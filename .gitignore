@@ -1,6 +1,8 @@
 node_modules/
 dist/
 build/
+.gocache/
+.gotmp/
 .turbo/
 .cache/
 .npm/
@@ -23,4 +25,3 @@ bin/
 apps/control-ui/dist/
 packages/shared/dist/
 deploy/image/out/
-

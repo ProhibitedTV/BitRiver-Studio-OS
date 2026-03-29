@@ -1,0 +1,22 @@
+[Unit]
+Description=BitRiver control API
+After=network-online.target bitriver-bootstrap.service
+Requires=bitriver-bootstrap.service
+PartOf=bitriver.target
+
+[Service]
+Type=simple
+User=bitriver
+Group=bitriver
+EnvironmentFile=-/etc/bitriver/bitriver.env
+WorkingDirectory=/var/lib/bitriver
+ExecStart=/usr/local/bin/bitriverd -http-addr ${BITRIVER_HTTP_ADDR} -ui-dir ${BITRIVER_UI_DIR}
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/bitriver /data/recordings
+
+[Install]
+WantedBy=bitriver.target

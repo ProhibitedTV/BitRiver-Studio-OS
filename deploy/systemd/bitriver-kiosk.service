@@ -1,0 +1,18 @@
+[Unit]
+Description=BitRiver kiosk session
+After=bitriverd.service
+Requires=bitriverd.service
+PartOf=bitriver.target
+
+[Service]
+Type=simple
+User=studio
+Group=studio
+EnvironmentFile=-/etc/bitriver/bitriver.env
+ExecStart=/usr/local/libexec/bitriver/start-kiosk.sh
+Restart=always
+RestartSec=3
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=bitriver.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=BitRiver Studio OS Appliance Target
+Requires=network-online.target bitriver-bootstrap.service bitriverd.service mediamtx.service obs.service bitriver-kiosk.service
+Wants=bitriver-healthcheck.service
+After=network-online.target bitriver-bootstrap.service
+
+[Install]
+WantedBy=multi-user.target

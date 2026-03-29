@@ -1,4 +1,4 @@
-POWERSHELL ?= pwsh
+POWERSHELL ?= powershell -ExecutionPolicy Bypass
 
 .DEFAULT_GOAL := help
 

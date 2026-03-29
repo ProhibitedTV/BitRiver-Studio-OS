@@ -1,0 +1,19 @@
+[Unit]
+Description=OBS production engine
+After=bitriver-kiosk.service
+Requires=bitriver-kiosk.service
+PartOf=bitriver.target
+
+[Service]
+Type=simple
+User=studio
+Group=studio
+EnvironmentFile=-/etc/bitriver/bitriver.env
+ExecStart=/usr/local/libexec/bitriver/start-obs.sh
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ReadWritePaths=/data/recordings
+
+[Install]
+WantedBy=bitriver.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=BitRiver appliance health check
+After=bitriverd.service mediamtx.service
+PartOf=bitriver.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/bitriver/healthcheck.sh
+
+[Install]
+WantedBy=bitriver.target

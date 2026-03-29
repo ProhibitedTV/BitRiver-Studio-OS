@@ -11,13 +11,13 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "pwsh -File scripts/dev.ps1 -Target api",
-    "dev:api": "pwsh -File scripts/dev.ps1 -Target api",
-    "dev:ui": "pwsh -File scripts/dev.ps1 -Target ui",
-    "lint": "pwsh -File scripts/lint.ps1",
-    "build": "pwsh -File scripts/build.ps1",
-    "package": "pwsh -File scripts/package.ps1",
-    "smoke": "pwsh -File scripts/smoke.ps1"
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1 -Target api",
+    "dev:api": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1 -Target api",
+    "dev:ui": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1 -Target ui",
+    "lint": "powershell -ExecutionPolicy Bypass -File scripts/lint.ps1",
+    "build": "powershell -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "package": "powershell -ExecutionPolicy Bypass -File scripts/package.ps1",
+    "smoke": "powershell -ExecutionPolicy Bypass -File scripts/smoke.ps1"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",

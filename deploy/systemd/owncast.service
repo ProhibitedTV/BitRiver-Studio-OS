@@ -1,0 +1,19 @@
+[Unit]
+Description=Owncast downstream destination
+After=network-online.target bitriver-bootstrap.service
+Requires=bitriver-bootstrap.service
+PartOf=bitriver.target
+ConditionPathExists=/opt/owncast/owncast
+
+[Service]
+Type=simple
+User=bitriver
+Group=bitriver
+ExecStart=/usr/local/libexec/bitriver/start-owncast.sh
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+ReadWritePaths=/var/lib/owncast /data/recordings
+
+[Install]
+WantedBy=bitriver.target

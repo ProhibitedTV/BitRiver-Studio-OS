@@ -1,0 +1,66 @@
+{
+  "system": {
+    "name": "studio-a",
+    "timezone": "America/Denver",
+    "updateChannel": "stable"
+  },
+  "sources": [
+    {
+      "id": "cam-host",
+      "name": "Host Camera",
+      "kind": "local_video",
+      "deviceRef": "usb-046d_0825-hostcam"
+    },
+    {
+      "id": "capture-game",
+      "name": "Gameplay Capture",
+      "kind": "local_video",
+      "deviceRef": "usb-elgato-hd60x-main"
+    },
+    {
+      "id": "lower-third",
+      "name": "Show Overlay",
+      "kind": "browser_source",
+      "deviceRef": "https://overlays.bitriver.local/show/lower-third"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "starting-soon",
+      "name": "Starting Soon",
+      "sources": ["lower-third"]
+    },
+    {
+      "id": "host-cam",
+      "name": "Host Camera",
+      "sources": ["cam-host", "mic-host", "lower-third"]
+    },
+    {
+      "id": "gameplay",
+      "name": "Gameplay",
+      "sources": ["capture-game", "mic-host", "lower-third"]
+    }
+  ],
+  "audio": {
+    "channels": [
+      {
+        "id": "mic-host",
+        "name": "Host Mic",
+        "deviceRef": "usb-focusrite-2i2-input-1"
+      }
+    ]
+  },
+  "destination": {
+    "mode": "external_rtmp",
+    "targetLabel": "Twitch",
+    "targetUrl": "rtmp://live.twitch.tv/app"
+  },
+  "recording": {
+    "container": "mkv",
+    "path": "/data/recordings"
+  },
+  "owncast": {
+    "enabled": false,
+    "publicUrl": "http://bitriver.local:8081"
+  }
+}

@@ -1,0 +1,14 @@
+logLevel: info
+rtmp: yes
+rtsp: yes
+srt: yes
+
+paths:
+  guest-1:
+    source: publisher
+  guest-2:
+    source: publisher
+  remote-cam-1:
+    source: publisher
+  backup-feed:
+    source: publisher
