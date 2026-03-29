@@ -1,0 +1,577 @@
+openapi: 3.1.0
+info:
+  title: BitRiver Control API
+  version: 0.1.0
+  description: >
+    LAN-facing control plane contract for BitRiver Studio OS. This contract is the
+    shared boundary between the browser control surface and the appliance control API.
+servers:
+  - url: http://bitriver.local
+    description: Appliance LAN address
+tags:
+  - name: system
+  - name: show
+  - name: sources
+  - name: audio
+  - name: storage
+  - name: config
+paths:
+  /api/v1/system:
+    get:
+      tags: [system]
+      operationId: getSystem
+      responses:
+        "200":
+          description: Appliance summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSummary"
+  /api/v1/show:
+    get:
+      tags: [show]
+      operationId: getShow
+      responses:
+        "200":
+          description: Current show state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowState"
+  /api/v1/show/scene/{sceneId}/activate:
+    post:
+      tags: [show]
+      operationId: activateScene
+      parameters:
+        - name: sceneId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Scene activation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+        "404":
+          description: Scene not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/show/stream/start:
+    post:
+      tags: [show]
+      operationId: startStream
+      responses:
+        "200":
+          description: Stream start accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/show/stream/stop:
+    post:
+      tags: [show]
+      operationId: stopStream
+      responses:
+        "200":
+          description: Stream stop accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/show/recording/start:
+    post:
+      tags: [show]
+      operationId: startRecording
+      responses:
+        "200":
+          description: Recording start accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/show/recording/stop:
+    post:
+      tags: [show]
+      operationId: stopRecording
+      responses:
+        "200":
+          description: Recording stop accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/sources:
+    get:
+      tags: [sources]
+      operationId: getSources
+      responses:
+        "200":
+          description: Known sources and ingest slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SourceSummary"
+  /api/v1/audio:
+    get:
+      tags: [audio]
+      operationId: getAudio
+      responses:
+        "200":
+          description: Exposed audio channels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioState"
+  /api/v1/audio/{channelId}/mute:
+    post:
+      tags: [audio]
+      operationId: muteAudioChannel
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Channel muted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/audio/{channelId}/unmute:
+    post:
+      tags: [audio]
+      operationId: unmuteAudioChannel
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Channel unmuted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/audio/{channelId}/gain:
+    post:
+      tags: [audio]
+      operationId: setAudioGain
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GainRequest"
+      responses:
+        "200":
+          description: Gain updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/storage:
+    get:
+      tags: [storage]
+      operationId: getStorage
+      responses:
+        "200":
+          description: Recording storage summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageSummary"
+  /api/v1/config/active:
+    get:
+      tags: [config]
+      operationId: getActiveConfig
+      responses:
+        "200":
+          description: Active config generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigEnvelope"
+  /api/v1/config/draft:
+    get:
+      tags: [config]
+      operationId: getDraftConfig
+      responses:
+        "200":
+          description: Editable config draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigEnvelope"
+    put:
+      tags: [config]
+      operationId: updateDraftConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ControlConfig"
+      responses:
+        "200":
+          description: Draft updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigEnvelope"
+  /api/v1/config/validate:
+    post:
+      tags: [config]
+      operationId: validateDraftConfig
+      responses:
+        "200":
+          description: Draft validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateConfigResponse"
+  /api/v1/config/apply:
+    post:
+      tags: [config]
+      operationId: applyDraftConfig
+      responses:
+        "200":
+          description: Draft promoted to active generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+        "422":
+          description: Draft rejected by validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateConfigResponse"
+components:
+  parameters:
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthCheck:
+      type: object
+      required: [key, state, message]
+      properties:
+        key:
+          type: string
+        state:
+          $ref: "#/components/schemas/HealthState"
+        message:
+          type: string
+    HealthState:
+      type: string
+      enum: [healthy, degraded, error]
+    HealthSummary:
+      type: object
+      required: [overall, checks]
+      properties:
+        overall:
+          $ref: "#/components/schemas/HealthState"
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
+    NetworkSummary:
+      type: object
+      required: [lanAddress, hostname]
+      properties:
+        lanAddress:
+          type: string
+        hostname:
+          type: string
+    SystemSummary:
+      type: object
+      required: [applianceId, name, version, bootMode, startedAt, uptimeSeconds, health, network]
+      properties:
+        applianceId:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        bootMode:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        uptimeSeconds:
+          type: integer
+        health:
+          $ref: "#/components/schemas/HealthSummary"
+        network:
+          $ref: "#/components/schemas/NetworkSummary"
+    DestinationSummary:
+      type: object
+      required: [mode, label, target, connected]
+      properties:
+        mode:
+          type: string
+          enum: [external_rtmp, owncast]
+        label:
+          type: string
+        target:
+          type: string
+        connected:
+          type: boolean
+    SceneSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ShowState:
+      type: object
+      required: [activeSceneId, streamState, recordState, destination, scenes]
+      properties:
+        activeSceneId:
+          type: string
+        streamState:
+          type: string
+          enum: [stopped, starting, live]
+        recordState:
+          type: string
+          enum: [stopped, recording]
+        destination:
+          $ref: "#/components/schemas/DestinationSummary"
+        scenes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SceneSummary"
+    SourceSummary:
+      type: object
+      required: [id, name, kind, status, detail, bitrateKbps]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [local_video, local_audio, network_ingest, browser_source]
+        status:
+          type: string
+          enum: [ready, disconnected, warning]
+        detail:
+          type: string
+        bitrateKbps:
+          type: integer
+        publishUrl:
+          type: string
+    AudioChannelSummary:
+      type: object
+      required: [id, name, muted, gainDb, peakDb, source]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        muted:
+          type: boolean
+        gainDb:
+          type: number
+        peakDb:
+          type: number
+        source:
+          type: string
+    AudioState:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudioChannelSummary"
+    StorageSummary:
+      type: object
+      required: [recordingPath, totalGb, usedGb, freeGb]
+      properties:
+        recordingPath:
+          type: string
+        totalGb:
+          type: integer
+        usedGb:
+          type: integer
+        freeGb:
+          type: integer
+        warning:
+          type: string
+    ConfigSystem:
+      type: object
+      required: [name, timezone, updateChannel]
+      properties:
+        name:
+          type: string
+        timezone:
+          type: string
+        updateChannel:
+          type: string
+    ConfigSource:
+      type: object
+      required: [id, name, kind]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [local_video, local_audio, network_ingest, browser_source]
+        deviceRef:
+          type: string
+        protocols:
+          type: array
+          items:
+            type: string
+        publishUrl:
+          type: string
+    ConfigScene:
+      type: object
+      required: [id, name, sources]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+    ConfigAudioChannel:
+      type: object
+      required: [id, name, deviceRef]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        deviceRef:
+          type: string
+    ConfigAudio:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigAudioChannel"
+    ConfigDestination:
+      type: object
+      required: [mode, targetLabel, targetUrl]
+      properties:
+        mode:
+          type: string
+          enum: [external_rtmp, owncast]
+        targetLabel:
+          type: string
+        targetUrl:
+          type: string
+    ConfigRecording:
+      type: object
+      required: [container, path]
+      properties:
+        container:
+          type: string
+          enum: [mkv, mp4]
+        path:
+          type: string
+    ConfigOwncast:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+        publicUrl:
+          type: string
+    ControlConfig:
+      type: object
+      required: [system, sources, scenes, audio, destination, recording, owncast]
+      properties:
+        system:
+          $ref: "#/components/schemas/ConfigSystem"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigSource"
+        scenes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigScene"
+        audio:
+          $ref: "#/components/schemas/ConfigAudio"
+        destination:
+          $ref: "#/components/schemas/ConfigDestination"
+        recording:
+          $ref: "#/components/schemas/ConfigRecording"
+        owncast:
+          $ref: "#/components/schemas/ConfigOwncast"
+    ConfigEnvelope:
+      type: object
+      required: [generation, updatedAt, config]
+      properties:
+        generation:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        config:
+          $ref: "#/components/schemas/ControlConfig"
+    ValidationIssue:
+      type: object
+      required: [field, severity, message]
+      properties:
+        field:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning]
+        message:
+          type: string
+    ValidateConfigResponse:
+      type: object
+      required: [valid, issues]
+      properties:
+        valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationIssue"
+    OperationResponse:
+      type: object
+      required: [operationId, status, message]
+      properties:
+        operationId:
+          type: string
+        status:
+          type: string
+          enum: [accepted, completed, rejected]
+        message:
+          type: string
+        appliedGeneration:
+          type: string
+    GainRequest:
+      type: object
+      required: [gainDb]
+      properties:
+        gainDb:
+          type: number
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string

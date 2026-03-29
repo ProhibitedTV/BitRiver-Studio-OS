@@ -1,0 +1,26 @@
+node_modules/
+dist/
+build/
+.turbo/
+.cache/
+.npm/
+coverage/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Go
+*.test
+*.out
+bin/
+
+# Editor / OS
+.idea/
+.vscode/
+
+# Artifact directories
+apps/control-ui/dist/
+packages/shared/dist/
+deploy/image/out/
+

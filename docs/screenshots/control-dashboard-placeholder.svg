@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#09141C"/>
+  <rect x="32" y="28" width="1216" height="664" rx="28" fill="#0E2430" stroke="#1E465A"/>
+  <rect x="72" y="72" width="452" height="256" rx="20" fill="#102D3B"/>
+  <rect x="552" y="72" width="312" height="124" rx="20" fill="#163B4D"/>
+  <rect x="888" y="72" width="312" height="124" rx="20" fill="#163B4D"/>
+  <rect x="552" y="220" width="648" height="108" rx="20" fill="#102D3B"/>
+  <rect x="72" y="356" width="1128" height="120" rx="20" fill="#102D3B"/>
+  <rect x="72" y="500" width="544" height="144" rx="20" fill="#163B4D"/>
+  <rect x="656" y="500" width="544" height="144" rx="20" fill="#163B4D"/>
+  <text x="72" y="46" fill="#A7C9D8" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="22" font-weight="600">BitRiver Control Dashboard</text>
+  <text x="96" y="114" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">Program + Live Controls</text>
+  <text x="576" y="114" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">System Health</text>
+  <text x="912" y="114" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">Storage + Update</text>
+  <text x="576" y="264" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">Scene Rail</text>
+  <text x="96" y="402" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">Sources and Ingest Slots</text>
+  <text x="96" y="546" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">Audio Mixer</text>
+  <text x="680" y="546" fill="#E8F6FC" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">Runbook + Recent Events</text>
+</svg>

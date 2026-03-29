@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#0E1016"/>
+  <rect x="52" y="52" width="1176" height="616" rx="28" fill="#151A23" stroke="#32404C"/>
+  <rect x="84" y="96" width="1112" height="92" rx="18" fill="#1A2230"/>
+  <rect x="84" y="224" width="1112" height="340" rx="22" fill="#111C28"/>
+  <circle cx="222" cy="394" r="58" fill="#244E63"/>
+  <circle cx="470" cy="394" r="58" fill="#244E63"/>
+  <circle cx="718" cy="394" r="58" fill="#244E63"/>
+  <circle cx="966" cy="394" r="58" fill="#244E63"/>
+  <rect x="222" y="388" width="496" height="12" rx="6" fill="#5DA2BF"/>
+  <rect x="718" y="388" width="248" height="12" rx="6" fill="#5DA2BF"/>
+  <text x="84" y="76" fill="#BFD0DA" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="22" font-weight="600">BitRiver Update Workflow</text>
+  <text x="112" y="152" fill="#ECF5F8" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="30" font-weight="700">Stage, Reboot, Validate, Roll Back If Needed</text>
+  <text x="162" y="488" fill="#ECF5F8" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="22" font-weight="700">Stage</text>
+  <text x="398" y="488" fill="#ECF5F8" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="22" font-weight="700">Reboot</text>
+  <text x="626" y="488" fill="#ECF5F8" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="22" font-weight="700">Validate</text>
+  <text x="888" y="488" fill="#ECF5F8" font-family="IBM Plex Sans, Segoe UI, sans-serif" font-size="22" font-weight="700">Rollback</text>
+</svg>
