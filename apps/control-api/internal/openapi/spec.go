@@ -1,0 +1,1020 @@
+package openapi
+
+func YAML() []byte {
+	return []byte(specYAML)
+}
+
+const specYAML = `openapi: 3.1.0
+info:
+  title: BitRiver Control API
+  version: 0.2.0
+  description: >
+    LAN-facing control API for BitRiver Studio OS. The API orchestrates OBS,
+    MediaMTX, system health, recordings, settings generations, and update state.
+servers:
+  - url: http://bitriver.local
+    description: Appliance LAN address
+tags:
+  - name: system
+  - name: health
+  - name: setup
+  - name: stream
+  - name: outputs
+  - name: media-router
+  - name: recordings
+  - name: scenes
+  - name: sources
+  - name: audio
+  - name: settings
+  - name: update
+paths:
+  /api/v1/system:
+    get:
+      tags: [system]
+      operationId: getSystem
+      responses:
+        "200":
+          description: Appliance system overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSummary"
+  /api/v1/health:
+    get:
+      tags: [health]
+      operationId: getHealth
+      responses:
+        "200":
+          description: Aggregated appliance health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthSummary"
+  /api/v1/setup/status:
+    get:
+      tags: [setup]
+      operationId: getSetupStatus
+      responses:
+        "200":
+          description: First-boot and hardware setup state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetupStatus"
+  /api/v1/stream:
+    get:
+      tags: [stream]
+      operationId: getStream
+      responses:
+        "200":
+          description: Current stream state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamSummary"
+  /api/v1/stream/start:
+    post:
+      tags: [stream]
+      operationId: startStream
+      responses:
+        "200":
+          description: Stream start accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+        "503":
+          description: OBS is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/stream/stop:
+    post:
+      tags: [stream]
+      operationId: stopStream
+      responses:
+        "200":
+          description: Stream stop accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/outputs:
+    get:
+      tags: [outputs]
+      operationId: getOutputs
+      responses:
+        "200":
+          description: Current output destinations and connectivity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutputSummary"
+  /api/v1/media-router:
+    get:
+      tags: [media-router]
+      operationId: getMediaRouter
+      responses:
+        "200":
+          description: MediaMTX configuration, active paths, and session visibility
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRouterSummary"
+  /api/v1/recordings:
+    get:
+      tags: [recordings]
+      operationId: getRecordings
+      responses:
+        "200":
+          description: Recording state and storage path summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordingSummary"
+  /api/v1/recordings/start:
+    post:
+      tags: [recordings]
+      operationId: startRecording
+      responses:
+        "200":
+          description: Recording start accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/recordings/stop:
+    post:
+      tags: [recordings]
+      operationId: stopRecording
+      responses:
+        "200":
+          description: Recording stop accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/scenes:
+    get:
+      tags: [scenes]
+      operationId: getScenes
+      responses:
+        "200":
+          description: Configured scenes and active scene selection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScenesState"
+  /api/v1/scenes/{sceneId}/activate:
+    post:
+      tags: [scenes]
+      operationId: activateScene
+      parameters:
+        - $ref: "#/components/parameters/SceneId"
+      responses:
+        "200":
+          description: Scene activation accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+        "404":
+          description: Scene not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/sources:
+    get:
+      tags: [sources]
+      operationId: getSources
+      responses:
+        "200":
+          description: Known local and network source availability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SourceSummary"
+  /api/v1/audio/routes:
+    get:
+      tags: [audio]
+      operationId: getAudioRoutes
+      responses:
+        "200":
+          description: Audio route visibility and mute state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioState"
+  /api/v1/audio/routes/{channelId}/mute:
+    post:
+      tags: [audio]
+      operationId: muteAudioRoute
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Audio route muted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+        "404":
+          description: Audio route not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/audio/routes/{channelId}/unmute:
+    post:
+      tags: [audio]
+      operationId: unmuteAudioRoute
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      responses:
+        "200":
+          description: Audio route unmuted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/audio/routes/{channelId}/gain:
+    post:
+      tags: [audio]
+      operationId: setAudioRouteGain
+      parameters:
+        - $ref: "#/components/parameters/ChannelId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GainRequest"
+      responses:
+        "200":
+          description: Audio route gain updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+  /api/v1/settings/active:
+    get:
+      tags: [settings]
+      operationId: getActiveSettings
+      responses:
+        "200":
+          description: Active settings generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigEnvelope"
+  /api/v1/settings/draft:
+    get:
+      tags: [settings]
+      operationId: getDraftSettings
+      responses:
+        "200":
+          description: Editable draft settings generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigEnvelope"
+    put:
+      tags: [settings]
+      operationId: updateDraftSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ControlConfig"
+      responses:
+        "200":
+          description: Draft settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigEnvelope"
+        "400":
+          description: Invalid settings payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/settings/validate:
+    post:
+      tags: [settings]
+      operationId: validateDraftSettings
+      responses:
+        "200":
+          description: Draft settings validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateConfigResponse"
+  /api/v1/settings/apply:
+    post:
+      tags: [settings]
+      operationId: applyDraftSettings
+      responses:
+        "200":
+          description: Draft promoted to active generation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResponse"
+        "422":
+          description: Draft rejected by validation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateConfigResponse"
+  /api/v1/update:
+    get:
+      tags: [update]
+      operationId: getUpdateStatus
+      responses:
+        "200":
+          description: Current and staged update status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateStatus"
+components:
+  parameters:
+    SceneId:
+      name: sceneId
+      in: path
+      required: true
+      schema:
+        type: string
+    ChannelId:
+      name: channelId
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    HealthState:
+      type: string
+      enum: [healthy, degraded, error]
+    HealthCheck:
+      type: object
+      required: [key, state, message]
+      properties:
+        key:
+          type: string
+        state:
+          $ref: "#/components/schemas/HealthState"
+        message:
+          type: string
+    HealthSummary:
+      type: object
+      required: [overall, checks, updatedAt]
+      properties:
+        overall:
+          $ref: "#/components/schemas/HealthState"
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
+        updatedAt:
+          type: string
+          format: date-time
+    ServiceStatus:
+      type: object
+      required: [name, active, state, detail, managedBy, restarting]
+      properties:
+        name:
+          type: string
+        active:
+          type: boolean
+        state:
+          type: string
+        detail:
+          type: string
+        managedBy:
+          type: string
+        restarting:
+          type: boolean
+    NetworkSummary:
+      type: object
+      required: [lanAddress, hostname, interfaces]
+      properties:
+        lanAddress:
+          type: string
+        hostname:
+          type: string
+        interfaces:
+          type: array
+          items:
+            type: string
+    CPUStatus:
+      type: object
+      required: [model, logicalCores, usagePercent, loadAverage]
+      properties:
+        model:
+          type: string
+        logicalCores:
+          type: integer
+        usagePercent:
+          type: number
+        loadAverage:
+          type: number
+    MemoryStatus:
+      type: object
+      required: [totalMiB, usedMiB, freeMiB]
+      properties:
+        totalMiB:
+          type: integer
+        usedMiB:
+          type: integer
+        freeMiB:
+          type: integer
+    DiskStatus:
+      type: object
+      required: [path, totalGb, usedGb, freeGb, available]
+      properties:
+        path:
+          type: string
+        totalGb:
+          type: integer
+        usedGb:
+          type: integer
+        freeGb:
+          type: integer
+        available:
+          type: boolean
+        warning:
+          type: string
+    SystemSummary:
+      type: object
+      required: [applianceId, name, version, bootMode, startedAt, uptimeSeconds, health, network, cpu, memory, disk, services]
+      properties:
+        applianceId:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        bootMode:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        uptimeSeconds:
+          type: integer
+        health:
+          $ref: "#/components/schemas/HealthSummary"
+        network:
+          $ref: "#/components/schemas/NetworkSummary"
+        cpu:
+          $ref: "#/components/schemas/CPUStatus"
+        memory:
+          $ref: "#/components/schemas/MemoryStatus"
+        disk:
+          $ref: "#/components/schemas/DiskStatus"
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceStatus"
+    StreamState:
+      type: string
+      enum: [stopped, starting, live]
+    RecordState:
+      type: string
+      enum: [stopped, recording]
+    StreamSummary:
+      type: object
+      required: [state, activeSceneId, destination]
+      properties:
+        state:
+          $ref: "#/components/schemas/StreamState"
+        activeSceneId:
+          type: string
+        destination:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+    DestinationSummary:
+      type: object
+      required: [id, mode, label, target, connected, enabled, detail]
+      properties:
+        id:
+          type: string
+        mode:
+          type: string
+          enum: [external_rtmp, external_srt, owncast]
+        label:
+          type: string
+        target:
+          type: string
+        connected:
+          type: boolean
+        enabled:
+          type: boolean
+        detail:
+          type: string
+    OutputSummary:
+      type: object
+      required: [streamState, destinations]
+      properties:
+        streamState:
+          $ref: "#/components/schemas/StreamState"
+        destinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DestinationSummary"
+    MediaDestinationSummary:
+      type: object
+      required: [id, name, protocol, target, enabled, connected, detail]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        protocol:
+          type: string
+          enum: [rtmp, srt]
+        target:
+          type: string
+        enabled:
+          type: boolean
+        connected:
+          type: boolean
+        detail:
+          type: string
+    MediaPathSummary:
+      type: object
+      required: [name, ready, source, readers, bitrateKbps, detail]
+      properties:
+        name:
+          type: string
+        ready:
+          type: boolean
+        source:
+          type: string
+        readers:
+          type: integer
+        bitrateKbps:
+          type: integer
+        detail:
+          type: string
+        publishUrl:
+          type: string
+    MediaSessionSummary:
+      type: object
+      required: [id, protocol, path, remoteAddr, state]
+      properties:
+        id:
+          type: string
+        protocol:
+          type: string
+          enum: [rtmp, srt, rtsp, webrtc]
+        path:
+          type: string
+        remoteAddr:
+          type: string
+        state:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+    MediaRouterSummary:
+      type: object
+      required: [healthy, detail, localIngestPath, localPreviewPath, recordingPath, webrtcPreviewEnabled, destinations, activePaths, activeSessions]
+      properties:
+        healthy:
+          type: boolean
+        detail:
+          type: string
+        configGeneration:
+          type: string
+        configPath:
+          type: string
+        localIngestPath:
+          type: string
+        localPreviewPath:
+          type: string
+        recordingPath:
+          type: string
+        webrtcPreviewEnabled:
+          type: boolean
+        destinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaDestinationSummary"
+        activePaths:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaPathSummary"
+        activeSessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSessionSummary"
+        lastAppliedAt:
+          type: string
+          format: date-time
+        lastReloadedAt:
+          type: string
+          format: date-time
+        lastConfigValidatedAt:
+          type: string
+          format: date-time
+    RecordingSummary:
+      type: object
+      required: [state, recordingPath, totalGb, usedGb, freeGb]
+      properties:
+        state:
+          $ref: "#/components/schemas/RecordState"
+        recordingPath:
+          type: string
+        currentFile:
+          type: string
+        totalGb:
+          type: integer
+        usedGb:
+          type: integer
+        freeGb:
+          type: integer
+        warning:
+          type: string
+    SceneSummary:
+      type: object
+      required: [id, name, active]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+    ScenesState:
+      type: object
+      required: [activeSceneId, items]
+      properties:
+        activeSceneId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SceneSummary"
+    SourceStatus:
+      type: string
+      enum: [ready, disconnected, warning]
+    SourceSummary:
+      type: object
+      required: [id, name, kind, status, available, detail, bitrateKbps]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+          enum: [local_video, local_audio, network_ingest, browser_source]
+        status:
+          $ref: "#/components/schemas/SourceStatus"
+        available:
+          type: boolean
+        detail:
+          type: string
+        bitrateKbps:
+          type: integer
+        publishUrl:
+          type: string
+    AudioChannelSummary:
+      type: object
+      required: [id, name, muted, gainDb, peakDb, source, available]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        muted:
+          type: boolean
+        gainDb:
+          type: number
+        peakDb:
+          type: number
+        source:
+          type: string
+        available:
+          type: boolean
+    AudioState:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudioChannelSummary"
+    HardwareCapabilities:
+      type: object
+      required: [kioskEligible, obsEligible, recommendedForMvp]
+      properties:
+        kioskEligible:
+          type: boolean
+        obsEligible:
+          type: boolean
+        recommendedForMvp:
+          type: boolean
+    HardwareReport:
+      type: object
+      required: [detectedAt, architecture, cpuModel, logicalCores, memoryMiB, displayAttached, videoDevices, audioCaptureDevices, networkInterfaces, capabilities]
+      properties:
+        detectedAt:
+          type: string
+          format: date-time
+        architecture:
+          type: string
+        cpuModel:
+          type: string
+        logicalCores:
+          type: integer
+        memoryMiB:
+          type: integer
+        displayAttached:
+          type: boolean
+        videoDevices:
+          type: array
+          items:
+            type: string
+        audioCaptureDevices:
+          type: array
+          items:
+            type: string
+        networkInterfaces:
+          type: array
+          items:
+            type: string
+        capabilities:
+          $ref: "#/components/schemas/HardwareCapabilities"
+    SetupStatus:
+      type: object
+      required: [state, firstBootComplete, applianceId, hostname, adminUsername, credentialsReady, requiresPasswordRotation, initialConfigWritten, hardwareDetected, displayMode, startedAt, issues, hardware]
+      properties:
+        state:
+          type: string
+          enum: [pending, in_progress, ready, degraded]
+        firstBootComplete:
+          type: boolean
+        applianceId:
+          type: string
+        hostname:
+          type: string
+        adminUsername:
+          type: string
+        credentialsReady:
+          type: boolean
+        requiresPasswordRotation:
+          type: boolean
+        initialConfigWritten:
+          type: boolean
+        hardwareDetected:
+          type: boolean
+        displayMode:
+          type: string
+          enum: [headless, kiosk]
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        issues:
+          type: array
+          items:
+            type: string
+        hardware:
+          $ref: "#/components/schemas/HardwareReport"
+    ConfigSystem:
+      type: object
+      required: [name, timezone, updateChannel]
+      properties:
+        name:
+          type: string
+        timezone:
+          type: string
+        updateChannel:
+          type: string
+    ConfigSource:
+      type: object
+      required: [id, name, kind]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+        deviceRef:
+          type: string
+        protocols:
+          type: array
+          items:
+            type: string
+        publishUrl:
+          type: string
+    ConfigScene:
+      type: object
+      required: [id, name, sources]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sources:
+          type: array
+          items:
+            type: string
+    ConfigAudioChannel:
+      type: object
+      required: [id, name, deviceRef]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        deviceRef:
+          type: string
+    ConfigAudio:
+      type: object
+      required: [channels]
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigAudioChannel"
+    ConfigDestination:
+      type: object
+      required: [mode, targetLabel, targetUrl]
+      properties:
+        mode:
+          type: string
+          enum: [external_rtmp, external_srt, owncast]
+        targetLabel:
+          type: string
+        targetUrl:
+          type: string
+    ConfigRecording:
+      type: object
+      required: [container, path]
+      properties:
+        container:
+          type: string
+          enum: [mkv, mp4]
+        path:
+          type: string
+    ConfigOwncast:
+      type: object
+      required: [enabled]
+      properties:
+        enabled:
+          type: boolean
+        publicUrl:
+          type: string
+    ConfigMediaDestination:
+      type: object
+      required: [id, name, protocol, targetUrl, enabled]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        protocol:
+          type: string
+          enum: [rtmp, srt]
+        targetUrl:
+          type: string
+        enabled:
+          type: boolean
+    ConfigMediaRouter:
+      type: object
+      required: [localIngestPath, localPreviewPath, recordingPath, publishDestinations, webrtcPreviewEnabled]
+      properties:
+        localIngestPath:
+          type: string
+        localPreviewPath:
+          type: string
+        recordingPath:
+          type: string
+        publishDestinations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigMediaDestination"
+        webrtcPreviewEnabled:
+          type: boolean
+    ControlConfig:
+      type: object
+      required: [system, sources, scenes, audio, destination, recording, owncast, mediaRouter]
+      properties:
+        system:
+          $ref: "#/components/schemas/ConfigSystem"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigSource"
+        scenes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConfigScene"
+        audio:
+          $ref: "#/components/schemas/ConfigAudio"
+        destination:
+          $ref: "#/components/schemas/ConfigDestination"
+        recording:
+          $ref: "#/components/schemas/ConfigRecording"
+        owncast:
+          $ref: "#/components/schemas/ConfigOwncast"
+        mediaRouter:
+          $ref: "#/components/schemas/ConfigMediaRouter"
+    ConfigEnvelope:
+      type: object
+      required: [schemaVersion, generation, updatedAt, config]
+      properties:
+        schemaVersion:
+          type: string
+        generation:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        config:
+          $ref: "#/components/schemas/ControlConfig"
+    ValidationIssue:
+      type: object
+      required: [field, severity, message]
+      properties:
+        field:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning]
+        message:
+          type: string
+    ValidateConfigResponse:
+      type: object
+      required: [valid, issues]
+      properties:
+        valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationIssue"
+    OperationResponse:
+      type: object
+      required: [operationId, status, message]
+      properties:
+        operationId:
+          type: string
+        status:
+          type: string
+          enum: [accepted, completed, rejected]
+        message:
+          type: string
+        appliedGeneration:
+          type: string
+    GainRequest:
+      type: object
+      required: [gainDb]
+      properties:
+        gainDb:
+          type: number
+    UpdateStatus:
+      type: object
+      required: [state, currentVersion, deploymentSource, rebootRequired]
+      properties:
+        state:
+          type: string
+        currentVersion:
+          type: string
+        stagedVersion:
+          type: string
+        deploymentSource:
+          type: string
+        rebootRequired:
+          type: boolean
+        lastCheckedAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+`

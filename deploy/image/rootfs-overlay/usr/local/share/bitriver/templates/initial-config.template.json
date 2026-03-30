@@ -1,0 +1,60 @@
+{
+  "system": {
+    "name": "__SYSTEM_NAME__",
+    "timezone": "UTC",
+    "updateChannel": "stable"
+  },
+  "sources": [
+    {
+      "id": "guest-1",
+      "name": "Guest Slot 1",
+      "kind": "network_ingest",
+      "protocols": ["rtmp", "srt"],
+      "publishUrl": "srt://bitriver.local:8890?streamid=publish:guest-1"
+    },
+    {
+      "id": "lower-third",
+      "name": "Show Overlay",
+      "kind": "browser_source",
+      "deviceRef": "https://overlays.bitriver.local/show/lower-third"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "starting-soon",
+      "name": "Starting Soon",
+      "sources": ["lower-third"]
+    }
+  ],
+  "audio": {
+    "channels": []
+  },
+  "destination": {
+    "mode": "external_rtmp",
+    "targetLabel": "Twitch",
+    "targetUrl": "rtmp://live.twitch.tv/app"
+  },
+  "recording": {
+    "container": "mkv",
+    "path": "/data/recordings/program"
+  },
+  "owncast": {
+    "enabled": false,
+    "publicUrl": "http://bitriver.local:8081"
+  },
+  "mediaRouter": {
+    "localIngestPath": "program-live",
+    "localPreviewPath": "program-preview",
+    "recordingPath": "/data/recordings/program",
+    "publishDestinations": [
+      {
+        "id": "primary-rtmp",
+        "name": "Twitch",
+        "protocol": "rtmp",
+        "targetUrl": "rtmp://live.twitch.tv/app",
+        "enabled": true
+      }
+    ],
+    "webrtcPreviewEnabled": false
+  }
+}

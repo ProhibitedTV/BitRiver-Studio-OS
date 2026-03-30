@@ -1,0 +1,12 @@
+[Unit]
+Description=BitRiver first-boot identity and initial config generation
+After=local-fs.target systemd-tmpfiles-setup.service network-online.target
+Before=bitriver-control-api.service mediamtx.service owncast.service bitriver-update-agent.service bitriver-kiosk.service obs.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/bitriver/firstboot.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=bitriver.target

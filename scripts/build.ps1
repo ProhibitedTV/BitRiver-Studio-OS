@@ -5,6 +5,10 @@ $buildDir = Join-Path $repoRoot "build"
 Ensure-Directory $buildDir
 Initialize-GoEnv
 
+Invoke-Step "Generate OpenAPI" {
+  & (Join-Path $PSScriptRoot "generate-openapi.ps1")
+}
+
 Invoke-Step "Build shared contracts" {
   Set-Location $repoRoot
   & npm run build --workspace @bitriver/shared

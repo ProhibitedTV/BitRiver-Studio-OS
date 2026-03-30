@@ -1,0 +1,23 @@
+[Unit]
+Description=BitRiver update status and bootc reconciliation agent
+After=network-online.target bitriver-firstboot.service
+Requires=bitriver-firstboot.service
+PartOf=bitriver.target
+
+[Service]
+Type=simple
+User=bitriver
+Group=bitriver
+EnvironmentFile=-/etc/bitriver/bitriver.env
+WorkingDirectory=/var/lib/bitriver
+ExecStart=/usr/local/libexec/bitriver/update-agent.sh
+Restart=always
+RestartSec=5
+StartLimitIntervalSec=0
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/bitriver /run/bitriver
+
+[Install]
+WantedBy=bitriver.target

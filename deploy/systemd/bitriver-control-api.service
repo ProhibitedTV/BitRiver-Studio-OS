@@ -1,0 +1,24 @@
+[Unit]
+Description=BitRiver control API
+After=network-online.target bitriver-firstboot.service
+Requires=bitriver-firstboot.service
+PartOf=bitriver.target
+
+[Service]
+Type=simple
+User=bitriver
+Group=bitriver
+EnvironmentFile=-/etc/bitriver/bitriver.env
+WorkingDirectory=/var/lib/bitriver
+ExecStart=/usr/local/bin/bitriverd -http-addr ${BITRIVER_HTTP_ADDR} -ui-dir ${BITRIVER_UI_DIR} -setup-status-path ${BITRIVER_SETUP_STATUS_PATH} -initial-config-path ${BITRIVER_INITIAL_CONFIG_PATH} -health-summary-path ${BITRIVER_HEALTH_STATUS_PATH} -mediamtx-config-path ${BITRIVER_MEDIAMTX_CONFIG} -mediamtx-destinations-path ${BITRIVER_MEDIAMTX_DESTINATIONS_PATH}
+Restart=on-failure
+RestartSec=2
+StartLimitIntervalSec=120
+StartLimitBurst=6
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/bitriver /data/recordings /run/bitriver /etc/bitriver /etc/mediamtx
+
+[Install]
+WantedBy=bitriver.target

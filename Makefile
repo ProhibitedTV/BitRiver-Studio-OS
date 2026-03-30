@@ -2,7 +2,7 @@ POWERSHELL ?= powershell -ExecutionPolicy Bypass
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install dev dev-api dev-ui lint build package smoke ci
+.PHONY: help install dev dev-api dev-ui lint build package smoke ci openapi
 
 help:
 	@echo "BitRiver Studio OS developer targets"
@@ -14,6 +14,7 @@ help:
 	@echo "  make package   Build artifacts and container image scaffold"
 	@echo "  make smoke     Run smoke and integration checks against a local API instance"
 	@echo "  make ci        Run the PR validation sequence"
+	@echo "  make openapi   Generate the shared OpenAPI contract from the Go API package"
 
 install:
 	npm install
@@ -32,6 +33,9 @@ lint:
 
 build:
 	$(POWERSHELL) -File scripts/build.ps1
+
+openapi:
+	$(POWERSHELL) -File scripts/generate-openapi.ps1
 
 package:
 	$(POWERSHELL) -File scripts/package.ps1

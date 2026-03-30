@@ -1,7 +1,7 @@
 [Unit]
 Description=BitRiver kiosk session
-After=bitriverd.service
-Requires=bitriverd.service
+After=bitriver-control-api.service bitriver-firstboot.service
+Requires=bitriver-control-api.service bitriver-firstboot.service
 PartOf=bitriver.target
 
 [Service]
@@ -9,10 +9,19 @@ Type=simple
 User=studio
 Group=studio
 EnvironmentFile=-/etc/bitriver/bitriver.env
+ExecCondition=/usr/local/libexec/bitriver/display-attached.sh
 ExecStart=/usr/local/libexec/bitriver/start-kiosk.sh
 Restart=always
 RestartSec=3
+StartLimitIntervalSec=120
+StartLimitBurst=4
 NoNewPrivileges=yes
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVTDisallocate=yes
+StandardInput=tty
+StandardOutput=journal
 
 [Install]
 WantedBy=bitriver.target

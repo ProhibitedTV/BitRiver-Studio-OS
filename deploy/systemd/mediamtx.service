@@ -1,7 +1,7 @@
 [Unit]
 Description=MediaMTX ingest and routing service
-After=network-online.target bitriver-bootstrap.service
-Requires=bitriver-bootstrap.service
+After=network-online.target bitriver-firstboot.service
+Requires=bitriver-firstboot.service
 PartOf=bitriver.target
 
 [Service]
@@ -12,10 +12,12 @@ EnvironmentFile=-/etc/bitriver/bitriver.env
 ExecStart=/usr/local/libexec/bitriver/start-mediamtx.sh
 Restart=on-failure
 RestartSec=2
+StartLimitIntervalSec=120
+StartLimitBurst=6
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/bitriver
+ReadWritePaths=/var/lib/bitriver /run/bitriver /data/recordings /etc/bitriver /etc/mediamtx
 
 [Install]
 WantedBy=bitriver.target

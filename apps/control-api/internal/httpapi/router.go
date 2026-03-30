@@ -3,162 +3,295 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/bitriver/studio-os/apps/control-api/internal/core"
+	"github.com/bitriver/studio-os/apps/control-api/internal/events"
+	"github.com/bitriver/studio-os/apps/control-api/internal/model"
+	"github.com/bitriver/studio-os/apps/control-api/internal/openapi"
+	"github.com/bitriver/studio-os/apps/control-api/internal/service"
 )
 
-type handler struct {
-	store *core.StateStore
-	uiDir string
+type Handler struct {
+	logger     *slog.Logger
+	controller *service.Controller
+	uiDir      string
 }
 
-func NewHandler(store *core.StateStore, uiDir string) http.Handler {
-	api := &handler{store: store, uiDir: uiDir}
-	mux := http.NewServeMux()
+func NewHandler(logger *slog.Logger, controller *service.Controller, uiDir string) http.Handler {
+	if logger == nil {
+		logger = slog.Default()
+	}
 
-	mux.HandleFunc("/healthz", api.handleHealth)
+	api := &Handler{
+		logger:     logger,
+		controller: controller,
+		uiDir:      uiDir,
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/healthz", api.handleHealthz)
 	mux.HandleFunc("/api/v1/system", api.handleSystem)
+	mux.HandleFunc("/api/v1/health", api.handleHealth)
+	mux.HandleFunc("/api/v1/setup/status", api.handleSetupStatus)
+	mux.HandleFunc("/api/v1/stream", api.handleStream)
+	mux.HandleFunc("/api/v1/stream/start", api.handleStreamStart)
+	mux.HandleFunc("/api/v1/stream/stop", api.handleStreamStop)
+	mux.HandleFunc("/api/v1/outputs", api.handleOutputs)
+	mux.HandleFunc("/api/v1/recordings", api.handleRecordings)
+	mux.HandleFunc("/api/v1/media-router", api.handleMediaRouter)
+	mux.HandleFunc("/api/v1/recordings/start", api.handleRecordingStart)
+	mux.HandleFunc("/api/v1/recordings/stop", api.handleRecordingStop)
+	mux.HandleFunc("/api/v1/scenes", api.handleScenes)
+	mux.HandleFunc("/api/v1/scenes/", api.handleSceneActions)
+	mux.HandleFunc("/api/v1/sources", api.handleSources)
+	mux.HandleFunc("/api/v1/audio", api.handleAudio)
+	mux.HandleFunc("/api/v1/audio/", api.handleAudioActions)
+	mux.HandleFunc("/api/v1/audio/routes", api.handleAudio)
+	mux.HandleFunc("/api/v1/audio/routes/", api.handleAudioActions)
+	mux.HandleFunc("/api/v1/settings/active", api.handleActiveSettings)
+	mux.HandleFunc("/api/v1/settings/draft", api.handleDraftSettings)
+	mux.HandleFunc("/api/v1/settings/validate", api.handleValidateSettings)
+	mux.HandleFunc("/api/v1/settings/apply", api.handleApplySettings)
+	mux.HandleFunc("/api/v1/update", api.handleUpdate)
 	mux.HandleFunc("/api/v1/show", api.handleShow)
-	mux.HandleFunc("/api/v1/show/scene/", api.handleSceneActions)
+	mux.HandleFunc("/api/v1/show/scene/", api.handleLegacySceneActions)
 	mux.HandleFunc("/api/v1/show/stream/start", api.handleStreamStart)
 	mux.HandleFunc("/api/v1/show/stream/stop", api.handleStreamStop)
 	mux.HandleFunc("/api/v1/show/recording/start", api.handleRecordingStart)
 	mux.HandleFunc("/api/v1/show/recording/stop", api.handleRecordingStop)
-	mux.HandleFunc("/api/v1/sources", api.handleSources)
-	mux.HandleFunc("/api/v1/audio", api.handleAudio)
-	mux.HandleFunc("/api/v1/audio/", api.handleAudioActions)
-	mux.HandleFunc("/api/v1/storage", api.handleStorage)
-	mux.HandleFunc("/api/v1/config/active", api.handleActiveConfig)
-	mux.HandleFunc("/api/v1/config/draft", api.handleDraftConfig)
-	mux.HandleFunc("/api/v1/config/validate", api.handleValidateConfig)
-	mux.HandleFunc("/api/v1/config/apply", api.handleApplyConfig)
+	mux.HandleFunc("/api/v1/storage", api.handleRecordings)
+	mux.HandleFunc("/api/v1/config/active", api.handleActiveSettings)
+	mux.HandleFunc("/api/v1/config/draft", api.handleDraftSettings)
+	mux.HandleFunc("/api/v1/config/validate", api.handleValidateSettings)
+	mux.HandleFunc("/api/v1/config/apply", api.handleApplySettings)
+	mux.HandleFunc("/api/v1/openapi.yaml", api.handleOpenAPI)
+	mux.HandleFunc("/api/v1/ws", api.handleWebsocket)
 	mux.HandleFunc("/", api.handleRoot)
 
-	return loggingMiddleware(mux)
+	return api.loggingMiddleware(mux)
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+func (handler *Handler) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		log.Printf("%s %s", request.Method, request.URL.Path)
-		next.ServeHTTP(writer, request)
+		startedAt := time.Now()
+		recorder := &statusRecorder{ResponseWriter: writer, status: http.StatusOK}
+		next.ServeHTTP(recorder, request)
+		handler.logger.Info("http request",
+			"method", request.Method,
+			"path", request.URL.Path,
+			"status", recorder.status,
+			"durationMs", time.Since(startedAt).Milliseconds(),
+			"remoteAddr", request.RemoteAddr,
+		)
 	})
 }
 
-func (api *handler) handleHealth(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleHealthz(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		methodNotAllowed(writer)
 		return
 	}
-
 	writer.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	_, _ = writer.Write([]byte("ok"))
 }
 
-func (api *handler) handleSystem(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleSystem(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		methodNotAllowed(writer)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, api.store.System())
+	writeJSON(writer, http.StatusOK, handler.controller.System(request.Context()))
 }
 
-func (api *handler) handleShow(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleHealth(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		methodNotAllowed(writer)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, api.store.Show())
+	writeJSON(writer, http.StatusOK, handler.controller.Health(request.Context()))
 }
 
-func (api *handler) handleSceneActions(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleSetupStatus(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	writeJSON(writer, http.StatusOK, handler.controller.SetupStatus(request.Context()))
+}
+
+func (handler *Handler) handleStream(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.Stream(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleStreamStart(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodPost {
 		methodNotAllowed(writer)
 		return
 	}
+	payload, err := handler.controller.StartStream(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
 
-	sceneID, action, err := splitActionPath(request.URL.Path, "/api/v1/show/scene/")
+func (handler *Handler) handleStreamStop(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.StopStream(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleOutputs(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.Outputs(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleRecordings(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.Recordings(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleMediaRouter(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	writeJSON(writer, http.StatusOK, handler.controller.MediaRouter(request.Context()))
+}
+
+func (handler *Handler) handleRecordingStart(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.StartRecording(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleRecordingStop(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.StopRecording(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleScenes(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	payload, err := handler.controller.Scenes(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
+}
+
+func (handler *Handler) handleSceneActions(writer http.ResponseWriter, request *http.Request) {
+	handler.handleActivateScene(writer, request, "/api/v1/scenes/")
+}
+
+func (handler *Handler) handleLegacySceneActions(writer http.ResponseWriter, request *http.Request) {
+	handler.handleActivateScene(writer, request, "/api/v1/show/scene/")
+}
+
+func (handler *Handler) handleActivateScene(writer http.ResponseWriter, request *http.Request, prefix string) {
+	if request.Method != http.MethodPost {
+		methodNotAllowed(writer)
+		return
+	}
+	sceneID, action, err := splitActionPath(request.URL.Path, prefix)
 	if err != nil || action != "activate" {
 		notFound(writer)
 		return
 	}
-
-	response, actionErr := api.store.ActivateScene(sceneID)
-	if actionErr != nil {
-		writeJSON(writer, http.StatusNotFound, map[string]string{"error": actionErr.Error()})
+	payload, err := handler.controller.ActivateScene(request.Context(), sceneID)
+	if err != nil {
+		writeError(writer, err)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, response)
+	writeJSON(writer, http.StatusOK, payload)
 }
 
-func (api *handler) handleStreamStart(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		methodNotAllowed(writer)
-		return
-	}
-
-	writeJSON(writer, http.StatusOK, api.store.StartStream())
-}
-
-func (api *handler) handleStreamStop(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		methodNotAllowed(writer)
-		return
-	}
-
-	writeJSON(writer, http.StatusOK, api.store.StopStream())
-}
-
-func (api *handler) handleRecordingStart(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		methodNotAllowed(writer)
-		return
-	}
-
-	writeJSON(writer, http.StatusOK, api.store.StartRecording())
-}
-
-func (api *handler) handleRecordingStop(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodPost {
-		methodNotAllowed(writer)
-		return
-	}
-
-	writeJSON(writer, http.StatusOK, api.store.StopRecording())
-}
-
-func (api *handler) handleSources(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleSources(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		methodNotAllowed(writer)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, api.store.Sources())
+	writeJSON(writer, http.StatusOK, handler.controller.Sources(request.Context()))
 }
 
-func (api *handler) handleAudio(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleAudio(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		methodNotAllowed(writer)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, api.store.Audio())
+	payload, err := handler.controller.Audio(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	writeJSON(writer, http.StatusOK, payload)
 }
 
-func (api *handler) handleAudioActions(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleAudioActions(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodPost {
 		methodNotAllowed(writer)
 		return
 	}
 
-	channelID, action, err := splitActionPath(request.URL.Path, "/api/v1/audio/")
+	channelID, action, err := splitAudioActionPath(request.URL.Path)
 	if err != nil {
 		notFound(writer)
 		return
@@ -166,112 +299,185 @@ func (api *handler) handleAudioActions(writer http.ResponseWriter, request *http
 
 	switch action {
 	case "mute":
-		response, actionErr := api.store.SetMute(channelID, true)
-		if actionErr != nil {
-			writeJSON(writer, http.StatusNotFound, map[string]string{"error": actionErr.Error()})
+		payload, err := handler.controller.SetMute(request.Context(), channelID, true)
+		if err != nil {
+			writeError(writer, err)
 			return
 		}
-		writeJSON(writer, http.StatusOK, response)
+		writeJSON(writer, http.StatusOK, payload)
 	case "unmute":
-		response, actionErr := api.store.SetMute(channelID, false)
-		if actionErr != nil {
-			writeJSON(writer, http.StatusNotFound, map[string]string{"error": actionErr.Error()})
+		payload, err := handler.controller.SetMute(request.Context(), channelID, false)
+		if err != nil {
+			writeError(writer, err)
 			return
 		}
-		writeJSON(writer, http.StatusOK, response)
+		writeJSON(writer, http.StatusOK, payload)
 	case "gain":
-		var requestBody core.GainRequest
+		var requestBody model.GainRequest
 		if err := decodeJSON(request, &requestBody); err != nil {
-			writeJSON(writer, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeError(writer, model.NewInvalidError("request body must include gainDb", map[string]string{"body": err.Error()}))
 			return
 		}
-		response, actionErr := api.store.SetGain(channelID, requestBody.GainDB)
-		if actionErr != nil {
-			writeJSON(writer, http.StatusNotFound, map[string]string{"error": actionErr.Error()})
+		payload, err := handler.controller.SetGain(request.Context(), channelID, requestBody.GainDB)
+		if err != nil {
+			writeError(writer, err)
 			return
 		}
-		writeJSON(writer, http.StatusOK, response)
+		writeJSON(writer, http.StatusOK, payload)
 	default:
 		notFound(writer)
 	}
 }
 
-func (api *handler) handleStorage(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleActiveSettings(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
 		methodNotAllowed(writer)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, api.store.Storage())
+	writeJSON(writer, http.StatusOK, handler.controller.ActiveConfig())
 }
 
-func (api *handler) handleActiveConfig(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != http.MethodGet {
-		methodNotAllowed(writer)
-		return
-	}
-
-	writeJSON(writer, http.StatusOK, api.store.ActiveConfig())
-}
-
-func (api *handler) handleDraftConfig(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleDraftSettings(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case http.MethodGet:
-		writeJSON(writer, http.StatusOK, api.store.DraftConfig())
+		writeJSON(writer, http.StatusOK, handler.controller.DraftConfig())
 	case http.MethodPut:
-		var config core.ControlConfig
+		var config model.ControlConfig
 		if err := decodeJSON(request, &config); err != nil {
-			writeJSON(writer, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			writeError(writer, model.NewInvalidError("request body must be a valid settings document", map[string]string{"body": err.Error()}))
 			return
 		}
-		writeJSON(writer, http.StatusOK, api.store.UpdateDraft(config))
+		payload, err := handler.controller.UpdateDraft(config)
+		if err != nil {
+			writeError(writer, err)
+			return
+		}
+		writeJSON(writer, http.StatusOK, payload)
 	default:
 		methodNotAllowed(writer)
 	}
 }
 
-func (api *handler) handleValidateConfig(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleValidateSettings(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodPost {
 		methodNotAllowed(writer)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, api.store.ValidateDraft())
+	writeJSON(writer, http.StatusOK, handler.controller.ValidateDraft())
 }
 
-func (api *handler) handleApplyConfig(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleApplySettings(writer http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodPost {
 		methodNotAllowed(writer)
 		return
 	}
-
-	response, validation := api.store.ApplyDraft()
+	payload, validation, err := handler.controller.ApplyDraft(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
 	if validation != nil {
 		writeJSON(writer, http.StatusUnprocessableEntity, validation)
 		return
 	}
-
-	writeJSON(writer, http.StatusOK, response)
+	writeJSON(writer, http.StatusOK, payload)
 }
 
-func (api *handler) handleRoot(writer http.ResponseWriter, request *http.Request) {
+func (handler *Handler) handleUpdate(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	writeJSON(writer, http.StatusOK, handler.controller.UpdateStatus(request.Context()))
+}
+
+func (handler *Handler) handleShow(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+
+	scenes, err := handler.controller.Scenes(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	stream, err := handler.controller.Stream(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	recordings, err := handler.controller.Recordings(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	outputs, err := handler.controller.Outputs(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+
+	show := model.ShowState{
+		ActiveSceneID: scenes.ActiveSceneID,
+		StreamState:   stream.State,
+		RecordState:   recordings.State,
+		Scenes:        scenes.Items,
+	}
+	if len(outputs.Destinations) > 0 {
+		show.Destination = outputs.Destinations[0]
+	}
+
+	writeJSON(writer, http.StatusOK, show)
+}
+
+func (handler *Handler) handleOpenAPI(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+	writer.Header().Set("Content-Type", "application/yaml; charset=utf-8")
+	writer.WriteHeader(http.StatusOK)
+	_, _ = writer.Write(openapi.YAML())
+}
+
+func (handler *Handler) handleWebsocket(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodGet {
+		methodNotAllowed(writer)
+		return
+	}
+
+	snapshot, err := handler.controller.Snapshot(request.Context())
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+
+	events.ServeWebsocket(writer, request, handler.controller.EventHub(), model.EventEnvelope{
+		Type:      "snapshot.initial",
+		Timestamp: time.Now().UTC(),
+		Payload:   snapshot,
+	})
+}
+
+func (handler *Handler) handleRoot(writer http.ResponseWriter, request *http.Request) {
 	if strings.HasPrefix(request.URL.Path, "/api/") {
 		notFound(writer)
 		return
 	}
 
-	if api.uiDir == "" {
+	if handler.uiDir == "" {
 		writeJSON(writer, http.StatusOK, map[string]string{
-			"service": "bitriverd",
+			"service": "bitriver-control-api",
 			"status":  "ui assets not configured; run the Vite dev server for local UI work",
 		})
 		return
 	}
 
-	uiPath := filepath.Clean(api.uiDir)
+	uiPath := filepath.Clean(handler.uiDir)
 	if _, err := os.Stat(uiPath); err != nil {
 		writeJSON(writer, http.StatusOK, map[string]string{
-			"service": "bitriverd",
+			"service": "bitriver-control-api",
 			"status":  "configured UI directory is unavailable",
 		})
 		return
@@ -291,6 +497,16 @@ func (api *handler) handleRoot(writer http.ResponseWriter, request *http.Request
 	http.ServeFile(writer, request, filepath.Join(uiPath, "index.html"))
 }
 
+type statusRecorder struct {
+	http.ResponseWriter
+	status int
+}
+
+func (recorder *statusRecorder) WriteHeader(status int) {
+	recorder.status = status
+	recorder.ResponseWriter.WriteHeader(status)
+}
+
 func splitActionPath(path string, prefix string) (string, string, error) {
 	trimmed := strings.TrimPrefix(path, prefix)
 	parts := strings.Split(strings.Trim(trimmed, "/"), "/")
@@ -300,10 +516,26 @@ func splitActionPath(path string, prefix string) (string, string, error) {
 	return parts[0], parts[1], nil
 }
 
+func splitAudioActionPath(path string) (string, string, error) {
+	for _, prefix := range []string{"/api/v1/audio/", "/api/v1/audio/routes/"} {
+		if strings.HasPrefix(path, prefix) {
+			return splitActionPath(path, prefix)
+		}
+	}
+	return "", "", fmt.Errorf("invalid audio action path")
+}
+
 func decodeJSON(request *http.Request, target any) error {
-	decoder := json.NewDecoder(request.Body)
+	defer request.Body.Close()
+	decoder := json.NewDecoder(io.LimitReader(request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
-	return decoder.Decode(target)
+	if err := decoder.Decode(target); err != nil {
+		return err
+	}
+	if decoder.More() {
+		return errors.New("request body must contain a single JSON document")
+	}
+	return nil
 }
 
 func writeJSON(writer http.ResponseWriter, status int, payload any) {
@@ -314,10 +546,32 @@ func writeJSON(writer http.ResponseWriter, status int, payload any) {
 	_ = encoder.Encode(payload)
 }
 
+func writeError(writer http.ResponseWriter, err error) {
+	var apiErr *model.APIError
+	if errors.As(err, &apiErr) {
+		writeJSON(writer, apiErr.Status, apiErr)
+		return
+	}
+
+	writeJSON(writer, http.StatusInternalServerError, &model.APIError{
+		Status:  http.StatusInternalServerError,
+		Code:    "internal_error",
+		Message: err.Error(),
+	})
+}
+
 func methodNotAllowed(writer http.ResponseWriter) {
-	writeJSON(writer, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+	writeJSON(writer, http.StatusMethodNotAllowed, &model.APIError{
+		Status:  http.StatusMethodNotAllowed,
+		Code:    "method_not_allowed",
+		Message: "method not allowed for this endpoint",
+	})
 }
 
 func notFound(writer http.ResponseWriter) {
-	writeJSON(writer, http.StatusNotFound, map[string]string{"error": "not found"})
+	writeJSON(writer, http.StatusNotFound, &model.APIError{
+		Status:  http.StatusNotFound,
+		Code:    "not_found",
+		Message: "resource not found",
+	})
 }

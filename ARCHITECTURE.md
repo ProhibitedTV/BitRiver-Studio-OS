@@ -95,7 +95,7 @@ This boundary matters because the browser UI can restart independently without i
    - `systemd-resolved`
    - `avahi-daemon`
    - firewall rules
-4. `bitriver-bootstrap.service` runs once per boot to:
+4. `bitriver-firstboot.service` runs once per boot to:
    - validate or generate appliance identity
    - detect first-boot state
    - run config and schema migrations
@@ -107,9 +107,9 @@ This boundary matters because the browser UI can restart independently without i
    - Chromium starts in full-screen kiosk mode pointed at `http://127.0.0.1/`
 8. `mediamtx.service` starts with the rendered ingest configuration.
 9. `owncast.service` starts only when enabled in the active config.
-10. `bitriverd.service` starts and serves the SPA, API, and event stream.
-11. `bitriver-healthcheck.service` confirms that:
-   - `bitriverd` is serving locally
+10. `bitriver-control-api.service` starts and serves the SPA, API, and event stream.
+11. `bitriver-health-supervisor.service` begins its watchdog loop and confirms that:
+   - `bitriver-control-api` is serving locally
    - `obs-websocket` responds
    - MediaMTX API is healthy
    - storage is mounted and writable

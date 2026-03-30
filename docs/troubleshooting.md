@@ -27,11 +27,20 @@
 - Check duplicate scene IDs.
 - Ensure at least one scene exists.
 - Ensure recording path and destination mode are set.
+- Ensure `mediaRouter.localIngestPath` and `mediaRouter.localPreviewPath` are different.
+- Ensure RTMP destinations use `rtmp://` or `rtmps://` and SRT destinations use `srt://`.
 
 ### Stream or recording state looks stale in the UI
 
 - The scaffold currently uses polling, not the final event transport.
 - Refresh the page or wait for the next poll interval before assuming state drift.
+
+### MediaMTX applies fail
+
+- Check that `bitriver-control-api.service` can write `/etc/mediamtx` and `/etc/bitriver`.
+- Inspect `journalctl -u mediamtx.service` for config parse or startup failures.
+- Inspect `journalctl -u bitriver-control-api.service` for reload-to-restart fallback logs.
+- Confirm `ffmpeg` and `jq` are present in the appliance image if downstream restreams are enabled.
 
 ## Appliance Packaging
 
@@ -44,3 +53,9 @@
 
 - Review `deploy/systemd/` and `deploy/image/rootfs-overlay/` together.
 - Pay special attention to environment files, expected binary paths, and enabled targets.
+
+### The appliance boots headless and never starts the local screen
+
+- Run `bitriver-hw-report` and check `displayAttached`.
+- Confirm a physical HDMI display or dummy plug is present.
+- Inspect `bitriver-kiosk.service` and `obs.service`; both are skipped intentionally when no display is detected.

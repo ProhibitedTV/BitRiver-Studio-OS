@@ -1,7 +1,7 @@
 [Unit]
 Description=OBS production engine
-After=bitriver-kiosk.service
-Requires=bitriver-kiosk.service
+After=bitriver-kiosk.service bitriver-firstboot.service
+Requires=bitriver-kiosk.service bitriver-firstboot.service
 PartOf=bitriver.target
 
 [Service]
@@ -9,11 +9,15 @@ Type=simple
 User=studio
 Group=studio
 EnvironmentFile=-/etc/bitriver/bitriver.env
+ExecCondition=/usr/local/libexec/bitriver/display-attached.sh
+ExecStartPre=/usr/local/libexec/bitriver/wait-wayland.sh
 ExecStart=/usr/local/libexec/bitriver/start-obs.sh
 Restart=on-failure
 RestartSec=3
+StartLimitIntervalSec=120
+StartLimitBurst=4
 NoNewPrivileges=yes
-ReadWritePaths=/data/recordings
+ReadWritePaths=/data/recordings /run/bitriver
 
 [Install]
 WantedBy=bitriver.target

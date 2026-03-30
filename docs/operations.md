@@ -38,6 +38,23 @@ The image build script expects MediaMTX and Owncast release asset URLs at build 
 - factory reset clears config and secrets, with an explicit choice to preserve or wipe recordings
 - support bundles are the default artifact for field debugging
 
+## Media Router Apply Model
+
+- `bitriverd` renders `/etc/mediamtx/mediamtx.yml` and `/etc/bitriver/mediamtx-destinations.json`
+- config apply validates the render inputs before writing either file
+- service control tries `reload` first and falls back to `restart`
+- if service control fails, BitRiver restores the previous router files before surfacing the error
+
+## Hardware Report
+
+The appliance ships a basic capability report command:
+
+```bash
+bitriver-hw-report
+```
+
+It reports architecture, CPU model, memory, attached display state, local video nodes, audio capture devices, and simple MVP eligibility flags.
+
 ## Logging And Diagnostics
 
 Development and deployment should assume journald as the primary sink for:

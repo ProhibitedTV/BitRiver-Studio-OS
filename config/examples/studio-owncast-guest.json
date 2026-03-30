@@ -53,10 +53,25 @@
   },
   "recording": {
     "container": "mkv",
-    "path": "/data/recordings"
+    "path": "/data/recordings/program"
   },
   "owncast": {
     "enabled": true,
     "publicUrl": "http://bitriver.local:8081"
+  },
+  "mediaRouter": {
+    "localIngestPath": "program-live",
+    "localPreviewPath": "program-preview",
+    "recordingPath": "/data/recordings/program",
+    "publishDestinations": [
+      {
+        "id": "primary-rtmp",
+        "name": "Owncast",
+        "protocol": "rtmp",
+        "targetUrl": "rtmp://127.0.0.1:1935/live",
+        "enabled": true
+      }
+    ],
+    "webrtcPreviewEnabled": true
   }
 }

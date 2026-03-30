@@ -1,14 +1,20 @@
 logLevel: info
+api: yes
+apiAddress: 127.0.0.1:9997
 rtmp: yes
+rtmpAddress: :1935
 rtsp: yes
+rtspAddress: :8554
 srt: yes
+srtAddress: :8890
+webrtc: no
 
 paths:
+  program-live:
+    source: publisher
+    record: yes
+    recordPath: '/data/recordings/program/%path/%Y-%m-%d_%H-%M-%S-%f'
+  program-preview:
+    source: 'rtsp://127.0.0.1:8554/program-live'
   guest-1:
-    source: publisher
-  guest-2:
-    source: publisher
-  remote-cam-1:
-    source: publisher
-  backup-feed:
     source: publisher

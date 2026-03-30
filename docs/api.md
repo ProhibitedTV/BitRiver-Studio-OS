@@ -1,42 +1,61 @@
 # Control API
 
-The canonical machine-readable API contract lives at [packages/shared/openapi/bitriver-control-api.yaml](../packages/shared/openapi/bitriver-control-api.yaml).
+The canonical machine-readable contract is generated from the Go API package into [packages/shared/openapi/bitriver-control-api.yaml](../packages/shared/openapi/bitriver-control-api.yaml).
 
-## Contract Scope
+## Scope
 
-The control API is the single browser-facing interface for:
+The control API is the single browser-facing boundary for:
 
-- system health and appliance metadata
-- show state and operator actions
-- source and ingest status
-- audio mixer state
-- storage visibility
-- config draft, validation, and apply lifecycle
+- appliance system and health state
+- first-boot setup visibility
+- stream, recording, scene, and audio control actions
+- MediaMTX-backed source availability
+- MediaMTX router configuration, active paths, and session state
+- active and draft settings generations
+- update status and staged deployment visibility
 
-Direct access to `obs-websocket`, MediaMTX, Owncast, and future update channels stays behind the control API boundary.
+OBS, MediaMTX, Owncast, and systemd stay behind this local API boundary.
 
 ## Endpoint Groups
 
 | Group | Purpose |
 | --- | --- |
-| `/api/v1/system` | appliance identity, build version, health summary |
-| `/api/v1/show` | stream state, record state, active scene, operator controls |
-| `/api/v1/sources` | local devices and network ingest slots |
-| `/api/v1/audio` | exposed audio channels and mixer actions |
-| `/api/v1/storage` | recording path capacity and warnings |
-| `/api/v1/config/*` | active config, draft config, validation, apply |
+| `/api/v1/system` | appliance identity, runtime metrics, service status |
+| `/api/v1/health` | aggregated appliance health |
+| `/api/v1/setup/status` | first-boot, credentials, display mode, hardware report |
+| `/api/v1/stream` | stream state plus start/stop actions |
+| `/api/v1/outputs` | current destination status, including optional Owncast |
+| `/api/v1/media-router` | rendered MediaMTX state, active paths, and router sessions |
+| `/api/v1/recordings` | recording state, current file, recording path capacity |
+| `/api/v1/scenes` | configured scenes and active scene switching |
+| `/api/v1/sources` | local capture availability and network ingest readiness |
+| `/api/v1/audio/routes` | audio route state plus mute/unmute actions |
+| `/api/v1/settings/*` | active settings, draft, validation, apply |
+| `/api/v1/update` | deployment and staged update visibility |
+| `/api/v1/ws` | websocket event stream for live snapshots and mutations |
 
-## Authentication
+## Event Stream
 
-The scaffold keeps auth out of the local development loop so contributors can iterate quickly, but the production target remains the LAN-first session model defined in [ARCHITECTURE.md](../ARCHITECTURE.md):
+`/api/v1/ws` is the live state transport for the browser control surface.
 
-- first-boot claim flow
-- admin password
-- same-origin session cookie
-- CSRF protection on mutating requests
+- The server sends an initial full snapshot immediately after the websocket upgrade succeeds.
+- The controller publishes full-state events on a timer and after mutating actions.
+- The OBS adapter also publishes normalized `obs.*` events when its background session is connected.
+- UI consumers should treat OBS events as normalized application events, never as raw obs-websocket payloads.
 
-## Current Scaffold Behavior
+## Settings Model
 
-- The Go API currently exposes a coherent in-memory appliance model for fast UI and contract iteration.
-- Mutating control actions update that in-memory state immediately so the UI can exercise the intended operator flows.
-- The event stream transport described in the architecture is reserved but not wired in this first scaffold; the UI polls snapshot endpoints for now.
+Settings are file-backed and schema-versioned.
+
+- `active.json` and `draft.json` are persisted on disk
+- the stored document carries `schemaVersion`, `generation`, and `updatedAt`
+- the API returns settings as `{ schemaVersion, generation, updatedAt, config }`
+- legacy plain config files are accepted and normalized on first load
+- the normalized config now includes a `mediaRouter` block that renders the managed `mediamtx.yml`
+
+## Dev And CI Mode
+
+The API can run with mocked adapters so CI and local development do not require OBS or MediaMTX.
+
+- `-adapter-mode mock` is the default
+- `-adapter-mode appliance` switches to the real obs-websocket, MediaMTX, Owncast, and systemd adapters

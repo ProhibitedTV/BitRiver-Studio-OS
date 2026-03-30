@@ -20,7 +20,7 @@ Streamers and small production teams regularly outgrow a fragile "desktop OS plu
 flowchart TB
     Browser["LAN Browser"] --> UI["Control UI (apps/control-ui)"]
     UI --> API["bitriverd Control API (apps/control-api)"]
-    API --> Store["SQLite State + Config Generations"]
+    API --> Store["File-backed Settings + Runtime State"]
     API --> OBS["OBS + obs-websocket"]
     API --> MTX["MediaMTX"]
     API --> OC["Owncast (optional)"]
@@ -30,9 +30,10 @@ flowchart TB
 
     Publishers["RTMP / SRT Contributors"] --> MTX
     MTX --> OBS
-    OBS --> Dest["External RTMP Destination"]
-    OBS --> OC
-    OBS --> Recs["Program Recordings"]
+    OBS --> MTX
+    MTX --> Dest["RTMP / SRT Destinations"]
+    MTX --> OC
+    MTX --> Recs["Router Recordings"]
 
     Image["deploy/image"] --> API
     Image --> OBS
@@ -69,7 +70,7 @@ test/
 - Go 1.22+
 - Node.js 22+
 - npm 10+
-- PowerShell 7+
+- PowerShell
 - GNU Make
 
 ### Install Tooling
@@ -79,13 +80,15 @@ npm install
 go work sync
 ```
 
+On Linux runners or developer machines where the shell is exposed as `pwsh`, run Make targets as `POWERSHELL=pwsh make <target>`.
+
 ### Run the Control API
 
 ```bash
 make dev-api
 ```
 
-The API starts on `http://127.0.0.1:8080` with an in-memory appliance model that mirrors the MVP control surface.
+The API starts on `http://127.0.0.1:8080` with file-backed settings generations and mocked runtime adapters by default, so the full REST and websocket surface works without a local OBS or MediaMTX instance.
 
 ### Run the Control UI
 
@@ -107,6 +110,10 @@ make smoke
 
 - [PRODUCT.md](PRODUCT.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
+- [BOOTFLOW.md](BOOTFLOW.md)
+- [HEALTHCHECKS.md](HEALTHCHECKS.md)
+- [MEDIAPLANE.md](MEDIAPLANE.md)
+- [OBS_SETUP.md](OBS_SETUP.md)
 - [docs/api.md](docs/api.md)
 - [docs/operations.md](docs/operations.md)
 - [docs/troubleshooting.md](docs/troubleshooting.md)
@@ -123,10 +130,10 @@ The UI and image build are scaffolded in this repo. The screenshot slots below a
 
 ## Implementation Priorities
 
-1. Turn the Go control plane into the authoritative local API for config, health, and operations.
-2. Replace the scaffolded UI polling loop with the live event transport defined in the architecture.
+1. Harden downstream delivery telemetry so destination health reflects remote publish success, not just local router readiness.
+2. Move the UI from polling-first behavior to the websocket snapshot stream.
 3. Wire appliance packaging in `deploy/image` to produce a bootable immutable image with the curated runtime stack.
-4. Add adapters for OBS, MediaMTX, PipeWire, and Owncast behind the control API service boundaries already defined here.
+4. Add PipeWire graph introspection and richer update orchestration behind the existing API boundaries.
 
 ## License
 

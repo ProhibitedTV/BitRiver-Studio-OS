@@ -20,7 +20,7 @@ The image build does not fetch random artifacts at appliance boot time. It expec
 ## Example
 
 ```bash
-pwsh -File deploy/image/build-image.ps1 `
+powershell -ExecutionPolicy Bypass -File deploy/image/build-image.ps1 `
   -ImageTag ghcr.io/bitriver/studio-os:dev `
   -ContainerRuntime podman
 ```

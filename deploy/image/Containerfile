@@ -38,15 +38,20 @@ RUN test -n "${MEDIAMTX_TARBALL_URL}" \
   && test -n "${OWNCAST_TARBALL_URL}"
 
 RUN dnf -y install \
+    alsa-utils \
     avahi \
     chromium \
     curl \
+    ffmpeg \
     jq \
     obs-studio \
+    openssl \
+    pciutils \
     pipewire \
     systemd-networkd \
     sway \
     tar \
+    v4l-utils \
     wireplumber \
     xorg-x11-server-Xwayland \
   && dnf clean all
@@ -64,10 +69,10 @@ RUN mkdir -p /opt/owncast \
 COPY --from=api-build /out/bitriverd /usr/local/bin/bitriverd
 COPY --from=ui-build /src/apps/control-ui/dist /usr/local/share/bitriver/control-ui
 
-COPY deploy/systemd /usr/lib/systemd/system
+COPY deploy/systemd/ /usr/lib/systemd/system/
 COPY deploy/image/rootfs-overlay/ /
 
-RUN chmod +x /usr/local/bin/bitriverd \
+RUN chmod +x /usr/local/bin/bitriverd /usr/local/bin/bitriver-hw-report \
   && chmod +x /usr/local/libexec/bitriver/*.sh \
   && systemctl enable bitriver.target
 

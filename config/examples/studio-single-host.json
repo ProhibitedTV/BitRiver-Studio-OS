@@ -57,10 +57,25 @@
   },
   "recording": {
     "container": "mkv",
-    "path": "/data/recordings"
+    "path": "/data/recordings/program"
   },
   "owncast": {
     "enabled": false,
     "publicUrl": "http://bitriver.local:8081"
+  },
+  "mediaRouter": {
+    "localIngestPath": "program-live",
+    "localPreviewPath": "program-preview",
+    "recordingPath": "/data/recordings/program",
+    "publishDestinations": [
+      {
+        "id": "primary-rtmp",
+        "name": "Twitch",
+        "protocol": "rtmp",
+        "targetUrl": "rtmp://live.twitch.tv/app",
+        "enabled": true
+      }
+    ],
+    "webrtcPreviewEnabled": false
   }
 }

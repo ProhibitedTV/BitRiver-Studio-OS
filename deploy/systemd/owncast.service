@@ -1,7 +1,7 @@
 [Unit]
 Description=Owncast downstream destination
-After=network-online.target bitriver-bootstrap.service
-Requires=bitriver-bootstrap.service
+After=network-online.target bitriver-firstboot.service
+Requires=bitriver-firstboot.service
 PartOf=bitriver.target
 ConditionPathExists=/opt/owncast/owncast
 
@@ -9,9 +9,13 @@ ConditionPathExists=/opt/owncast/owncast
 Type=simple
 User=bitriver
 Group=bitriver
+EnvironmentFile=-/etc/bitriver/bitriver.env
+ExecCondition=/usr/local/libexec/bitriver/owncast-enabled.sh
 ExecStart=/usr/local/libexec/bitriver/start-owncast.sh
 Restart=on-failure
 RestartSec=2
+StartLimitIntervalSec=120
+StartLimitBurst=6
 NoNewPrivileges=yes
 ReadWritePaths=/var/lib/owncast /data/recordings
 
