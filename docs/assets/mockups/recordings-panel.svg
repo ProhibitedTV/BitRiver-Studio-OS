@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#0B0F16"/>
+  <rect x="40" y="40" width="1200" height="640" rx="28" fill="#111824" stroke="#273246"/>
+  <text x="80" y="110" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">Recordings Panel</text>
+  <text x="80" y="150" fill="#95A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="22">README placeholder: replace with a real recordings management capture.</text>
+  <rect x="80" y="210" width="1120" height="140" rx="18" fill="#171F2D"/>
+  <rect x="80" y="380" width="1120" height="90" rx="16" fill="#171F2D"/>
+  <rect x="80" y="490" width="1120" height="90" rx="16" fill="#171F2D"/>
+  <text x="112" y="275" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="28">/data/recordings/program</text>
+  <text x="112" y="432" fill="#95A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="24">Recent files placeholder</text>
+</svg>

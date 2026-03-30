@@ -1,69 +1,73 @@
 # BitRiver Studio OS
 
-BitRiver Studio OS is a bootable, self-hosted production appliance for streamers. It turns a small x86_64 PC into a dedicated live broadcast box that boots directly into a browser-controlled control plane, routes contributor feeds with MediaMTX, drives production through OBS, and can optionally stream into a bundled Owncast instance.
+BitRiver Studio OS is a bootable, self-hosted broadcast appliance that turns a small x86_64 PC into a dedicated live production box controlled from a browser on the LAN.
 
-This repository is the monorepo for the appliance image, control plane, browser UI, typed API contracts, deployment assets, and operational docs.
+General-purpose streaming rigs are powerful, but they are also the source of most avoidable show-day anxiety. Desktop OS updates land at the wrong time. USB devices reorder themselves. Audio routing drifts. Remote control turns into a remote desktop session. What starts as a flexible creator setup becomes an unreliable pile of software held together by muscle memory.
 
-## Why It Exists
+BitRiver Studio OS exists to package the useful parts of that stack into something narrower and safer: immutable image updates, direct boot into the product, OBS for real production control, MediaMTX for ingest and routing, and a browser-first control plane instead of a desktop workflow.
 
-Streamers and small production teams regularly outgrow a fragile "desktop OS plus OBS plus capture tools plus remote desktop" stack long before they can justify a rack of broadcast gear. BitRiver Studio OS focuses on the middle ground:
+## Key Capabilities
 
-- appliance UX instead of desktop UX
-- browser-native control on the LAN
-- safe updates and rollback
-- predictable ingest, switching, recording, and recovery
-- no cloud dependency for core operation
+- Boots like an appliance, not a workstation.
+- Serves a LAN control plane for scene switching, streaming, recording, and health visibility.
+- Uses OBS plus `obs-websocket` for the program engine instead of inventing a custom switcher.
+- Uses MediaMTX for contributor ingest, local preview routing, downstream fanout, and router-level recording.
+- Supports fixed RTMP and SRT ingest slots that are easier to operate than ad hoc URLs.
+- Keeps settings versioned and file-backed so config apply, rollback, and recovery have a clear model.
+- Runs with deterministic mock adapters for local development and repo demos, so contributors can see the product direction without a capture rig.
 
-## Architecture
+## Why BitRiver Exists
+
+Independent creators deserve something between a fragile gaming PC and enterprise broadcast gear. BitRiver is aimed at the point where the workflow is serious enough to need predictable operations, but still small enough that the operator wants one box, one browser UI, and one system they can understand.
+
+The goal is not to become a bloated media suite. The goal is to become the open broadcast appliance for independent creators.
+
+## How It Works
 
 ```mermaid
-flowchart TB
-    Browser["LAN Browser"] --> UI["Control UI (apps/control-ui)"]
-    UI --> API["bitriverd Control API (apps/control-api)"]
-    API --> Store["File-backed Settings + Runtime State"]
-    API --> OBS["OBS + obs-websocket"]
+flowchart LR
+    Browser["LAN Browser"] --> UI["Control UI"]
+    UI --> API["bitriverd Control API"]
+
+    API --> Settings["Versioned Settings"]
+    API --> Health["Health + Update State"]
+    API --> OBS["OBS via obs-websocket"]
     API --> MTX["MediaMTX"]
-    API --> OC["Owncast (optional)"]
+    API --> Owncast["Owncast (optional)"]
 
-    OBS --> PW["PipeWire + WirePlumber"]
-    PW --> Devs["UVC/UAC Devices"]
+    Cameras["UVC Cameras / Capture Cards"] --> OBS
+    Audio["PipeWire / Local Audio Devices"] --> OBS
+    Guests["RTMP / SRT Contributors"] --> MTX
 
-    Publishers["RTMP / SRT Contributors"] --> MTX
-    MTX --> OBS
     OBS --> MTX
-    MTX --> Dest["RTMP / SRT Destinations"]
-    MTX --> OC
-    MTX --> Recs["Router Recordings"]
-
-    Image["deploy/image"] --> API
-    Image --> OBS
-    Image --> MTX
-    Image --> PW
+    MTX --> Outputs["RTMP / SRT Outputs"]
+    MTX --> Preview["Local Preview Paths"]
+    MTX --> Records["Router Recordings"]
 ```
 
-## Repository Layout
+The control plane never becomes the media plane. `bitriverd` manages configuration, health, events, and orchestration. OBS owns the live program. MediaMTX owns ingest, preview, and downstream routing. The browser talks to one local API.
 
-```text
-apps/
-  control-api/     Go control plane and local API server
-  control-ui/      Vite + React browser control surface
-packages/
-  shared/          OpenAPI contract and shared TypeScript types
-deploy/
-  image/           bootc image build assets and rootfs overlay
-  systemd/         appliance systemd unit files
-config/
-  examples/        realistic sample appliance configurations
-docs/
-  *.md             product, architecture, API, operations, troubleshooting
-scripts/
-  *.ps1            local development, lint, build, package, smoke automation
-test/
-  integration/     API lifecycle checks
-  smoke/           fast endpoint and health checks
-```
+## Current MVP Status
 
-## Quickstart
+What is real in this repo today:
+
+- Go control API with REST endpoints, WebSocket state streaming, structured logs, and mocked adapters for CI and local work.
+- Production-grade OBS adapter built on `obs-websocket`.
+- Managed MediaMTX integration with generated `mediamtx.yml`, safe reload-to-restart fallback, path and session inspection, and router health in the API.
+- Immutable-image scaffold, appliance `systemd` units, first-boot state, and kiosk boot path.
+- Typed shared contracts and an initial React control surface scaffold.
+
+What is still in progress:
+
+- A fully polished websocket-first control UI.
+- PipeWire device discovery beyond the current groundwork.
+- Update orchestration beyond the current service scaffold.
+- Owncast destination flows as a first-class output path.
+- Hardware certification and end-to-end appliance validation on target mini PCs.
+
+## Try The Demo Locally
+
+The repo already supports a local mock-driven demo path. The API runs in mock mode by default, which means you can exercise scene switching, stream state, recording state, source availability, and MediaMTX router state without OBS, capture cards, or a full appliance image.
 
 ### Prerequisites
 
@@ -73,40 +77,75 @@ test/
 - PowerShell
 - GNU Make
 
-### Install Tooling
+### Start The Demo
 
 ```bash
 npm install
 go work sync
-```
-
-On Linux runners or developer machines where the shell is exposed as `pwsh`, run Make targets as `POWERSHELL=pwsh make <target>`.
-
-### Run the Control API
-
-```bash
 make dev-api
-```
-
-The API starts on `http://127.0.0.1:8080` with file-backed settings generations and mocked runtime adapters by default, so the full REST and websocket surface works without a local OBS or MediaMTX instance.
-
-### Run the Control UI
-
-```bash
 make dev-ui
 ```
 
-The UI starts on `http://127.0.0.1:3000` and proxies `/api` requests to the local control API.
+Open `http://127.0.0.1:3000`.
 
-### Repo Checks
+Useful local commands:
 
-```bash
-make lint
-make build
-make smoke
-```
+- `make smoke` runs the API smoke and integration checks against the local mock stack.
+- `make openapi` regenerates the shared API contract from the Go source.
+- `make build` builds the API and UI artifacts that the appliance image consumes.
 
-## Canonical Product Docs
+## Screenshots And Motion
+
+These are the exact placeholder assets currently committed for the README and future demo captures:
+
+| View | File |
+| --- | --- |
+| Dashboard overview | `docs/assets/mockups/dashboard-overview.svg` |
+| Scene switching | `docs/assets/mockups/scenes-switcher.svg` |
+| Audio panel | `docs/assets/mockups/audio-panel.svg` |
+| Output destinations | `docs/assets/mockups/output-destinations.svg` |
+| Recordings panel | `docs/assets/mockups/recordings-panel.svg` |
+| Settings panel | `docs/assets/mockups/settings-panel.svg` |
+| Demo motion placeholder | `docs/assets/mockups/bitriver-demo-loop.svg` |
+
+| Asset | Placeholder |
+| --- | --- |
+| Dashboard | ![Dashboard placeholder](docs/assets/mockups/dashboard-overview.svg) |
+| Scenes | ![Scenes placeholder](docs/assets/mockups/scenes-switcher.svg) |
+| Outputs | ![Outputs placeholder](docs/assets/mockups/output-destinations.svg) |
+| Demo Loop | ![Demo loop placeholder](docs/assets/mockups/bitriver-demo-loop.svg) |
+
+## Why This Is Different
+
+- It is opinionated on purpose. BitRiver is not trying to be a Linux distribution for creators.
+- It treats operational safety as a product feature, not a future polish pass.
+- It keeps the browser UI as the primary operator surface instead of assuming remote desktop forever.
+- It is built from proven media components, but the product model is appliance-first.
+- It is open-source without pretending that "more knobs" automatically means a better production system.
+
+## Roadmap
+
+### Near Term
+
+- Finish the first serious websocket-first control UI.
+- Add deterministic demo mode flows that make the repo feel alive on first clone.
+- Tighten hardware visibility, audio device modeling, and source diagnostics.
+- Extend output validation so destination status reflects remote publish success, not just local router readiness.
+
+### Mid Term
+
+- Owncast as a clean optional destination mode.
+- Safer image-update UX with staged apply, verification, and rollback visibility.
+- Better browser-side preview and confidence monitoring.
+- Certified mini PC and capture-device matrix.
+
+### Long Term
+
+- Multi-destination publishing.
+- Stronger remote guest workflows.
+- Better automation and show presets without turning BitRiver into a general-purpose media platform.
+
+## Documentation
 
 - [PRODUCT.md](PRODUCT.md)
 - [ARCHITECTURE.md](ARCHITECTURE.md)
@@ -117,23 +156,6 @@ make smoke
 - [docs/api.md](docs/api.md)
 - [docs/operations.md](docs/operations.md)
 - [docs/troubleshooting.md](docs/troubleshooting.md)
-
-## Screenshots
-
-The UI and image build are scaffolded in this repo. The screenshot slots below are committed as placeholders so the README structure is stable from the start.
-
-| View | Placeholder |
-| --- | --- |
-| Dashboard overview | ![Dashboard placeholder](docs/screenshots/control-dashboard-placeholder.svg) |
-| Ingest management | ![Ingest placeholder](docs/screenshots/ingest-management-placeholder.svg) |
-| Update workflow | ![Update placeholder](docs/screenshots/update-workflow-placeholder.svg) |
-
-## Implementation Priorities
-
-1. Harden downstream delivery telemetry so destination health reflects remote publish success, not just local router readiness.
-2. Move the UI from polling-first behavior to the websocket snapshot stream.
-3. Wire appliance packaging in `deploy/image` to produce a bootable immutable image with the curated runtime stack.
-4. Add PipeWire graph introspection and richer update orchestration behind the existing API boundaries.
 
 ## License
 

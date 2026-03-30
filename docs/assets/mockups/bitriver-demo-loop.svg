@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#0B0F16"/>
+  <rect x="40" y="40" width="1200" height="640" rx="28" fill="#111824" stroke="#273246"/>
+  <text x="80" y="110" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">Demo Loop Placeholder</text>
+  <text x="80" y="150" fill="#95A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="22">Expected future asset: docs/assets/mockups/bitriver-demo-loop.gif</text>
+  <rect x="80" y="210" width="1120" height="360" rx="24" fill="#171F2D"/>
+  <polygon points="585,320 585,460 715,390" fill="#F3F5F7"/>
+  <text x="80" y="630" fill="#95A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="20">Replace this placeholder with a short control-surface walkthrough capture.</text>
+</svg>

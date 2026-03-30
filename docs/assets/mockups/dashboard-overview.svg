@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#0B0F16"/>
+  <rect x="40" y="40" width="1200" height="640" rx="28" fill="#111824" stroke="#273246"/>
+  <text x="80" y="110" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">Dashboard Overview</text>
+  <text x="80" y="150" fill="#95A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="22">README placeholder: replace with a real dashboard capture.</text>
+  <rect x="80" y="190" width="340" height="180" rx="18" fill="#171F2D"/>
+  <rect x="450" y="190" width="340" height="180" rx="18" fill="#171F2D"/>
+  <rect x="820" y="190" width="380" height="180" rx="18" fill="#171F2D"/>
+  <rect x="80" y="400" width="560" height="220" rx="18" fill="#171F2D"/>
+  <rect x="670" y="400" width="530" height="220" rx="18" fill="#171F2D"/>
+  <text x="108" y="245" fill="#6EE7B7" font-family="Segoe UI, Arial, sans-serif" font-size="22">Stream Live</text>
+  <text x="478" y="245" fill="#F8D66D" font-family="Segoe UI, Arial, sans-serif" font-size="22">Recording Armed</text>
+  <text x="848" y="245" fill="#7DD3FC" font-family="Segoe UI, Arial, sans-serif" font-size="22">Output Health</text>
+</svg>

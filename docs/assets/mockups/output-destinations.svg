@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" fill="none">
+  <rect width="1280" height="720" fill="#0B0F16"/>
+  <rect x="40" y="40" width="1200" height="640" rx="28" fill="#111824" stroke="#273246"/>
+  <text x="80" y="110" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700">Output Destinations</text>
+  <text x="80" y="150" fill="#95A3B8" font-family="Segoe UI, Arial, sans-serif" font-size="22">README placeholder: replace with a real output-health capture.</text>
+  <rect x="80" y="210" width="350" height="360" rx="20" fill="#171F2D"/>
+  <rect x="465" y="210" width="350" height="360" rx="20" fill="#171F2D"/>
+  <rect x="850" y="210" width="350" height="360" rx="20" fill="#171F2D"/>
+  <text x="108" y="280" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="30">Twitch</text>
+  <text x="493" y="280" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="30">YouTube</text>
+  <text x="878" y="280" fill="#F3F5F7" font-family="Segoe UI, Arial, sans-serif" font-size="30">Owncast</text>
+  <text x="108" y="322" fill="#6EE7B7" font-family="Segoe UI, Arial, sans-serif" font-size="20">Healthy</text>
+  <text x="493" y="322" fill="#F8D66D" font-family="Segoe UI, Arial, sans-serif" font-size="20">Validation Warning</text>
+  <text x="878" y="322" fill="#7DD3FC" font-family="Segoe UI, Arial, sans-serif" font-size="20">Bundled Mode</text>
+</svg>
