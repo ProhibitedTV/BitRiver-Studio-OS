@@ -27,6 +27,7 @@ import (
 func main() {
 	httpAddr := flag.String("http-addr", "127.0.0.1:8080", "HTTP listen address")
 	uiDir := flag.String("ui-dir", "", "directory containing built control UI assets")
+	assetLibraryDir := flag.String("asset-library-dir", "", "local OBS-Scene-Assets assets directory (optional)")
 	setupStatusPath := flag.String("setup-status-path", "", "path to first-boot setup status JSON")
 	initialConfigPath := flag.String("initial-config-path", "", "path to active settings JSON")
 	draftConfigPath := flag.String("draft-config-path", "", "path to draft settings JSON")
@@ -121,7 +122,7 @@ func main() {
 		PollInterval: *pollInterval,
 	})
 
-	handler := httpapi.NewHandler(logger, controller, *uiDir)
+	handler := httpapi.NewHandler(logger, controller, *uiDir, *assetLibraryDir)
 	server := &http.Server{
 		Addr:              *httpAddr,
 		Handler:           handler,
