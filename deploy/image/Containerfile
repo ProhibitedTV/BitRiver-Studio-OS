@@ -1,5 +1,7 @@
-ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc:44
-FROM golang:1.22-bookworm AS api-build
+ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc@sha256:5f2947d685c24029b2eb4e1f0634dc4ac06116a88d9dd93da4b5571b2f0e28e1
+ARG GO_BUILDER_IMAGE=docker.io/library/golang:1.22-bookworm@sha256:3d699e4d15d0f8f13c9195c0632a16702b8cbdece2955af1c23b37ae5d55a253
+ARG NODE_BUILDER_IMAGE=docker.io/library/node:22-bookworm@sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb
+FROM ${GO_BUILDER_IMAGE} AS api-build
 
 WORKDIR /src
 
@@ -24,7 +26,7 @@ RUN cd apps/control-api \
     -o /out/bitriver-operator-key \
     ./cmd/bitriver-operator-key
 
-FROM node:22-bookworm AS ui-build
+FROM ${NODE_BUILDER_IMAGE} AS ui-build
 
 WORKDIR /src
 
@@ -40,7 +42,7 @@ COPY packages/shared packages/shared
 RUN npm run build --workspace @bitriver/shared \
   && npm run build --workspace @bitriver/control-ui
 
-# The build wrapper resolves the Fedora 44 tag to an immutable digest.
+# All three image stages are pinned to immutable manifest digests.
 FROM ${FEDORA_BOOTC_IMAGE}
 
 ARG BITRIVER_SOURCE_REV=unknown

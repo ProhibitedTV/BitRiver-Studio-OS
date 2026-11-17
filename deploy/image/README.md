@@ -28,12 +28,17 @@ hashes and archive member names:
 bash test/appliance/check-release-assets.sh
 ```
 
-The Fedora `44` tag itself is mutable. The build wrapper pulls it and resolves
-a **specific registry manifest digest** before invoking the Containerfile.
-The resolved digest is recorded in the provenance file. To reproduce a build,
-pass the previously recorded immutable reference via `-BaseImageDigest`.
-A future task must additionally pin the base digest in the repository and
-lock npm builder dependencies to eliminate remaining supply-chain drift.
+The checked-in release lock now pins **all three OCI image stages** by manifest
+digest: Fedora 44, Go 1.22/Bookworm and Node 22/Bookworm. These exact
+references were captured from the successful Fedora bootc image workflow run
+44166997083. The build wrapper rejects any unreviewed base-image override and
+records the immutable references in its provenance file.
+
+The digests prevent a tag being silently redirected to different image bytes,
+but the build is **not bit-for-bit reproducible**: Fedora RPM repositories,
+npm dependency resolution (no committed lockfile yet), and the image-builder
+CLI used for the CI-only QCOW2 still need independent pinning and verification.
+Upgrade these images deliberately by editing the lock and its validation tests.
 
 ## Build Example (on Linux)
 

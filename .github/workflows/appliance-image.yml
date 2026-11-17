@@ -45,6 +45,9 @@ jobs:
             .releaseReady == false and
             (.baseRef | test("^quay\\.io/fedora/fedora-bootc@sha256:[a-f0-9]{64}$")) and
             (.localImageId | length > 10) and
+            .goBuilderRef == "docker.io/library/golang:1.22-bookworm@sha256:3d699e4d15d0f8f13c9195c0632a16702b8cbdece2955af1c23b37ae5d55a253" and
+            .nodeBuilderRef == "docker.io/library/node:22-bookworm@sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb" and
+            .baseRef == "quay.io/fedora/fedora-bootc@sha256:5f2947d685c24029b2eb4e1f0634dc4ac06116a88d9dd93da4b5571b2f0e28e1" and
             .mediamtxVersion == "v1.21.4" and
             .owncastVersion == "v0.3.0"
           ' artifacts/image-build-provenance.json

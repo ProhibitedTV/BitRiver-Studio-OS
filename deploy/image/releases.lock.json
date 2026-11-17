@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "targetPlatform": "linux/amd64",
   "fedoraBootc": "quay.io/fedora/fedora-bootc:44",
   "mediamtx": {
@@ -17,5 +17,10 @@
     "sha256": "8753c12ce58b7d1120c815e49d19f8fd3cc1a53dc8e0abb581e212694ca670d8",
     "license": "MIT",
     "upstream": "https://github.com/owncast/owncast"
+  },
+  "builderImages": {
+    "fedoraBootc": "quay.io/fedora/fedora-bootc@sha256:5f2947d685c24029b2eb4e1f0634dc4ac06116a88d9dd93da4b5571b2f0e28e1",
+    "go": "docker.io/library/golang:1.22-bookworm@sha256:3d699e4d15d0f8f13c9195c0632a16702b8cbdece2955af1c23b37ae5d55a253",
+    "node": "docker.io/library/node:22-bookworm@sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb"
   }
 }
