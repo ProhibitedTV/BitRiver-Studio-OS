@@ -22,7 +22,7 @@ for entry in "FEDORA_BOOTC_IMAGE fedoraBootc" "GO_BUILDER_IMAGE go" "NODE_BUILDE
     echo "Unpinned or mismatched ${arg} in Containerfile" >&2
     exit 1
   }
-  grep -Fxq "FROM ${${arg}}" "${file}" || {
+  grep -Fq "FROM \${${arg}}" "${file}" || {
     echo "Missing FROM reference ${arg} in Containerfile" >&2
     exit 1
   }
