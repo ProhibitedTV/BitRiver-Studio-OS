@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"syscall"
 )
 
 func writeFixture(t *testing.T) (string, string) {
@@ -47,11 +48,10 @@ func TestRotateRetainsCredentialsAndFileSecurity(t *testing.T) {
 	if info.Mode().Perm() != 0o600 {
 		t.Fatalf("rotated credential file permissions: %#o", info.Mode().Perm())
 	}
-	if info.Sys() == nil || originalInfo.Sys() == nil {
-		t.Fatal("missing owner metadata")
-	}
-	if stat, ok := info.Sys().(interface{ Dev() uint64 }); ok && stat == nil {
-		t.Fatal("unexpected missing metadata")
+	oldOwner, oldOK := originalInfo.Sys().(*syscall.Stat_t)
+	newOwner, newOK := info.Sys().(*syscall.Stat_t)
+	if !oldOK || !newOK || oldOwner.Uid != newOwner.Uid || oldOwner.Gid != newOwner.Gid {
+		t.Fatal("rotation changed the credentials owner or group")
 	}
 
 	content, err := os.ReadFile(path)
