@@ -97,7 +97,7 @@ first_boot_id="$(wait_for_guest)"
 echo "VM first boot ID: ${first_boot_id}"
 wait_for_appliance "first boot"
 
-guest 'sudo -n /bin/bash -se' <<'GUEST'
+if ! guest 'sudo -n /bin/bash -se' <<'GUEST'
 set -euo pipefail
 systemctl is-active --quiet bitriver.target
 systemctl is-active --quiet bitriver-firstboot.service
@@ -118,6 +118,10 @@ test -d /data/recordings
 test "$(stat -c '%U' /data/recordings)" = studio
 echo "Firstboot, systemd target, credentials, health API and persistent /data passed."
 GUEST
+then
+  diagnostics
+  exit 1
+fi
 
 baseline="$(guest 'sudo -n sha256sum /var/lib/bitriver/bootstrap/device-identity.json /var/lib/bitriver/bootstrap/admin-credentials.json')"
 printf '%s\n' "${baseline}" > "${output_dir}/diagnostics/before-reboot-sha256.txt"
@@ -128,13 +132,17 @@ second_boot_id="$(wait_for_guest "${first_boot_id}")"
 echo "VM reboot ID: ${second_boot_id}"
 wait_for_appliance "second boot"
 
-guest 'sudo -n /bin/bash -se' <<'GUEST'
+if ! guest 'sudo -n /bin/bash -se' <<'GUEST'
 set -euo pipefail
 systemctl is-active --quiet bitriver.target
 systemctl is-active --quiet bitriver-control-api.service
 curl --fail --silent --show-error http://127.0.0.1:8080/healthz >/dev/null
 test -d /data/recordings
 GUEST
+then
+  diagnostics
+  exit 1
+fi
 after="$(guest 'sudo -n sha256sum /var/lib/bitriver/bootstrap/device-identity.json /var/lib/bitriver/bootstrap/admin-credentials.json')"
 printf '%s\n' "${after}" > "${output_dir}/diagnostics/after-reboot-sha256.txt"
 if [[ "${baseline}" != "${after}" ]]; then
