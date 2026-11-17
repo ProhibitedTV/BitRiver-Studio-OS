@@ -11,8 +11,15 @@ and reproducible images). The hardware probe work is one concrete step.
 - [x] Exercise hardware-report JSON on CI and fixture-based discovery tests.
 - [x] Syntax-check all appliance shell scripts in CI.
 - [ ] Build the **complete bootc image** in CI, including upstream media archives.
-- [ ] Pin base OS image and upstream MediaMTX/Owncast archives by version and
-      digest; verify checksums and document license obligations.
+      An image-build workflow now attempts this on relevant PRs; mark complete
+      only when it succeeds on the chosen base.
+- [x] Pin verified MediaMTX/Owncast archive releases by SHA256 and validate
+      bytes/format in CI (MediaMTX tar.gz; Owncast ZIP).
+- [ ] Pin the Fedora base **digest in the repository**, not just the
+      release line; the build wrapper resolves and records an immutable digest.
+- [ ] Commit npm dependency locks and account for all builder image digests.
+- [ ] Publish a full license inventory/SBOM; Fedora and bundled dependencies
+      have licenses beyond the two upstream MIT application licenses.
 - [ ] Create an installable UEFI disk image, document flash procedure, and
       verify secure update and rollback behavior.
 - [ ] Add signed release artifacts, reproducible release notes and checksums.
