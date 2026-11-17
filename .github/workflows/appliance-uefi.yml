@@ -39,6 +39,23 @@ jobs:
             -ImageTag bitriver/studio-os:ci `
             -MetadataPath artifacts/image-build-provenance.json
 
+      - name: Prepare non-release SBOM output directory
+        run: mkdir -p artifacts/vm/sbom
+
+      - name: Inventory complete bootc OCI image using pinned Syft
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3 pinned commit
+        with:
+          image: bitriver/studio-os:ci
+          syft-version: v1.57.2
+          format: spdx-json
+          output-file: artifacts/vm/sbom/appliance-image.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          dependency-snapshot: false
+
+      - name: Validate and checksum image SPDX inventory
+        run: bash test/appliance/validate-oci-sbom.sh
+
       - name: Generate disposable SSH identity for UEFI VM
         run: |
           mkdir -p artifacts/vm
@@ -59,6 +76,7 @@ jobs:
           path: |
             artifacts/image-build-provenance.json
             artifacts/vm/qcow2.sha256
+            artifacts/vm/sbom/
             artifacts/vm/diagnostics/
           if-no-files-found: ignore
           retention-days: 14

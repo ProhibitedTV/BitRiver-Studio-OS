@@ -36,8 +36,8 @@ records the immutable references in its provenance file.
 
 The digests prevent a tag being silently redirected to different image bytes,
 but the build is **not bit-for-bit reproducible**: Fedora RPM repositories,
-the CI-only image-builder CLI and Fedora RPM repositories still need
-independent pinning and verification. The UI now uses a committed npm v10
+Fedora RPM package repositories remain mutable and must be
+independently pinned or snapshotted. The UI now uses a committed npm v10
 lockfile with SHA-512 registry integrity hashes and clean `npm ci` installs.
 Upgrade these images deliberately by editing the lock and its validation tests.
 
@@ -99,8 +99,8 @@ The VM-only image contains an **ephemeral authorized SSH public key** and a
 temporary passwordless-sudo test account for CI inspection. This customization
 is injected into the QCOW2 at conversion time and **does not exist in the
 shipping OCI image**. **Do not redistribute the CI QCOW2**: it is deliberately
-not uploaded as a release artifact. Only a disk SHA-256 and test diagnostics
-are retained for 14 days.
+not uploaded as a release artifact. Only a disk SHA-256, VM diagnostics and a separately generated Syft
+OCI-image SPDX inventory are retained for 14 days.
 
 The conversion is performed with:
 
@@ -124,6 +124,30 @@ remote login is possible.
 USB capture devices, kiosk/Wayland display, long-duration streaming, secure
 updates or rollback. Neither a CI QCOW2 nor an OCI container is a signed,
 installable **consumer release**.
+
+## UEFI builder provenance and SPDX evidence
+
+The QCOW2 conversion tool is pinned to an immutable
+`ghcr.io/osbuild/image-builder-cli@sha256:...` OCI manifest digest in
+`releases.lock.json` and checked by `test/appliance/check-image-lock.sh`.
+It no longer silently follows the moving `:latest` image.
+
+The upstream CLI's `--with-sbom` flag produced **no SPDX files** on
+the tested bootc-based QCOW2 path despite successfully generating the disk.
+UEFI CI therefore scans the **fully assembled bootc OCI image** with
+`anchore/sbom-action` pinned to commit `66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c`
+(version 0.24.3) and Syft `v1.57.2`.
+
+A dedicated shell check rejects missing/empty SPDX 2.3 package inventories,
+records basic declared-license coverage, and creates SHA-256 checksums.
+Only the SBOM, summary and checksum are retained as non-release CI evidence.
+No CI disk, private SSH key, VM-only sudoers file or blueprint is uploaded.
+
+An OCI scanner's component inventory is useful evidence, **not a complete
+redistribution compliance verdict**. Sources, licenses and notices for
+MediaMTX, Owncast, Go/npm dependencies, Fedora packages and embedded assets
+still require review. A comprehensive license inventory remains an official
+release blocker.
 
 ## Licenses
 

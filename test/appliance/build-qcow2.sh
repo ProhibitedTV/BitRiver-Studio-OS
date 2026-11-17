@@ -37,18 +37,29 @@ sudo podman load -i "${output_dir}/bootc-local-image.tar"
 rm -f "${output_dir}/bootc-local-image.tar"
 sudo podman image exists localhost/bitriver-studio-os:ci
 
+# Pin the build tooling as tightly as the Fedora, Go and Node image stages.
+# "latest" would silently change the disk layout or generated SBOM.
+image_builder_ref="$(jq -er '.toolImages.imageBuilderCli |
+  select(test("^ghcr[.]io/osbuild/image-builder-cli@sha256:[a-f0-9]{64}$"))' \
+  deploy/image/releases.lock.json)"
+echo "Pinned Image Builder CLI: ${image_builder_ref}"
+
 # image-builder-cli succeeds bootc-image-builder. This uses local container
 # storage and does not upload the image to any public registry.
 sudo podman run --rm --privileged \
   -v "${output_dir}:/output" \
   -v "${output_dir}/vm-blueprint.json:/config.json:ro" \
   -v /var/lib/containers/storage:/var/lib/containers/storage \
-  ghcr.io/osbuild/image-builder-cli:latest \
+  "${image_builder_ref}" \
   --bootc-ref localhost/bitriver-studio-os:ci \
   --bootc-default-fs ext4 \
-  build --blueprint /config.json --with-manifest --with-sbom qcow2
+  build --blueprint /config.json --with-manifest qcow2
 
 sudo chown -R "$(id -u):$(id -g)" "${output_dir}"
+
+# The bootc-specific Image Builder conversion does not emit SPDX files even
+# with --with-sbom in the tested tool. Syft scans the completed OCI image in
+# the UEFI workflow instead, before disk conversion.
 qcow2="$(find "${output_dir}" -type f -name '*.qcow2' -print -quit)"
 test -n "${qcow2}"
 qemu-img info --output=json "${qcow2}" | jq -e '.format == "qcow2" and (."virtual-size" >= 1073741824)' >/dev/null
