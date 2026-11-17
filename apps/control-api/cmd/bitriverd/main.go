@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"strings"
 	"time"
 
 	"github.com/bitriver/studio-os/apps/control-api/internal/adapters"
@@ -27,6 +28,7 @@ import (
 func main() {
 	httpAddr := flag.String("http-addr", "127.0.0.1:8080", "HTTP listen address")
 	uiDir := flag.String("ui-dir", "", "directory containing built control UI assets")
+	operatorCredentialsPath := flag.String("operator-credentials-path", "", "path to first-boot operator credentials JSON (required in appliance mode)")
 	assetLibraryDir := flag.String("asset-library-dir", "", "local OBS-Scene-Assets assets directory (optional)")
 	setupStatusPath := flag.String("setup-status-path", "", "path to first-boot setup status JSON")
 	initialConfigPath := flag.String("initial-config-path", "", "path to active settings JSON")
@@ -46,6 +48,14 @@ func main() {
 	flag.Parse()
 
 	logger := newLogger(*logFormat)
+	if *adapterMode == "appliance" && *operatorCredentialsPath == "" {
+		logger.Error("appliance mode requires operator credentials")
+		os.Exit(1)
+	}
+	if *operatorCredentialsPath != "" && !strings.HasPrefix(*httpAddr, "127.0.0.1:") && !strings.HasPrefix(*httpAddr, "localhost:") && !strings.HasPrefix(*httpAddr, "[::1]:") {
+		logger.Error("operator control endpoint must bind to loopback until HTTPS is configured", "listenAddress", *httpAddr)
+		os.Exit(1)
+	}
 	startedAt := time.Now().UTC()
 
 	activePath := *initialConfigPath
@@ -122,7 +132,17 @@ func main() {
 		PollInterval: *pollInterval,
 	})
 
-	handler := httpapi.NewHandler(logger, controller, *uiDir, *assetLibraryDir)
+	var handler http.Handler
+	if *operatorCredentialsPath != "" {
+		auth, err := httpapi.NewOperatorAuth(*operatorCredentialsPath)
+		if err != nil {
+			logger.Error("operator authentication unavailable; refusing startup", "error", err)
+			os.Exit(1)
+		}
+		handler = httpapi.NewSecureHandler(logger, controller, *uiDir, *assetLibraryDir, auth)
+	} else {
+		handler = httpapi.NewHandler(logger, controller, *uiDir, *assetLibraryDir)
+	}
 	server := &http.Server{
 		Addr:              *httpAddr,
 		Handler:           handler,
