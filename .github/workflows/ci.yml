@@ -46,3 +46,6 @@ jobs:
 
       - name: Appliance scaffold and hardware report checks
         run: bash test/appliance/check-scaffold.sh
+
+      - name: Verify pinned media release bytes and archive layout
+        run: bash test/appliance/check-release-assets.sh
