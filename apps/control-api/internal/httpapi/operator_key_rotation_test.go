@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 	"testing"
@@ -67,7 +66,4 @@ func TestOfflineRotationRevokesSessionsImmediately(t *testing.T) {
 	if failLogin.StatusCode != http.StatusServiceUnavailable {
 		t.Fatalf("login must fail closed on missing credentials: %d", failLogin.StatusCode)
 	}
-	// Restore a valid digest; previously granted sessions may be revalidated
-	// only when they have not expired or been revoked by an actual rotation.
-	_ = json.Valid
 }
