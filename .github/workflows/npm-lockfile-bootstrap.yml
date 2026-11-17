@@ -11,7 +11,7 @@ on:
       - "packages/shared/package.json"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate-lock:
@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: build/npm-lockfile-ci
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -51,3 +53,13 @@ jobs:
           path: package-lock.json
           if-no-files-found: error
           retention-days: 1
+      - name: Commit the verified lockfile to the PR branch
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'build/npm-lockfile-ci' }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build: commit verified npm v10 workspace lockfile'
+            git push origin HEAD:refs/heads/build/npm-lockfile-ci
+          fi
