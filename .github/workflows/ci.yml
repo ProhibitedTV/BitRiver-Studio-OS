@@ -47,5 +47,16 @@ jobs:
       - name: Appliance scaffold and hardware report checks
         run: bash test/appliance/check-scaffold.sh
 
+      - name: Parse image build PowerShell syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path ./deploy/image/build-image.ps1), [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List
+            throw "Image build wrapper contains PowerShell syntax errors."
+          }
+
       - name: Verify pinned media release bytes and archive layout
         run: bash test/appliance/check-release-assets.sh
