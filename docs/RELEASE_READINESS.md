@@ -32,6 +32,8 @@ and reproducible images). The hardware probe work is one concrete step.
 
 - [x] Pre-release local operator key, session cookie, CSRF, origin checking and
       fail-closed appliance binding implemented (not a complete claim flow).
+- [x] Local operator key rotation and per-request session revocation implemented;
+      must still validate file ownership and recovery on the installed image.
 - [ ] Implement and test real admin claim/authentication, session protection
       and authorization on all mutating control endpoints; generated initial
       passwords alone do not secure the current API.
