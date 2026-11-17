@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check exact locked inputs, not caller-controlled archive overrides.
+# Validate exact upstream archives and layout, without accepting URL overrides.
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 lock="${repo_root}/deploy/image/releases.lock.json"
 temp_dir="$(mktemp -d)"
@@ -33,13 +33,7 @@ done
 
 tar -tzf "${temp_dir}/mediamtx_v1.21.4_linux_amd64.tar.gz" > "${temp_dir}/mediamtx-members.txt"
 unzip -Z1 "${temp_dir}/owncast-0.3.0-linux-64bit.zip" > "${temp_dir}/owncast-members.txt"
-grep -Eq '(^|^\./)mediamtx
-
-echo "Locked media artifacts match release SHA256 digests and expected archive layouts."
- "${temp_dir}/mediamtx-members.txt"
-grep -Eq '(^|^\./)owncast
-
-echo "Locked media artifacts match release SHA256 digests and expected archive layouts."
- "${temp_dir}/owncast-members.txt"
+grep -Eq '^(\./)?mediamtx$' "${temp_dir}/mediamtx-members.txt"
+grep -Eq '^(\./)?owncast$' "${temp_dir}/owncast-members.txt"
 
 echo "Locked media artifacts match release SHA256 digests and expected archive layouts."
