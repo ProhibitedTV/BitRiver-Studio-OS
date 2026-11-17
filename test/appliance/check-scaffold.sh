@@ -10,6 +10,13 @@ test -f deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 grep -Fq 'COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report' deploy/image/Containerfile
 grep -Fq '/usr/local/bin/bitriver-hw-report --output' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 
+echo 'Checking security configuration...'
+grep -Fq 'BITRIVER_HTTP_ADDR=127.0.0.1:8080' deploy/image/rootfs-overlay/etc/bitriver/bitriver.env
+grep -Fq -- '-operator-credentials-path' deploy/systemd/bitriver-control-api.service
+grep -Fq -- '-adapter-mode appliance' deploy/systemd/bitriver-control-api.service
+grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
+grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
+
 echo 'Checking appliance script syntax...'
 while IFS= read -r -d '' script; do
   bash -n "${script}"

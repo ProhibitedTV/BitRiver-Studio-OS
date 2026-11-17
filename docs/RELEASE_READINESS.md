@@ -30,6 +30,8 @@ and reproducible images). The hardware probe work is one concrete step.
 
 ## Gate 3: Safety and security (release blockers)
 
+- [x] Pre-release local operator key, session cookie, CSRF, origin checking and
+      fail-closed appliance binding implemented (not a complete claim flow).
 - [ ] Implement and test real admin claim/authentication, session protection
       and authorization on all mutating control endpoints; generated initial
       passwords alone do not secure the current API.

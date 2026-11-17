@@ -12,11 +12,46 @@ import {
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
 
+let operatorCsrfToken = "";
+
+export interface OperatorSession {
+  enabled: boolean;
+  authenticated: boolean;
+  csrfToken?: string;
+}
+
+export function setOperatorCsrfToken(token: string) {
+  operatorCsrfToken = token;
+}
+
+export async function getOperatorSession() {
+  const session = await request<OperatorSession>("/api/v1/auth/session");
+  setOperatorCsrfToken(session.csrfToken ?? "");
+  return session;
+}
+
+export async function operatorLogin(key: string) {
+  const session = await request<OperatorSession>("/api/v1/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ key })
+  });
+  setOperatorCsrfToken(session.csrfToken ?? "");
+  return session;
+}
+
+export async function operatorLogout() {
+  const result = await request<{ authenticated: boolean }>("/api/v1/auth/logout", { method: "POST" });
+  setOperatorCsrfToken("");
+  return result;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...init,
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
+      ...(init?.method && init.method.toUpperCase() !== "GET" && operatorCsrfToken ? { "X-BitRiver-CSRF": operatorCsrfToken } : {}),
       ...(init?.headers ?? {})
     }
   });

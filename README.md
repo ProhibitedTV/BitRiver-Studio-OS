@@ -152,6 +152,15 @@ These are the exact placeholder assets currently committed for the README and fu
 - Stronger remote guest workflows.
 - Better automation and show presets without turning BitRiver into a general-purpose media platform.
 
+## Operator Login (Pre-release)
+
+The appliance now gates its broadcast controls behind a local operator-key
+sign-in. First boot creates a random control key, and API actions require an
+authenticated session with CSRF protection. The appliance binds to loopback
+until a TLS access path is available; the secure login is not yet an official
+remote-access or multi-user solution. See
+[Operator authentication](docs/OPERATOR_AUTH.md) for setup and limitations.
+
 ## Release Readiness
 
 The project is pre-release; passing the API/UI CI suite does not certify a bootable appliance. The image now includes the first-boot hardware report utility and CI verifies its output contract and boot script syntax. Hardware validation, full image builds, security, and recovery testing remain release gates. See [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
