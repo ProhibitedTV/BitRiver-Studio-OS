@@ -75,24 +75,48 @@ hostname="$(jq -r '.hostname' "${identity_path}")"
 if [[ ! -f "${credentials_path}" ]]; then
   one_time_password="$(openssl rand -hex 16)"
   password_hash="$(openssl passwd -6 -salt "$(openssl rand -hex 8)" "${one_time_password}")"
+  control_key_sha256="$(printf %s "${one_time_password}" | sha256sum | cut -d " " -f 1)"
 
   printf '%s\n' "$(
     jq -n \
       --arg username "admin" \
       --arg passwordHash "${password_hash}" \
+      --arg controlKeySha256 "${control_key_sha256}" \
       --arg createdAt "${started_at}" \
-      '{username: $username, passwordHash: $passwordHash, createdAt: $createdAt, rotateOnFirstLogin: true}'
+      '{username: $username, passwordHash: $passwordHash, controlKeySha256: $controlKeySha256, createdAt: $createdAt, rotateOnFirstLogin: true}'
   )" >"${credentials_path}"
 
   cat >"${password_notice_path}" <<EOF
 BitRiver Studio OS one-time admin credentials
 Username: admin
-Password: ${one_time_password}
+Operator control key: ${one_time_password}
 
-Rotate this password during setup. This file is intended for local recovery only.
+Use the control key to sign in at the local kiosk. Keep it private. This
+pre-release key cannot be rotated from the web interface yet; use local
+re-provisioning and revoke access before public deployment.
 EOF
 
   chmod 0600 "${password_notice_path}" "${credentials_path}"
+fi
+
+
+# Pre-release migration: older bootstrap records have a password crypt hash
+# but no control-key digest. Generate a NEW strong control key rather than
+# storing or attempting to derive a plaintext password from the crypt hash.
+if ! jq -e '.controlKeySha256 | type == "string" and length == 64' "${credentials_path}" >/dev/null 2>&1; then
+  control_key="$(openssl rand -hex 32)"
+  control_key_sha256="$(printf %s "${control_key}" | sha256sum | cut -d " " -f 1)"
+  jq --arg digest "${control_key_sha256}" '.controlKeySha256 = $digest' "${credentials_path}" >"${credentials_path}.new"
+  chmod 0600 "${credentials_path}.new"
+  mv -f "${credentials_path}.new" "${credentials_path}"
+  cat >"${password_notice_path}" <<EOF
+BitRiver Studio OS operator control key (local recovery)
+Username: admin
+Operator control key: ${control_key}
+
+This key replaces any old pre-release control key. Keep it private.
+EOF
+  chmod 0600 "${password_notice_path}"
 fi
 
 /usr/local/bin/bitriver-hw-report --output "${hardware_report_path}" >/dev/null
