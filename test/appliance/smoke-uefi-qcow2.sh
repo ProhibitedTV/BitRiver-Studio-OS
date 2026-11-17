@@ -123,6 +123,25 @@ then
   exit 1
 fi
 
+echo "Rotating operator key locally before reboot (suppressing the new secret)..."
+if ! guest 'sudo -n /bin/bash -se' <<'GUEST'
+set -euo pipefail
+credentials=/var/lib/bitriver/bootstrap/admin-credentials.json
+notice=/var/lib/bitriver/bootstrap/one-time-admin-password.txt
+before="$(sha256sum "$credentials")"
+/usr/local/bin/bitriver-operator-key rotate > /dev/null
+after="$(sha256sum "$credentials")"
+test "$before" != "$after"
+test ! -e "$notice"
+test "$(stat -c '%a' "$credentials")" = 600
+test "$(stat -c '%U' "$credentials")" = bitriver
+echo "Operator key rotation changed digest, removed old notice, and retained credentials permissions."
+GUEST
+then
+  diagnostics
+  exit 1
+fi
+
 baseline="$(guest 'sudo -n sha256sum /var/lib/bitriver/bootstrap/device-identity.json /var/lib/bitriver/bootstrap/admin-credentials.json')"
 printf '%s\n' "${baseline}" > "${output_dir}/diagnostics/before-reboot-sha256.txt"
 
