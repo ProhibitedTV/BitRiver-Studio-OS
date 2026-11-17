@@ -87,7 +87,7 @@ The repo already supports a local mock-driven demo path. The API runs in mock mo
 ### Start The Demo
 
 ```bash
-npm install
+npm ci --ignore-scripts --no-audit --no-fund
 go work sync
 make dev-api
 make dev-ui

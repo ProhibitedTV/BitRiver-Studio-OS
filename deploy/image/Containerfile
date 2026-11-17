@@ -30,11 +30,11 @@ FROM ${NODE_BUILDER_IMAGE} AS ui-build
 
 WORKDIR /src
 
-COPY package.json tsconfig.base.json eslint.config.mjs ./
+COPY package.json package-lock.json tsconfig.base.json eslint.config.mjs ./
 COPY apps/control-ui/package.json apps/control-ui/package.json
 COPY packages/shared/package.json packages/shared/package.json
 
-RUN npm install
+RUN npm ci --ignore-scripts --no-audit --no-fund
 
 COPY apps/control-ui apps/control-ui
 COPY packages/shared packages/shared

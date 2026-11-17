@@ -24,10 +24,12 @@ grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/
 
 echo 'Checking immutable OCI builder image references...'
 bash test/appliance/check-image-lock.sh
+bash test/appliance/check-npm-lock.sh
 
 echo 'Checking appliance script syntax...'
 bash -n test/appliance/check-release-assets.sh
 bash -n test/appliance/check-image-lock.sh
+bash -n test/appliance/check-npm-lock.sh
 bash -n test/appliance/build-qcow2.sh
 bash -n test/appliance/smoke-uefi-qcow2.sh
 while IFS= read -r -d '' script; do

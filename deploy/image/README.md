@@ -36,9 +36,27 @@ records the immutable references in its provenance file.
 
 The digests prevent a tag being silently redirected to different image bytes,
 but the build is **not bit-for-bit reproducible**: Fedora RPM repositories,
-npm dependency resolution (no committed lockfile yet), and the image-builder
-CLI used for the CI-only QCOW2 still need independent pinning and verification.
+the CI-only image-builder CLI and Fedora RPM repositories still need
+independent pinning and verification. The UI now uses a committed npm v10
+lockfile with SHA-512 registry integrity hashes and clean `npm ci` installs.
 Upgrade these images deliberately by editing the lock and its validation tests.
+
+## Locked JavaScript Workspaces
+
+`package-lock.json` is checked in for the root, the control UI and shared
+contracts. Both normal GitHub Actions CI and the OCI Node build stage run:
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+```
+
+`npm ci` rejects mismatches between workspace manifests and the lock instead
+of silently rewriting dependency versions. CI also verifies all registry
+entries have pinned package tarball URLs and SHA-512 integrity digests.
+`--ignore-scripts` avoids executing arbitrary npm install lifecycle hooks;
+actual UI/TypeScript builds run separately afterward. To intentionally update
+dependencies, regenerate and review the **root** lockfile and rerun all CI
+and UEFI appliance validations. Do not commit nested workspace lockfiles.
 
 ## Build Example (on Linux)
 
