@@ -43,3 +43,6 @@ jobs:
 
       - name: Smoke and integration checks
         run: make smoke
+
+      - name: Appliance scaffold and hardware report checks
+        run: bash test/appliance/check-scaffold.sh
