@@ -31,7 +31,15 @@ for component in mediamtx owncast; do
   printf '%s  %s\n' "${sha}" "${temp_dir}/${archive}" | sha256sum -c -
 done
 
-tar -tzf "${temp_dir}/mediamtx_v1.21.4_linux_amd64.tar.gz" | grep -Eq '(^|^\./)mediamtx$'
-unzip -Z1 "${temp_dir}/owncast-0.3.0-linux-64bit.zip" | grep -Eq '(^|^\./)owncast$'
+tar -tzf "${temp_dir}/mediamtx_v1.21.4_linux_amd64.tar.gz" > "${temp_dir}/mediamtx-members.txt"
+unzip -Z1 "${temp_dir}/owncast-0.3.0-linux-64bit.zip" > "${temp_dir}/owncast-members.txt"
+grep -Eq '(^|^\./)mediamtx
+
+echo "Locked media artifacts match release SHA256 digests and expected archive layouts."
+ "${temp_dir}/mediamtx-members.txt"
+grep -Eq '(^|^\./)owncast
+
+echo "Locked media artifacts match release SHA256 digests and expected archive layouts."
+ "${temp_dir}/owncast-members.txt"
 
 echo "Locked media artifacts match release SHA256 digests and expected archive layouts."
