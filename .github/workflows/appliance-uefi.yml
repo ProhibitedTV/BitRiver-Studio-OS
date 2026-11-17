@@ -1,0 +1,59 @@
+name: appliance-uefi
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/appliance-uefi.yml"
+      - "test/appliance/**"
+      - "deploy/image/**"
+      - "deploy/systemd/**"
+      - "apps/control-api/**"
+
+permissions:
+  contents: read
+
+jobs:
+  uefi-boot-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install QEMU, OVMF and Podman tooling
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends podman qemu-system-x86 qemu-utils ovmf
+
+      - name: Build fully assembled BitRiver bootc OCI image
+        shell: pwsh
+        run: |
+          ./deploy/image/build-image.ps1 `
+            -ContainerRuntime docker `
+            -ImageTag bitriver/studio-os:ci `
+            -MetadataPath artifacts/image-build-provenance.json
+
+      - name: Generate disposable SSH identity for UEFI VM
+        run: |
+          mkdir -p artifacts/vm
+          ssh-keygen -t ed25519 -N '' -C bitriver-ci-disposable -f artifacts/vm/id_ed25519
+          chmod 0600 artifacts/vm/id_ed25519
+
+      - name: Convert bootc image into UEFI QCOW2
+        run: bash test/appliance/build-qcow2.sh
+
+      - name: Verify headless first boot and reboot persistence
+        run: bash test/appliance/smoke-uefi-qcow2.sh
+
+      - name: Upload non-release provenance and VM diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-uefi-smoke-evidence
+          path: |
+            artifacts/image-build-provenance.json
+            artifacts/vm/qcow2.sha256
+            artifacts/vm/diagnostics/
+          if-no-files-found: ignore
+          retention-days: 14
