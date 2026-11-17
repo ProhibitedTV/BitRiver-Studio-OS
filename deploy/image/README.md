@@ -99,8 +99,8 @@ The VM-only image contains an **ephemeral authorized SSH public key** and a
 temporary passwordless-sudo test account for CI inspection. This customization
 is injected into the QCOW2 at conversion time and **does not exist in the
 shipping OCI image**. **Do not redistribute the CI QCOW2**: it is deliberately
-not uploaded as a release artifact. Only a disk SHA-256, VM diagnostics and Image Builder's SPDX
-image-OS/buildroot inventories are retained for 14 days.
+not uploaded as a release artifact. Only a disk SHA-256, VM diagnostics and a separately generated Syft
+OCI-image SPDX inventory are retained for 14 days.
 
 The conversion is performed with:
 
@@ -132,17 +132,22 @@ The QCOW2 conversion tool is pinned to an immutable
 `releases.lock.json` and checked by `test/appliance/check-image-lock.sh`.
 It no longer silently follows the moving `:latest` image.
 
-The UEFI pipeline already requested `--with-sbom`; it now **validates** both
-image-OS and buildroot SPDX 2.3 JSON documents and retains those documents,
-their SHA-256 checksums and a small license-coverage summary in a
-**non-release** GitHub Actions artifact. The summary counts packages with a
-declared license but is not an automated compliance verdict.
+The upstream CLI's `--with-sbom` flag produced **no SPDX files** on
+the tested bootc-based QCOW2 path despite successfully generating the disk.
+UEFI CI therefore scans the **fully assembled bootc OCI image** with
+`anchore/sbom-action` pinned to commit `66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c`
+(version 0.24.3) and Syft `v1.57.2`.
 
-These SPDX inventories reflect Image Builder's package graph; they may omit
-separately unpacked MediaMTX, Owncast binaries and assets, application Go
-modules, and browser/npm dependencies. A complete redistributable license
-inventory with attribution and review is still a release blocker. No CI disk,
-temporary SSH key, VM-only sudoers file, or blueprint is uploaded.
+A dedicated shell check rejects missing/empty SPDX 2.3 package inventories,
+records basic declared-license coverage, and creates SHA-256 checksums.
+Only the SBOM, summary and checksum are retained as non-release CI evidence.
+No CI disk, private SSH key, VM-only sudoers file or blueprint is uploaded.
+
+An OCI scanner's component inventory is useful evidence, **not a complete
+redistribution compliance verdict**. Sources, licenses and notices for
+MediaMTX, Owncast, Go/npm dependencies, Fedora packages and embedded assets
+still require review. A comprehensive license inventory remains an official
+release blocker.
 
 ## Licenses
 

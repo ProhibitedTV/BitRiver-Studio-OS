@@ -39,6 +39,23 @@ jobs:
             -ImageTag bitriver/studio-os:ci `
             -MetadataPath artifacts/image-build-provenance.json
 
+      - name: Prepare non-release SBOM output directory
+        run: mkdir -p artifacts/vm/sbom
+
+      - name: Inventory complete bootc OCI image using pinned Syft
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3 pinned commit
+        with:
+          image: bitriver/studio-os:ci
+          syft-version: v1.57.2
+          format: spdx-json
+          output-file: artifacts/vm/sbom/appliance-image.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          dependency-snapshot: false
+
+      - name: Validate and checksum image SPDX inventory
+        run: bash test/appliance/validate-oci-sbom.sh
+
       - name: Generate disposable SSH identity for UEFI VM
         run: |
           mkdir -p artifacts/vm
@@ -47,16 +64,6 @@ jobs:
 
       - name: Convert bootc image into UEFI QCOW2
         run: bash test/appliance/build-qcow2.sh
-
-      - name: Verify generated SPDX package inventory and checksums
-        run: |
-          jq -e '
-            .releaseReady == false and
-            .imageBuilderRef == "ghcr.io/osbuild/image-builder-cli@sha256:f33fa06204ab382eed24979bc99e880b221fbded5a369a0f40ded881d649d392" and
-            .spdxDocuments >= 2 and
-            .imageOsPackageCount > 0
-          ' artifacts/vm/sbom/inventory-summary.json
-          (cd artifacts/vm/sbom && sha256sum -c SHA256SUMS)
 
       - name: Verify headless first boot and reboot persistence
         run: bash test/appliance/smoke-uefi-qcow2.sh

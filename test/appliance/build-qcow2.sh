@@ -53,54 +53,13 @@ sudo podman run --rm --privileged \
   "${image_builder_ref}" \
   --bootc-ref localhost/bitriver-studio-os:ci \
   --bootc-default-fs ext4 \
-  build --blueprint /config.json --with-manifest --with-sbom qcow2
+  build --blueprint /config.json --with-manifest qcow2
 
 sudo chown -R "$(id -u):$(id -g)" "${output_dir}"
 
-# --with-sbom generates SPDX documents for the image OS and buildroot.
-# Save inventory evidence only; NEVER upload the CI disk or VM blueprint.
-sbom_dir="${output_dir}/sbom"
-mkdir -p "${sbom_dir}"
-image_os_sbom=""
-count=0
-while IFS= read -r -d '' sbom; do
-  jq -e '
-    .spdxVersion == "SPDX-2.3" and
-    (.packages | type == "array") and
-    (.packages | length > 0)
-  ' "${sbom}" >/dev/null || {
-    echo "Invalid or empty SPDX document: ${sbom}" >&2
-    exit 1
-  }
-  cp -- "${sbom}" "${sbom_dir}/$(basename "${sbom}")"
-  count=$((count+1))
-  if [[ "${sbom}" == *.image-os.spdx.json ]]; then
-    image_os_sbom="${sbom}"
-  fi
-done < <(find "${output_dir}" -path "${sbom_dir}" -prune -o \
-  -type f -name '*.spdx.json' -print0)
-if [[ "${count}" -lt 2 || -z "${image_os_sbom}" ]]; then
-  echo "Expected image OS and buildroot SPDX documents; found ${count}" >&2
-  find "${output_dir}" -type f -name '*spdx*' -print >&2
-  exit 1
-fi
-
-jq -n --arg toolRef "${image_builder_ref}" --argjson count "${count}" \
-  --slurpfile sbom "${image_os_sbom}" '{
-    schemaVersion: 1,
-    releaseReady: false,
-    imageBuilderRef: $toolRef,
-    spdxDocuments: $count,
-    imageOsPackageCount: ($sbom[0].packages | length),
-    imageOsPackagesWithDeclaredLicense: ([
-      $sbom[0].packages[] |
-      select((.licenseDeclared // "NOASSERTION") != "NOASSERTION")
-    ] | length),
-    inventoryScope: "image-builder bootc disk conversion; excludes separately bundled binaries and npm packages"
-  }' > "${sbom_dir}/inventory-summary.json"
-(cd "${sbom_dir}" && sha256sum -- *.spdx.json > SHA256SUMS)
-echo "Verified ${count} SPDX documents; saving non-release inventory evidence."
-
+# The bootc-specific Image Builder conversion does not emit SPDX files even
+# with --with-sbom in the tested tool. Syft scans the completed OCI image in
+# the UEFI workflow instead, before disk conversion.
 qcow2="$(find "${output_dir}" -type f -name '*.qcow2' -print -quit)"
 test -n "${qcow2}"
 qemu-img info --output=json "${qcow2}" | jq -e '.format == "qcow2" and (."virtual-size" >= 1073741824)' >/dev/null

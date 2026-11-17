@@ -19,13 +19,14 @@ and reproducible images). The hardware probe work is one concrete step.
 - [x] Commit the npm v10 workspace lockfile and install via `npm ci` in
       CI and the OS image build, with registry integrity and workspace checks.
 - [ ] Publish a **comprehensive** license inventory/SBOM. UEFI CI now
-      validates and retains image-OS/buildroot SPDX evidence, but separately
-      bundled MediaMTX/Owncast, npm packages and custom Go binaries need
-      full license/component attribution before an official release.
+      validates and retains an OCI-image SPDX inventory generated with Syft,
+      but separate component/license attribution and manual review are
+      required before public distribution.
 - [ ] Validate generated SPDX identifiers and package license obligations,
       including exceptions, and publish a release-specific inventory.
 - [x] Pin Image Builder CLI to a reviewed OCI digest rather than the
-      floating latest tag, and check the SBOM output in UEFI CI.
+      floating latest tag. Bootc conversion did not emit its requested SPDX
+      documents, so UEFI CI uses a commit-pinned Syft scanner instead.
 - [x] Build UEFI QCOW2 and verify firstboot + reboot under OVMF/QEMU,
       including operator key rotation (successful run 44166997005, PR #8).
 - [ ] Create a user-installable release artifact, document flashing, and
@@ -84,10 +85,10 @@ OCI image into a disposable QCOW2 with Image Builder and boots with OVMF/QEMU.
 It provisions a transient CI-only SSH key and account in that disk image,
 tests required services, first-boot configuration and credential permissions,
 then reboots to check identity/key persistence. The test disk is **never
-published**; diagnostics, checksums and validated SPDX image-OS/buildroot
-inventory are stored as workflow artifacts. These documents cover the
-Image Builder package view, **not** a complete inventory of every bundled
-BitRiver software component.
+published**; diagnostics, checksums and validated OCI-image SPDX inventory
+are stored as workflow artifacts. This covers what Syft can discover from
+the assembled container, not a guaranteed complete accounting of all
+third-party source code, licenses, or assets.
 
 UEFI validation passed in workflow run 44166997005, including first boot,
 operator key rotation, restart, and preserved credential/identity hashes.

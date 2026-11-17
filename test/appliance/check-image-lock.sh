@@ -33,6 +33,8 @@ if grep -E '^FROM[[:space:]]+(docker\.io/|quay\.io/|golang:|node:)' "${file}"; t
   exit 1
 fi
 grep -Fq '"${image_builder_ref}"' test/appliance/build-qcow2.sh
+grep -Fq 'uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c' .github/workflows/appliance-uefi.yml
+grep -Fq 'syft-version: v1.57.2' .github/workflows/appliance-uefi.yml
 if grep -Fq 'ghcr.io/osbuild/image-builder-cli:latest' test/appliance/build-qcow2.sh; then
   echo "Mutable Image Builder CLI tag detected" >&2
   exit 1
