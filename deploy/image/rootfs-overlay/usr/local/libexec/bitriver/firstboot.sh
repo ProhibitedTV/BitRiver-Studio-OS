@@ -225,4 +225,6 @@ printf '%s\n' "$(
 
 touch "${marker_path}"
 chown bitriver:bitriver "${identity_path}" "${credentials_path}" "${setup_status_path}" "${initial_config_path}" "${hardware_report_path}" "${marker_path}"
-chown bitriver:bitriver "${password_notice_path}"
+if [[ -f "${password_notice_path}" ]]; then
+  chown bitriver:bitriver "${password_notice_path}"
+fi
