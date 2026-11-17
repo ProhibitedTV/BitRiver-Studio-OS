@@ -74,7 +74,7 @@ hostname="$(jq -r '.hostname' "${identity_path}")"
 
 if [[ ! -f "${credentials_path}" ]]; then
   one_time_password="$(openssl rand -hex 16)"
-  password_hash="$(openssl passwd -6 -salt "$(openssl rand -hex 8)" "${one_time_password}")"
+  password_hash="$(printf %s "${one_time_password}" | openssl passwd -6 -salt "$(openssl rand -hex 8)" -stdin)"
   control_key_sha256="$(printf %s "${one_time_password}" | sha256sum | cut -d " " -f 1)"
 
   printf '%s\n' "$(
