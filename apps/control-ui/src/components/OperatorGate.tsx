@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { App } from "../App";
 import {
   getOperatorSession,
@@ -21,7 +21,7 @@ export function OperatorGate() {
     return () => { active = false; };
   }, []);
 
-  async function login(event: React.FormEvent<HTMLFormElement>) {
+  async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError("");
