@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "targetPlatform": "linux/amd64",
+  "fedoraBootc": "quay.io/fedora/fedora-bootc:44",
+  "mediamtx": {
+    "version": "v1.21.4",
+    "archive": "mediamtx_v1.21.4_linux_amd64.tar.gz",
+    "url": "https://github.com/bluenviron/mediamtx/releases/download/v1.21.4/mediamtx_v1.21.4_linux_amd64.tar.gz",
+    "sha256": "be0c05d9c8af8338116977e7f1c3fcb409fbf882075e5ab075cf8baad76a59d2",
+    "license": "MIT",
+    "upstream": "https://github.com/bluenviron/mediamtx"
+  },
+  "owncast": {
+    "version": "v0.3.0",
+    "archive": "owncast-0.3.0-linux-64bit.zip",
+    "url": "https://github.com/owncast/owncast/releases/download/v0.3.0/owncast-0.3.0-linux-64bit.zip",
+    "sha256": "8753c12ce58b7d1120c815e49d19f8fd3cc1a53dc8e0abb581e212694ca670d8",
+    "license": "MIT",
+    "upstream": "https://github.com/owncast/owncast"
+  }
+}

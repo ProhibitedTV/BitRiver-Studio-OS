@@ -1,0 +1,60 @@
+name: appliance-image
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/appliance-image.yml"
+      - "deploy/image/**"
+      - "deploy/systemd/**"
+      - "apps/control-api/**"
+      - "apps/control-ui/**"
+      - "packages/shared/**"
+      - "go.work"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  build-bootc:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Inspect available space
+        run: df -h .
+
+      - name: Validate pinned archive hashes
+        run: bash test/appliance/check-release-assets.sh
+
+      - name: Build full Fedora bootc container (never push from PR)
+        shell: pwsh
+        run: |
+          ./deploy/image/build-image.ps1 `
+            -ContainerRuntime docker `
+            -ImageTag bitriver/studio-os:ci `
+            -MetadataPath artifacts/image-build-provenance.json
+
+      - name: Check image metadata
+        run: |
+          test -s artifacts/image-build-provenance.json
+          jq -e '
+            .releaseReady == false and
+            (.baseRef | test("^quay\\.io/fedora/fedora-bootc@sha256:[a-f0-9]{64}$")) and
+            (.localImageId | length > 10) and
+            .mediamtxVersion == "v1.21.4" and
+            .owncastVersion == "v0.3.0"
+          ' artifacts/image-build-provenance.json
+          docker image inspect bitriver/studio-os:ci --format '{{.Id}}'
+
+      - name: Publish non-release build provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-appliance-build-provenance
+          path: artifacts/image-build-provenance.json
+          if-no-files-found: ignore
+          retention-days: 14
