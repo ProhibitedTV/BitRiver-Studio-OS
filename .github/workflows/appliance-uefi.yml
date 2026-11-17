@@ -9,6 +9,11 @@ on:
       - "deploy/image/**"
       - "deploy/systemd/**"
       - "apps/control-api/**"
+      - "apps/control-ui/**"
+      - "packages/shared/**"
+      - "package.json"
+      - "package-lock.json"
+      - "go.work"
 
 permissions:
   contents: read

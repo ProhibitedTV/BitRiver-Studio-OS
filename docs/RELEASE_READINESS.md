@@ -16,8 +16,8 @@ and reproducible images). The hardware probe work is one concrete step.
       bytes/format in CI (MediaMTX tar.gz; Owncast ZIP).
 - [x] Pin Fedora 44, Go 1.22 and Node 22 OCI builder images to immutable
       manifest digests in the committed lock; build wrapper rejects drift.
-- [ ] Commit an npm dependency lockfile and use `npm ci` consistently;
-      pinned image digests alone do not freeze package resolution.
+- [x] Commit the npm v10 workspace lockfile and install via `npm ci` in
+      CI and the OS image build, with registry integrity and workspace checks.
 - [ ] Publish a full license inventory/SBOM; Fedora and bundled dependencies
       have licenses beyond the two upstream MIT application licenses.
 - [x] Build UEFI QCOW2 and verify firstboot + reboot under OVMF/QEMU,
