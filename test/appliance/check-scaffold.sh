@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# A fast scaffold check, not a substitute for booting a real bootc image.
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "${repo_root}"
+
+test -f apps/control-api/cmd/bitriver-hw-report/main.go
+test -f deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
+grep -Fq 'COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report' deploy/image/Containerfile
+grep -Fq '/usr/local/bin/bitriver-hw-report --output' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
+
+echo 'Checking appliance script syntax...'
+while IFS= read -r -d '' script; do
+  bash -n "${script}"
+done < <(find deploy/image/rootfs-overlay/usr/local/libexec/bitriver -name '*.sh' -print0)
+
+echo 'Checking JSON templates...'
+jq -e . deploy/image/rootfs-overlay/usr/local/share/bitriver/templates/initial-config.template.json >/dev/null
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "${tmp_dir}"' EXIT
+echo 'Building and running first-boot hardware probe...'
+(
+  cd apps/control-api
+  go build -o "${tmp_dir}/bitriver-hw-report" ./cmd/bitriver-hw-report
+)
+"${tmp_dir}/bitriver-hw-report" --output "${tmp_dir}/capabilities.json"
+
+jq -e '
+  (.detectedAt | type == "string") and
+  (.architecture | type == "string") and
+  (.cpuModel | type == "string") and
+  (.logicalCores | type == "number") and
+  (.memoryMiB | type == "number") and
+  (.displayAttached | type == "boolean") and
+  (.videoDevices | type == "array") and
+  (.audioCaptureDevices | type == "array") and
+  (.networkInterfaces | type == "array") and
+  (.capabilities.kioskEligible | type == "boolean") and
+  (.capabilities.obsEligible | type == "boolean") and
+  (.capabilities.recommendedForMvp | type == "boolean")
+' "${tmp_dir}/capabilities.json" >/dev/null
+
+echo 'Appliance scaffold and hardware report checks passed.'
