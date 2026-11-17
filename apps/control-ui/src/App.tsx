@@ -1,4 +1,5 @@
 import { StatusBadge } from "./components/StatusBadge";
+import { CreatorAssets } from "./components/CreatorAssets";
 import { useDashboard } from "./hooks/useDashboard";
 
 function formatTimestamp(value: string | null) {
@@ -211,6 +212,8 @@ export function App() {
             ))}
           </div>
         </section>
+
+        <CreatorAssets />
 
         <section className="panel panel--wide">
           <div className="panel__header">

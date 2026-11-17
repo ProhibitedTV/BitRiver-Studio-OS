@@ -56,6 +56,7 @@ What is real in this repo today:
 - Managed MediaMTX integration with generated `mediamtx.yml`, safe reload-to-restart fallback, path and session inspection, and router health in the API.
 - Immutable-image scaffold, appliance `systemd` units, first-boot state, and kiosk boot path.
 - Typed shared contracts and an initial React control surface scaffold.
+- Optional local Creator Asset Studio browser with metadata search, previews, and copyable OBS URLs.
 
 What is still in progress:
 
@@ -64,6 +65,12 @@ What is still in progress:
 - Update orchestration beyond the current service scaffold.
 - Owncast destination flows as a first-class output path.
 - Hardware certification and end-to-end appliance validation on target mini PCs.
+
+## Creator Asset Studio (Optional)
+
+BitRiver now includes a read-only Creator Asset Studio panel for a **locally installed** copy of [OBS Scene Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets). Once the catalog is installed, the dashboard can search, filter, and preview designs and create copyable OBS Browser Source URLs with optional titles and subtitles. The control API serves PNG previews only, never overlay HTML; sources are not automatically installed in OBS yet.
+
+See [docs/CREATOR_ASSETS.md](docs/CREATOR_ASSETS.md) for setup, API details, and security boundaries. An absent library does not affect live production.
 
 ## Try The Demo Locally
 

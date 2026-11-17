@@ -22,17 +22,24 @@ type Handler struct {
 	logger     *slog.Logger
 	controller *service.Controller
 	uiDir      string
+	assetLibraryDir string
 }
 
-func NewHandler(logger *slog.Logger, controller *service.Controller, uiDir string) http.Handler {
+func NewHandler(logger *slog.Logger, controller *service.Controller, uiDir string, assetLibraryDirs ...string) http.Handler {
 	if logger == nil {
 		logger = slog.Default()
+	}
+
+	assetLibraryDir := ""
+	if len(assetLibraryDirs) > 0 && assetLibraryDirs[0] != "" {
+		assetLibraryDir = filepath.Clean(assetLibraryDirs[0])
 	}
 
 	api := &Handler{
 		logger:     logger,
 		controller: controller,
 		uiDir:      uiDir,
+		assetLibraryDir: assetLibraryDir,
 	}
 
 	mux := http.NewServeMux()
@@ -46,6 +53,8 @@ func NewHandler(logger *slog.Logger, controller *service.Controller, uiDir strin
 	mux.HandleFunc("/api/v1/outputs", api.handleOutputs)
 	mux.HandleFunc("/api/v1/recordings", api.handleRecordings)
 	mux.HandleFunc("/api/v1/media-router", api.handleMediaRouter)
+	mux.HandleFunc("/api/v1/creator-assets/catalog", api.handleCreatorAssetCatalog)
+	mux.HandleFunc("/api/v1/creator-assets/preview/", api.handleCreatorAssetPreview)
 	mux.HandleFunc("/api/v1/recordings/start", api.handleRecordingStart)
 	mux.HandleFunc("/api/v1/recordings/stop", api.handleRecordingStop)
 	mux.HandleFunc("/api/v1/scenes", api.handleScenes)
