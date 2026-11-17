@@ -20,6 +20,7 @@ grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriv
 grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
 
 echo 'Checking appliance script syntax...'
+bash -n test/appliance/check-release-assets.sh
 while IFS= read -r -d '' script; do
   bash -n "${script}"
 done < <(find deploy/image/rootfs-overlay/usr/local/libexec/bitriver -name '*.sh' -print0)
