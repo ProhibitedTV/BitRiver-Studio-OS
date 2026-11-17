@@ -6,6 +6,8 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "${repo_root}"
 
 test -f apps/control-api/cmd/bitriver-hw-report/main.go
+test -f apps/control-api/cmd/bitriver-operator-key/main.go
+grep -Fq 'COPY --from=api-build /out/bitriver-operator-key /usr/local/bin/bitriver-operator-key' deploy/image/Containerfile
 test -f deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 grep -Fq 'COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report' deploy/image/Containerfile
 grep -Fq '/usr/local/bin/bitriver-hw-report --output' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
@@ -49,4 +51,9 @@ jq -e '
   (.capabilities.recommendedForMvp | type == "boolean")
 ' "${tmp_dir}/capabilities.json" >/dev/null
 
+echo 'Building offline operator recovery command...'
+(
+  cd apps/control-api
+  go build -o "${tmp_dir}/bitriver-operator-key" ./cmd/bitriver-operator-key
+)
 echo 'Appliance scaffold and hardware report checks passed.'
