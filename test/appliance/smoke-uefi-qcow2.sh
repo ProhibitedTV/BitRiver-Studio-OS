@@ -64,9 +64,38 @@ wait_for_guest() {
   return 1
 }
 
+diagnostics() {
+  # Never collect bootstrap recovery notices or credential contents.
+  guest 'sudo -n /bin/bash -se' > "${output_dir}/diagnostics/unit-status.txt" 2>&1 <<'GUEST' || true
+systemctl --no-pager --plain --failed
+systemctl --no-pager --plain status bitriver-firstboot.service bitriver.target bitriver-control-api.service mediamtx.service bitriver-update-agent.service
+journalctl --no-pager --output=short -u bitriver-firstboot.service -u bitriver-control-api.service -u mediamtx.service -n 100
+GUEST
+}
+wait_for_appliance() {
+  local phase="$1"
+  for ((attempt=1; attempt<=100; attempt++)); do
+    if guest 'sudo -n systemctl is-active --quiet bitriver.target && sudo -n systemctl is-active --quiet bitriver-firstboot.service && sudo -n systemctl is-active --quiet bitriver-control-api.service && sudo -n systemctl is-active --quiet mediamtx.service && sudo -n systemctl is-active --quiet bitriver-update-agent.service && curl -fsS http://127.0.0.1:8080/healthz >/dev/null'; then
+      echo "BitRiver appliance is ready (${phase})"
+      return 0
+    fi
+    # A failed required unit cannot make progress without intervention.
+    if guest 'sudo -n systemctl is-failed --quiet bitriver-firstboot.service' 2>/dev/null; then
+      echo "Firstboot systemd unit failed during ${phase}" >&2
+      diagnostics
+      return 1
+    fi
+    sleep 3
+  done
+  echo "Timed out waiting for BitRiver target/services (${phase})" >&2
+  diagnostics
+  return 1
+}
+
 echo "Waiting for first UEFI boot to enable SSH..."
 first_boot_id="$(wait_for_guest)"
 echo "VM first boot ID: ${first_boot_id}"
+wait_for_appliance "first boot"
 
 guest 'sudo -n /bin/bash -se' <<'GUEST'
 set -euo pipefail
@@ -97,6 +126,7 @@ echo "Rebooting UEFI VM to check persistent identity and operator key..."
 guest 'sudo -n systemctl reboot' >/dev/null 2>&1 || true
 second_boot_id="$(wait_for_guest "${first_boot_id}")"
 echo "VM reboot ID: ${second_boot_id}"
+wait_for_appliance "second boot"
 
 guest 'sudo -n /bin/bash -se' <<'GUEST'
 set -euo pipefail
