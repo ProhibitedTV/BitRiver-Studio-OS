@@ -1,4 +1,5 @@
 [Unit]
+StartLimitIntervalSec=0
 Description=BitRiver update status and bootc reconciliation agent
 After=network-online.target bitriver-firstboot.service
 Requires=bitriver-firstboot.service
@@ -13,7 +14,6 @@ WorkingDirectory=/var/lib/bitriver
 ExecStart=/usr/local/libexec/bitriver/update-agent.sh
 Restart=always
 RestartSec=5
-StartLimitIntervalSec=0
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=true
