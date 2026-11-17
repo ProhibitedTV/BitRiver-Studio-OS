@@ -23,27 +23,45 @@ type Handler struct {
 	controller *service.Controller
 	uiDir      string
 	assetLibraryDir string
+	operatorAuth *OperatorAuth
 }
 
 func NewHandler(logger *slog.Logger, controller *service.Controller, uiDir string, assetLibraryDirs ...string) http.Handler {
+	assetLibraryDir := ""
+	if len(assetLibraryDirs) > 0 {
+		assetLibraryDir = assetLibraryDirs[0]
+	}
+	return newHandler(logger, controller, uiDir, assetLibraryDir, nil)
+}
+
+// NewSecureHandler enables mandatory operator authentication on appliance APIs.
+func NewSecureHandler(logger *slog.Logger, controller *service.Controller, uiDir, assetLibraryDir string, auth *OperatorAuth) http.Handler {
+	if auth == nil {
+		panic("secure handler requires operator authentication")
+	}
+	return newHandler(logger, controller, uiDir, assetLibraryDir, auth)
+}
+
+func newHandler(logger *slog.Logger, controller *service.Controller, uiDir, assetLibraryDir string, auth *OperatorAuth) http.Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
-
-	assetLibraryDir := ""
-	if len(assetLibraryDirs) > 0 && assetLibraryDirs[0] != "" {
-		assetLibraryDir = filepath.Clean(assetLibraryDirs[0])
+	if assetLibraryDir != "" {
+		assetLibraryDir = filepath.Clean(assetLibraryDir)
 	}
-
 	api := &Handler{
-		logger:     logger,
-		controller: controller,
-		uiDir:      uiDir,
+		logger:          logger,
+		controller:      controller,
+		uiDir:           uiDir,
 		assetLibraryDir: assetLibraryDir,
+		operatorAuth:    auth,
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", api.handleHealthz)
+	mux.HandleFunc("/api/v1/auth/login", api.handleOperatorLogin)
+	mux.HandleFunc("/api/v1/auth/session", api.handleOperatorSession)
+	mux.HandleFunc("/api/v1/auth/logout", api.handleOperatorLogout)
 	mux.HandleFunc("/api/v1/system", api.handleSystem)
 	mux.HandleFunc("/api/v1/health", api.handleHealth)
 	mux.HandleFunc("/api/v1/setup/status", api.handleSetupStatus)
@@ -84,6 +102,9 @@ func NewHandler(logger *slog.Logger, controller *service.Controller, uiDir strin
 	mux.HandleFunc("/api/v1/ws", api.handleWebsocket)
 	mux.HandleFunc("/", api.handleRoot)
 
+	if auth != nil {
+		return api.loggingMiddleware(auth.gate(mux))
+	}
 	return api.loggingMiddleware(mux)
 }
 
@@ -100,6 +121,30 @@ func (handler *Handler) loggingMiddleware(next http.Handler) http.Handler {
 			"remoteAddr", request.RemoteAddr,
 		)
 	})
+}
+
+func (handler *Handler) handleOperatorLogin(writer http.ResponseWriter, request *http.Request) {
+	if handler.operatorAuth == nil {
+		writeJSON(writer, http.StatusBadRequest, map[string]string{"error": "authentication disabled in development mode"})
+		return
+	}
+	handler.operatorAuth.handleLogin(writer, request)
+}
+
+func (handler *Handler) handleOperatorSession(writer http.ResponseWriter, request *http.Request) {
+	if handler.operatorAuth == nil {
+		writeJSON(writer, http.StatusOK, map[string]bool{"enabled": false, "authenticated": true})
+		return
+	}
+	handler.operatorAuth.handleSession(writer, request)
+}
+
+func (handler *Handler) handleOperatorLogout(writer http.ResponseWriter, request *http.Request) {
+	if handler.operatorAuth == nil {
+		writeJSON(writer, http.StatusOK, map[string]bool{"authenticated": false})
+		return
+	}
+	handler.operatorAuth.handleLogout(writer, request)
 }
 
 func (handler *Handler) handleHealthz(writer http.ResponseWriter, request *http.Request) {
