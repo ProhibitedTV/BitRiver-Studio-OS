@@ -4,7 +4,7 @@
 
 ## Build Inputs
 
-- Go control API from `apps/control-api`
+- Go control API and `bitriver-hw-report` first-boot hardware probe from `apps/control-api`
 - Browser UI from `apps/control-ui`
 - systemd units from `deploy/systemd`
 - rootfs overlay assets from `deploy/image/rootfs-overlay`
@@ -24,6 +24,10 @@ powershell -ExecutionPolicy Bypass -File deploy/image/build-image.ps1 `
   -ImageTag ghcr.io/bitriver/studio-os:dev `
   -ContainerRuntime podman
 ```
+
+## Early Validation
+
+Run `bash test/appliance/check-scaffold.sh` from the repository root. CI builds and runs the hardware report binary, validates its JSON contract, and syntax-checks appliance shell scripts. This is **not** a full image build or UEFI boot test. See [release readiness](../../docs/RELEASE_READINESS.md) for the required release gates.
 
 ## Result
 

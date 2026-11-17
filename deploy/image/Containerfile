@@ -11,7 +11,12 @@ RUN cd apps/control-api \
     -trimpath \
     -ldflags="-s -w" \
     -o /out/bitriverd \
-    ./cmd/bitriverd
+    ./cmd/bitriverd \
+  && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -trimpath \
+    -ldflags="-s -w" \
+    -o /out/bitriver-hw-report \
+    ./cmd/bitriver-hw-report
 
 FROM node:22-bookworm AS ui-build
 
@@ -67,6 +72,7 @@ RUN mkdir -p /opt/owncast \
   && rm -f /tmp/owncast.tar.gz
 
 COPY --from=api-build /out/bitriverd /usr/local/bin/bitriverd
+COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report
 COPY --from=ui-build /src/apps/control-ui/dist /usr/local/share/bitriver/control-ui
 
 COPY deploy/systemd/ /usr/lib/systemd/system/

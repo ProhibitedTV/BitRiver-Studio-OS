@@ -152,6 +152,10 @@ These are the exact placeholder assets currently committed for the README and fu
 - Stronger remote guest workflows.
 - Better automation and show presets without turning BitRiver into a general-purpose media platform.
 
+## Release Readiness
+
+The project is pre-release; passing the API/UI CI suite does not certify a bootable appliance. The image now includes the first-boot hardware report utility and CI verifies its output contract and boot script syntax. Hardware validation, full image builds, security, and recovery testing remain release gates. See [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
+
 ## Documentation
 
 - [PRODUCT.md](PRODUCT.md)
