@@ -22,8 +22,12 @@ grep -Fq -- '-adapter-mode appliance' deploy/systemd/bitriver-control-api.servic
 grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
 
+echo 'Checking immutable OCI builder image references...'
+bash test/appliance/check-image-lock.sh
+
 echo 'Checking appliance script syntax...'
 bash -n test/appliance/check-release-assets.sh
+bash -n test/appliance/check-image-lock.sh
 bash -n test/appliance/build-qcow2.sh
 bash -n test/appliance/smoke-uefi-qcow2.sh
 while IFS= read -r -d '' script; do

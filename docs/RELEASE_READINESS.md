@@ -14,21 +14,22 @@ and reproducible images). The hardware probe work is one concrete step.
       (successful image run 44156876970 on Fedora 44, PR #7).
 - [x] Pin verified MediaMTX/Owncast archive releases by SHA256 and validate
       bytes/format in CI (MediaMTX tar.gz; Owncast ZIP).
-- [ ] Pin the Fedora base **digest in the repository**, not just the
-      release line; the build wrapper resolves and records an immutable digest.
-- [ ] Commit npm dependency locks and account for all builder image digests.
+- [x] Pin Fedora 44, Go 1.22 and Node 22 OCI builder images to immutable
+      manifest digests in the committed lock; build wrapper rejects drift.
+- [ ] Commit an npm dependency lockfile and use `npm ci` consistently;
+      pinned image digests alone do not freeze package resolution.
 - [ ] Publish a full license inventory/SBOM; Fedora and bundled dependencies
       have licenses beyond the two upstream MIT application licenses.
-- [ ] Generate UEFI QCOW2 and exercise firstboot + reboot under QEMU via
-      the new appliance-uefi workflow; keep unchecked until a run passes.
+- [x] Build UEFI QCOW2 and verify firstboot + reboot under OVMF/QEMU,
+      including operator key rotation (successful run 44166997005, PR #8).
 - [ ] Create a user-installable release artifact, document flashing, and
       verify secure update and rollback behavior.
 - [ ] Add signed release artifacts, reproducible release notes and checksums.
 
 ## Gate 2: First boot and configuration
 
-- [ ] Boot an actual UEFI x86_64 machine/VM from the produced image and
-      confirm systemd reaches bitriver.target without failed required units.
+- [x] Boot a UEFI x86_64 QEMU VM and confirm bitriver.target and required
+      systemd services are healthy (run 44166997005; not physical hardware).
 - [ ] Verify first-boot identity, hardware inventory, initial config, ownership
       and expected permissions in /var/lib/bitriver and /data/recordings.
 - [ ] Verify reboot retains identities and operator configuration.
@@ -79,9 +80,10 @@ tests required services, first-boot configuration and credential permissions,
 then reboots to check identity/key persistence. The test disk is **never
 published**; diagnostics and checksums are stored as workflow artifacts.
 
-This validation still needs a **successful workflow run** before any UEFI gate
-can be checked. A passing VM test is not a hardware certification, signed
-installer, or rollback demonstration.
+UEFI validation passed in workflow run 44166997005, including first boot,
+operator key rotation, restart, and preserved credential/identity hashes.
+A passing VM test is not hardware certification, a signed installer, or a
+rollback demonstration.
 
 ## First-boot hardware probe
 
