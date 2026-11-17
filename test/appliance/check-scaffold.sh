@@ -31,6 +31,7 @@ bash -n test/appliance/check-release-assets.sh
 bash -n test/appliance/check-image-lock.sh
 bash -n test/appliance/check-npm-lock.sh
 bash -n test/appliance/build-qcow2.sh
+grep -Fq -- '--with-sbom' test/appliance/build-qcow2.sh
 bash -n test/appliance/smoke-uefi-qcow2.sh
 while IFS= read -r -d '' script; do
   bash -n "${script}"

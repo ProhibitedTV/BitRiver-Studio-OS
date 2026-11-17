@@ -48,6 +48,16 @@ jobs:
       - name: Convert bootc image into UEFI QCOW2
         run: bash test/appliance/build-qcow2.sh
 
+      - name: Verify generated SPDX package inventory and checksums
+        run: |
+          jq -e '
+            .releaseReady == false and
+            .imageBuilderRef == "ghcr.io/osbuild/image-builder-cli@sha256:f33fa06204ab382eed24979bc99e880b221fbded5a369a0f40ded881d649d392" and
+            .spdxDocuments >= 2 and
+            .imageOsPackageCount > 0
+          ' artifacts/vm/sbom/inventory-summary.json
+          (cd artifacts/vm/sbom && sha256sum -c SHA256SUMS)
+
       - name: Verify headless first boot and reboot persistence
         run: bash test/appliance/smoke-uefi-qcow2.sh
 
@@ -59,6 +69,7 @@ jobs:
           path: |
             artifacts/image-build-provenance.json
             artifacts/vm/qcow2.sha256
+            artifacts/vm/sbom/
             artifacts/vm/diagnostics/
           if-no-files-found: ignore
           retention-days: 14

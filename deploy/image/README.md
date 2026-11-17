@@ -36,8 +36,8 @@ records the immutable references in its provenance file.
 
 The digests prevent a tag being silently redirected to different image bytes,
 but the build is **not bit-for-bit reproducible**: Fedora RPM repositories,
-the CI-only image-builder CLI and Fedora RPM repositories still need
-independent pinning and verification. The UI now uses a committed npm v10
+Fedora RPM package repositories remain mutable and must be
+independently pinned or snapshotted. The UI now uses a committed npm v10
 lockfile with SHA-512 registry integrity hashes and clean `npm ci` installs.
 Upgrade these images deliberately by editing the lock and its validation tests.
 
@@ -99,8 +99,8 @@ The VM-only image contains an **ephemeral authorized SSH public key** and a
 temporary passwordless-sudo test account for CI inspection. This customization
 is injected into the QCOW2 at conversion time and **does not exist in the
 shipping OCI image**. **Do not redistribute the CI QCOW2**: it is deliberately
-not uploaded as a release artifact. Only a disk SHA-256 and test diagnostics
-are retained for 14 days.
+not uploaded as a release artifact. Only a disk SHA-256, VM diagnostics and Image Builder's SPDX
+image-OS/buildroot inventories are retained for 14 days.
 
 The conversion is performed with:
 
@@ -124,6 +124,25 @@ remote login is possible.
 USB capture devices, kiosk/Wayland display, long-duration streaming, secure
 updates or rollback. Neither a CI QCOW2 nor an OCI container is a signed,
 installable **consumer release**.
+
+## UEFI builder provenance and SPDX evidence
+
+The QCOW2 conversion tool is pinned to an immutable
+`ghcr.io/osbuild/image-builder-cli@sha256:...` OCI manifest digest in
+`releases.lock.json` and checked by `test/appliance/check-image-lock.sh`.
+It no longer silently follows the moving `:latest` image.
+
+The UEFI pipeline already requested `--with-sbom`; it now **validates** both
+image-OS and buildroot SPDX 2.3 JSON documents and retains those documents,
+their SHA-256 checksums and a small license-coverage summary in a
+**non-release** GitHub Actions artifact. The summary counts packages with a
+declared license but is not an automated compliance verdict.
+
+These SPDX inventories reflect Image Builder's package graph; they may omit
+separately unpacked MediaMTX, Owncast binaries and assets, application Go
+modules, and browser/npm dependencies. A complete redistributable license
+inventory with attribution and review is still a release blocker. No CI disk,
+temporary SSH key, VM-only sudoers file, or blueprint is uploaded.
 
 ## Licenses
 
