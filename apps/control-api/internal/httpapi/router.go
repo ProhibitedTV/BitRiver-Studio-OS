@@ -2,11 +2,13 @@ package httpapi
 
 import (
 	"encoding/json"
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -559,6 +561,19 @@ type statusRecorder struct {
 func (recorder *statusRecorder) WriteHeader(status int) {
 	recorder.status = status
 	recorder.ResponseWriter.WriteHeader(status)
+}
+
+// Preserve HTTP upgrade support through request logging (e.g. OBS/dashboard WS).
+func (recorder *statusRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := recorder.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, http.ErrNotSupported
+	}
+	conn, buffer, err := hijacker.Hijack()
+	if err == nil {
+		recorder.status = http.StatusSwitchingProtocols
+	}
+	return conn, buffer, err
 }
 
 func splitActionPath(path string, prefix string) (string, string, error) {
