@@ -593,3 +593,49 @@ code {
 @media (max-width: 440px) {
   .creator-assets__grid { grid-template-columns: 1fr; }
 }
+
+/* The operator login surface stays isolated until the API grants a session. */
+.operator-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--bg), var(--bg-soft));
+}
+.operator-gate__panel {
+  width: min(100%, 460px);
+  padding: 2rem;
+  border-radius: 1.3rem;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 0.9rem;
+}
+.operator-gate__panel h1 { margin: 0; font-size: 1.8rem; }
+.operator-gate__panel p { color: var(--muted); line-height: 1.5; }
+.operator-gate__panel label { font-weight: 600; }
+.operator-gate__panel input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  color: var(--text);
+  background: var(--bg-soft);
+}
+.operator-gate__panel .operator-gate__error { color: var(--danger); }
+.operator-session {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.45rem 2rem;
+  color: var(--muted);
+  background: var(--bg-soft);
+}
+.operator-session .button { padding: 0.4rem 0.75rem; }
+@media (max-width: 760px) {
+  .operator-session { padding: 0.45rem 1rem; }
+  .operator-session .button { width: auto; }
+}
