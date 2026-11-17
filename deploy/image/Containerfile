@@ -43,6 +43,10 @@ RUN npm run build --workspace @bitriver/shared \
 ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc:44
 FROM ${FEDORA_BOOTC_IMAGE}
 
+ARG BITRIVER_SOURCE_REV=unknown
+LABEL org.opencontainers.image.source="https://github.com/ProhibitedTV/BitRiver-Studio-OS" \
+  org.opencontainers.image.revision="${BITRIVER_SOURCE_REV}"
+
 ARG MEDIAMTX_TARBALL_URL
 ARG MEDIAMTX_SHA256
 ARG OWNCAST_ZIP_URL
