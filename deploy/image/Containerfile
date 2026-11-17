@@ -65,6 +65,7 @@ RUN dnf -y install \
     ffmpeg \
     jq \
     obs-studio \
+    openssh-server \
     openssl \
     pciutils \
     pipewire \
@@ -101,9 +102,13 @@ COPY --from=ui-build /src/apps/control-ui/dist /usr/local/share/bitriver/control
 COPY deploy/systemd/ /usr/lib/systemd/system/
 COPY deploy/image/rootfs-overlay/ /
 
+# bootc treats the image root as immutable. Redirect /data to persistent
+# /var storage before firstboot initializes recordings and local assets.
+RUN ln -s /var/lib/bitriver/data /data
+
 RUN chmod +x /usr/local/bin/bitriverd /usr/local/bin/bitriver-hw-report /usr/local/bin/bitriver-operator-key \
   && chmod +x /usr/local/libexec/bitriver/*.sh \
-  && systemctl enable bitriver.target \
+  && systemctl enable bitriver.target systemd-networkd.service sshd.service \
   && bootc container lint
 
 CMD ["/sbin/init"]
