@@ -1,0 +1,53 @@
+name: npm-lockfile-bootstrap
+
+# Temporary, read-only bootstrap: generate an exact lockfile on a runner with
+# registry access. It is removed before this PR is ready to merge.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/npm-lockfile-bootstrap.yml"
+      - "package.json"
+      - "apps/control-ui/package.json"
+      - "packages/shared/package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-lock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Generate npm v10 workspace lockfile without lifecycle scripts
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Verify clean install from generated lock
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify workspace lock integrity
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          if (lock.lockfileVersion !== 3) throw Error('Expected npm v10 lockfile v3');
+          for (const path of ['', 'apps/control-ui', 'packages/shared',
+            'node_modules/@bitriver/control-ui', 'node_modules/@bitriver/shared']) {
+            if (!lock.packages[path]) throw Error('Missing workspace lock entry: ' + path);
+          }
+          for (const [path, pkg] of Object.entries(lock.packages)) {
+            if (!path.startsWith('node_modules/') || pkg.link) continue;
+            if (!pkg.integrity || !pkg.resolved?.startsWith('https://registry.npmjs.org/')) {
+              throw Error('Unpinned registry dependency: ' + path);
+            }
+          }
+          console.log('Lockfile packages:', Object.keys(lock.packages).length);
+          NODE
+      - name: Upload exact generated lockfile for source review
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-npm-workspace-lockfile
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 1
