@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
 )
 
@@ -100,15 +99,9 @@ func rotate(path string, entropy io.Reader) (string, error) {
 	if err := temp.Chmod(0o600); err != nil {
 		return "", err
 	}
-	// A root-run recovery command must not transfer ownership of the file
-	// away from the bitriver service user.
-	if stat, ok := fileInfo.Sys().(*syscall.Stat_t); ok {
-		uid, gid := int(stat.Uid), int(stat.Gid)
-		if uid != os.Geteuid() || gid != os.Getegid() {
-			if err := temp.Chown(uid, gid); err != nil {
-				return "", fmt.Errorf("cannot preserve credentials ownership: %w", err)
-			}
-		}
+	// Preserve the bitriver service user's ownership even when root rotates.
+	if err := preserveOwnership(temp, fileInfo); err != nil {
+		return "", err
 	}
 	if _, err := temp.Write(payload); err != nil {
 		return "", err
