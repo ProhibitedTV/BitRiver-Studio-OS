@@ -71,6 +71,7 @@ RUN dnf -y install \
     pipewire \
     systemd-networkd \
     sway \
+    sudo \
     tar \
     unzip \
     v4l-utils \
