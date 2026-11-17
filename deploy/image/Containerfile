@@ -16,7 +16,12 @@ RUN cd apps/control-api \
     -trimpath \
     -ldflags="-s -w" \
     -o /out/bitriver-hw-report \
-    ./cmd/bitriver-hw-report
+    ./cmd/bitriver-hw-report \
+  && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -trimpath \
+    -ldflags="-s -w" \
+    -o /out/bitriver-operator-key \
+    ./cmd/bitriver-operator-key
 
 FROM node:22-bookworm AS ui-build
 
@@ -73,12 +78,13 @@ RUN mkdir -p /opt/owncast \
 
 COPY --from=api-build /out/bitriverd /usr/local/bin/bitriverd
 COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report
+COPY --from=api-build /out/bitriver-operator-key /usr/local/bin/bitriver-operator-key
 COPY --from=ui-build /src/apps/control-ui/dist /usr/local/share/bitriver/control-ui
 
 COPY deploy/systemd/ /usr/lib/systemd/system/
 COPY deploy/image/rootfs-overlay/ /
 
-RUN chmod +x /usr/local/bin/bitriverd /usr/local/bin/bitriver-hw-report \
+RUN chmod +x /usr/local/bin/bitriverd /usr/local/bin/bitriver-hw-report /usr/local/bin/bitriver-operator-key \
   && chmod +x /usr/local/libexec/bitriver/*.sh \
   && systemctl enable bitriver.target
 
