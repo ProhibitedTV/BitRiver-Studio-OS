@@ -52,8 +52,8 @@ func main() {
 		logger.Error("appliance mode requires operator credentials")
 		os.Exit(1)
 	}
-	if *operatorCredentialsPath != "" && !strings.HasPrefix(*httpAddr, "127.0.0.1:") && !strings.HasPrefix(*httpAddr, "localhost:") && !strings.HasPrefix(*httpAddr, "[::1]:") {
-		logger.Error("operator control endpoint must bind to loopback until HTTPS is configured", "listenAddress", *httpAddr)
+	if !strings.HasPrefix(*httpAddr, "127.0.0.1:") && !strings.HasPrefix(*httpAddr, "localhost:") && !strings.HasPrefix(*httpAddr, "[::1]:") {
+		logger.Error("HTTP control API must bind to loopback until HTTPS is configured", "listenAddress", *httpAddr)
 		os.Exit(1)
 	}
 	startedAt := time.Now().UTC()
