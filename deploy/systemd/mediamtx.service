@@ -1,4 +1,6 @@
 [Unit]
+StartLimitIntervalSec=120
+StartLimitBurst=6
 Description=MediaMTX ingest and routing service
 After=network-online.target bitriver-firstboot.service
 Requires=bitriver-firstboot.service
@@ -12,8 +14,6 @@ EnvironmentFile=-/etc/bitriver/bitriver.env
 ExecStart=/usr/local/libexec/bitriver/start-mediamtx.sh
 Restart=on-failure
 RestartSec=2
-StartLimitIntervalSec=120
-StartLimitBurst=6
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=true

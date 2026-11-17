@@ -10,9 +10,8 @@ and reproducible images). The hardware probe work is one concrete step.
 - [x] Implement and package the hardware-report binary required by first boot.
 - [x] Exercise hardware-report JSON on CI and fixture-based discovery tests.
 - [x] Syntax-check all appliance shell scripts in CI.
-- [ ] Build the **complete bootc image** in CI, including upstream media archives.
-      An image-build workflow now attempts this on relevant PRs; mark complete
-      only when it succeeds on the chosen base.
+- [x] Build the **complete bootc OCI image** in CI with upstream media archives
+      (successful image run 44156876970 on Fedora 44, PR #7).
 - [x] Pin verified MediaMTX/Owncast archive releases by SHA256 and validate
       bytes/format in CI (MediaMTX tar.gz; Owncast ZIP).
 - [ ] Pin the Fedora base **digest in the repository**, not just the
@@ -20,7 +19,9 @@ and reproducible images). The hardware probe work is one concrete step.
 - [ ] Commit npm dependency locks and account for all builder image digests.
 - [ ] Publish a full license inventory/SBOM; Fedora and bundled dependencies
       have licenses beyond the two upstream MIT application licenses.
-- [ ] Create an installable UEFI disk image, document flash procedure, and
+- [ ] Generate UEFI QCOW2 and exercise firstboot + reboot under QEMU via
+      the new appliance-uefi workflow; keep unchecked until a run passes.
+- [ ] Create a user-installable release artifact, document flashing, and
       verify secure update and rollback behavior.
 - [ ] Add signed release artifacts, reproducible release notes and checksums.
 
@@ -68,6 +69,19 @@ and reproducible images). The hardware probe work is one concrete step.
 - [ ] Add optional media library, AI and Discord integrations only behind
       explicit configuration and permission boundaries.
 - [ ] Keep desktop gaming/Steam isolated from dependable Broadcast Mode.
+
+## UEFI VM validation
+
+The experimental `.github/workflows/appliance-uefi.yml` converts the complete
+OCI image into a disposable QCOW2 with Image Builder and boots with OVMF/QEMU.
+It provisions a transient CI-only SSH key and account in that disk image,
+tests required services, first-boot configuration and credential permissions,
+then reboots to check identity/key persistence. The test disk is **never
+published**; diagnostics and checksums are stored as workflow artifacts.
+
+This validation still needs a **successful workflow run** before any UEFI gate
+can be checked. A passing VM test is not a hardware certification, signed
+installer, or rollback demonstration.
 
 ## First-boot hardware probe
 

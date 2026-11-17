@@ -63,6 +63,45 @@ The normal CI workflow checks app builds and pinned release archive inputs;
 `bash test/appliance/check-scaffold.sh` remains a faster offline-friendly
 check of hardware-report wiring and shell syntax.
 
+## UEFI VM smoke-test pipeline (non-release)
+
+The separate [appliance-uefi workflow](../../.github/workflows/appliance-uefi.yml)
+builds the OCI image, converts a **local copy** into an x86_64 QCOW2 disk
+using Image Builder, then boots the disk with OVMF firmware under QEMU. It
+checks the required headless services, first-boot setup JSON, hardware report,
+local `/healthz`, operator credentials file permissions, persistent recording
+directory, and identity/key preservation after a complete VM reboot.
+
+The VM-only image contains an **ephemeral authorized SSH public key** and a
+temporary passwordless-sudo test account for CI inspection. This customization
+is injected into the QCOW2 at conversion time and **does not exist in the
+shipping OCI image**. **Do not redistribute the CI QCOW2**: it is deliberately
+not uploaded as a release artifact. Only a disk SHA-256 and test diagnostics
+are retained for 14 days.
+
+The conversion is performed with:
+
+```bash
+bash test/appliance/build-qcow2.sh
+bash test/appliance/smoke-uefi-qcow2.sh
+```
+
+These scripts require a container image already built as
+`bitriver/studio-os:ci`, rootful Podman, Docker, QEMU, OVMF, SSH, jq,
+`qemu-img`, and a disposable SSH keypair in `artifacts/vm/`. They intentionally
+fail rather than inject a static password or quietly skip firstboot tests.
+
+For the appliance itself, `/data` points at persistent
+`/var/lib/bitriver/data` because bootc treats the base image as immutable.
+`openssh-server` starts with root login and password authentication disabled;
+a real device still needs user-owned SSH public key provisioning before
+remote login is possible.
+
+**Validation boundary:** a passing UEFI VM check does not validate physical
+USB capture devices, kiosk/Wayland display, long-duration streaming, secure
+updates or rollback. Neither a CI QCOW2 nor an OCI container is a signed,
+installable **consumer release**.
+
 ## Licenses
 
 Upstream application sources are available under the MIT license:

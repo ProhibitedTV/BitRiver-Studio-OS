@@ -165,8 +165,10 @@ remote-access or multi-user solution. See
 ## Release Readiness
 
 The project is pre-release; passing the API/UI CI suite does not certify a bootable appliance. The image now includes the first-boot hardware report utility and CI verifies its output contract and boot script syntax. Image-related PRs now attempt an OCI bootc image build using checksum-locked
-MediaMTX and Owncast releases with provenance metadata. This does **not**
-produce a UEFI installer or certify actual boot behavior. Hardware validation,
+MediaMTX and Owncast releases with provenance metadata. A separate UEFI smoke-test workflow now attempts to convert the OCI image to
+a disposable QCOW2 and boot it under QEMU with firstboot/reboot checks.
+The test disk is **not** published as an installer, and passing it does not
+certify physical hardware or release readiness. Hardware validation,
 security, and recovery testing remain release gates. See [docs/RELEASE_READINESS.md](docs/RELEASE_READINESS.md).
 
 ## Documentation

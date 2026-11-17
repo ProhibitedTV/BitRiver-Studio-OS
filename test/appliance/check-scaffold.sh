@@ -13,6 +13,9 @@ grep -Fq 'COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-
 grep -Fq '/usr/local/bin/bitriver-hw-report --output' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 
 echo 'Checking security configuration...'
+test -f deploy/image/rootfs-overlay/etc/ssh/sshd_config.d/50-bitriver.conf
+grep -Fq 'ln -s /var/lib/bitriver/data /data' deploy/image/Containerfile
+grep -Fq 'systemd-networkd.service sshd.service' deploy/image/Containerfile
 grep -Fq 'BITRIVER_HTTP_ADDR=127.0.0.1:8080' deploy/image/rootfs-overlay/etc/bitriver/bitriver.env
 grep -Fq -- '-operator-credentials-path' deploy/systemd/bitriver-control-api.service
 grep -Fq -- '-adapter-mode appliance' deploy/systemd/bitriver-control-api.service
@@ -21,6 +24,8 @@ grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/
 
 echo 'Checking appliance script syntax...'
 bash -n test/appliance/check-release-assets.sh
+bash -n test/appliance/build-qcow2.sh
+bash -n test/appliance/smoke-uefi-qcow2.sh
 while IFS= read -r -d '' script; do
   bash -n "${script}"
 done < <(find deploy/image/rootfs-overlay/usr/local/libexec/bitriver -name '*.sh' -print0)

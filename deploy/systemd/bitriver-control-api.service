@@ -1,4 +1,6 @@
 [Unit]
+StartLimitIntervalSec=120
+StartLimitBurst=6
 Description=BitRiver control API
 After=network-online.target bitriver-firstboot.service
 Requires=bitriver-firstboot.service
@@ -13,8 +15,6 @@ WorkingDirectory=/var/lib/bitriver
 ExecStart=/usr/local/bin/bitriverd -adapter-mode appliance -http-addr ${BITRIVER_HTTP_ADDR} -ui-dir ${BITRIVER_UI_DIR} -operator-credentials-path ${BITRIVER_OPERATOR_CREDENTIALS_PATH} -asset-library-dir ${BITRIVER_ASSET_LIBRARY_DIR} -setup-status-path ${BITRIVER_SETUP_STATUS_PATH} -initial-config-path ${BITRIVER_INITIAL_CONFIG_PATH} -health-summary-path ${BITRIVER_HEALTH_STATUS_PATH} -mediamtx-config-path ${BITRIVER_MEDIAMTX_CONFIG} -mediamtx-destinations-path ${BITRIVER_MEDIAMTX_DESTINATIONS_PATH}
 Restart=on-failure
 RestartSec=2
-StartLimitIntervalSec=120
-StartLimitBurst=6
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=true

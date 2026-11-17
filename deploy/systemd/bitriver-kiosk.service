@@ -1,4 +1,6 @@
 [Unit]
+StartLimitIntervalSec=120
+StartLimitBurst=4
 Description=BitRiver kiosk session
 After=bitriver-control-api.service bitriver-firstboot.service
 Requires=bitriver-control-api.service bitriver-firstboot.service
@@ -13,8 +15,6 @@ ExecCondition=/usr/local/libexec/bitriver/display-attached.sh
 ExecStart=/usr/local/libexec/bitriver/start-kiosk.sh
 Restart=always
 RestartSec=3
-StartLimitIntervalSec=120
-StartLimitBurst=4
 NoNewPrivileges=yes
 PAMName=login
 TTYPath=/dev/tty1
