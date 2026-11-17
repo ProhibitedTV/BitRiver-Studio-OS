@@ -5,13 +5,12 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
-	"errors"
+
+	"github.com/bitriver/studio-os/apps/control-api/internal/operatorcredentials"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +28,7 @@ type operatorSession struct {
 // generated from cryptographic randomness during firstboot (not user passwords).
 // The strong key is compared by digest, and raw credentials never enter logs.
 type OperatorAuth struct {
+	credentialsPath string
 	keyDigest [32]byte
 	mu        sync.Mutex
 	sessions  map[string]operatorSession
@@ -36,23 +36,32 @@ type OperatorAuth struct {
 }
 
 func NewOperatorAuth(credentialsPath string) (*OperatorAuth, error) {
-	content, err := os.ReadFile(credentialsPath)
+	digest, err := operatorcredentials.ReadDigest(credentialsPath)
 	if err != nil {
 		return nil, err
 	}
-	var credential struct {
-		ControlKeySHA256 string `json:"controlKeySha256"`
+	return &OperatorAuth{
+		credentialsPath: credentialsPath,
+		keyDigest:       digest,
+		sessions:        make(map[string]operatorSession),
+	}, nil
+}
+
+// refreshKey makes an offline rotation take effect on the next request.
+// Unreadable or malformed credentials fail closed and do not authorize access.
+func (auth *OperatorAuth) refreshKey() error {
+	digest, err := operatorcredentials.ReadDigest(auth.credentialsPath)
+	if err != nil {
+		return err
 	}
-	if err := json.Unmarshal(content, &credential); err != nil {
-		return nil, err
+	auth.mu.Lock()
+	defer auth.mu.Unlock()
+	if subtle.ConstantTimeCompare(digest[:], auth.keyDigest[:]) != 1 {
+		auth.keyDigest = digest
+		auth.sessions = make(map[string]operatorSession)
+		auth.failures = nil
 	}
-	digest, err := hex.DecodeString(credential.ControlKeySHA256)
-	if err != nil || len(digest) != sha256.Size {
-		return nil, errors.New("operator credentials missing a valid controlKeySha256; rerun firstboot")
-	}
-	auth := &OperatorAuth{sessions: make(map[string]operatorSession)}
-	copy(auth.keyDigest[:], digest)
-	return auth, nil
+	return nil
 }
 
 func randomKey() (string, error) {
@@ -105,6 +114,10 @@ func (auth *OperatorAuth) gate(next http.Handler) http.Handler {
 			return
 		}
 		writer.Header().Set("Cache-Control", "no-store")
+		if err := auth.refreshKey(); err != nil {
+			writeJSON(writer, http.StatusServiceUnavailable, map[string]string{"error": "operator credentials unavailable"})
+			return
+		}
 		session, _, ok := auth.session(request)
 		if !ok {
 			writeJSON(writer, http.StatusUnauthorized, map[string]string{"error": "operator login required"})
@@ -131,6 +144,10 @@ func (auth *OperatorAuth) handleLogin(writer http.ResponseWriter, request *http.
 	writer.Header().Set("Cache-Control", "no-store")
 	if !sameOrigin(request) {
 		writeJSON(writer, http.StatusForbidden, map[string]string{"error": "request origin rejected"})
+		return
+	}
+	if err := auth.refreshKey(); err != nil {
+		writeJSON(writer, http.StatusServiceUnavailable, map[string]string{"error": "operator credentials unavailable"})
 		return
 	}
 	var input struct {
@@ -202,6 +219,10 @@ func (auth *OperatorAuth) handleSession(writer http.ResponseWriter, request *htt
 		return
 	}
 	writer.Header().Set("Cache-Control", "no-store")
+	if err := auth.refreshKey(); err != nil {
+		writeJSON(writer, http.StatusServiceUnavailable, map[string]string{"error": "operator credentials unavailable"})
+		return
+	}
 	session, _, ok := auth.session(request)
 	if !ok || !sameOrigin(request) {
 		writeJSON(writer, http.StatusOK, map[string]bool{"enabled": true, "authenticated": false})

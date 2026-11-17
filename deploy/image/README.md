@@ -4,7 +4,7 @@
 
 ## Build Inputs
 
-- Go control API and `bitriver-hw-report` first-boot hardware probe from `apps/control-api`
+- Go control API, `bitriver-hw-report` hardware probe and local `bitriver-operator-key` recovery CLI from `apps/control-api`
 - Browser UI from `apps/control-ui`
 - systemd units from `deploy/systemd`
 - rootfs overlay assets from `deploy/image/rootfs-overlay`

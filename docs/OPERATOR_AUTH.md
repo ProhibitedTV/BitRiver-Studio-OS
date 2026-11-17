@@ -2,7 +2,7 @@
 
 The appliance control plane now requires a local operator session. This is a
 **first security layer**, not a claim that remote multi-user administration,
-TLS, key rotation or a production-ready first-boot claim flow are complete.
+TLS, unattended remote recovery or a production-ready first-boot claim flow are complete.
 
 ## Appliance boot
 
@@ -20,6 +20,33 @@ A valid existing key persists across reboot. Keep recovery notices private.
 
 The systemd control API service passes the credentials path and enables the
 appliance adapter. Startup fails if the key digest is missing or invalid.
+
+## Rotate a compromised operator key
+
+On the appliance's **trusted local shell**, run:
+
+    sudo /usr/local/bin/bitriver-operator-key rotate
+
+The command generates a fresh 256-bit random key, atomically replaces only the
+key digest in the existing credentials file, preserves the file's owner and
+private permissions, and prints the **new key once** to local standard output.
+Do not run it from CI logs, shared terminals, or session-recording software.
+Save the new key in a trusted password manager; it cannot be recovered from
+the stored digest.
+
+The old first-boot notice is deleted after successful rotation because it
+contains the revoked key. If cleanup fails, the command prints a warning;
+delete that obsolete notice manually. If the new key is lost, run the command
+locally again. This requires administrative access to the appliance.
+
+The running control API re-reads the digest for every authenticated request:
+existing sessions are revoked as soon as the new digest is observed; the
+previous key no longer permits login. A missing or corrupt credentials file
+causes the API to **fail closed** with HTTP 503 rather than falling back to
+the old key. A service restart is not required to activate the new key.
+
+This is **offline recovery**, not web-based password change, user claiming,
+or cloud account recovery. It is intended only for trusted local operators.
 
 ## Sign in and protected routes
 
@@ -61,7 +88,8 @@ explicit trust boundary before an official release.
 
 ## Remaining release blockers
 
-- Operator key rotation/revocation, re-claim flow, and full recovery UX.
+- Web-based key change, a secure first-boot claim flow, and full recovery UX.
+- Audit local key rotation on real hardware, including backup and file owner handling.
 - Production HTTPS certificate management and secure cookie policy across
   a trusted TLS termination boundary.
 - Session rate limits across restart and security audit of origin/Host policies.

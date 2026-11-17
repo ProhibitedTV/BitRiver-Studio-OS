@@ -155,7 +155,8 @@ These are the exact placeholder assets currently committed for the README and fu
 ## Operator Login (Pre-release)
 
 The appliance now gates its broadcast controls behind a local operator-key
-sign-in. First boot creates a random control key, and API actions require an
+sign-in. Offline key rotation and immediate session revocation are supported
+from a trusted local appliance shell. First boot creates a random control key, and API actions require an
 authenticated session with CSRF protection. The appliance binds to loopback
 until a TLS access path is available; the secure login is not yet an official
 remote-access or multi-user solution. See
