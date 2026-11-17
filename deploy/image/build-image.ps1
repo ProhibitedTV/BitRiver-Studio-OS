@@ -46,7 +46,46 @@ if ($baseDigest -notmatch '^quay\.io/fedora/fedora-bootc@sha256:[0-9a-f]{64}
   --file (Join-Path $PSScriptRoot "Containerfile") `
   --platform linux/amd64 `
   --build-arg "FEDORA_BOOTC_IMAGE=$baseDigest" `
-  --build-arg "BITRIVER_SOURCE_REV=$((& git -C $repoRoot rev-parse HEAD | Select-Object -First 1).Trim())" `
+  --build-arg "BITRIVER_SOURCE_REV=$sourceRevision" `
+  --build-arg "MEDIAMTX_TARBALL_URL=$($lock.mediamtx.url)" `
+  --build-arg "MEDIAMTX_SHA256=$($lock.mediamtx.sha256)" `
+  --build-arg "OWNCAST_ZIP_URL=$($lock.owncast.url)" `
+  --build-arg "OWNCAST_SHA256=$($lock.owncast.sha256)" `
+  --tag $ImageTag `
+  $repoRoot
+if ($LASTEXITCODE -ne 0) { throw "BitRiver bootc image build failed." }
+
+if (-not [string]::IsNullOrWhiteSpace($MetadataPath)) {
+  $imageId = (& $ContainerRuntime image inspect $ImageTag --format "{{.Id}}" | Select-Object -First 1).Trim()
+  if ($LASTEXITCODE -ne 0 -or -not $imageId) { throw "Could not inspect the built image." }
+  $record = [ordered]@{
+    imageTag = $ImageTag
+    sourceRevision = $sourceRevision
+    platform = $lock.targetPlatform
+    baseRef = $baseDigest
+    localImageId = $imageId
+    mediamtxVersion = $lock.mediamtx.version
+    mediamtxArchiveSha256 = $lock.mediamtx.sha256
+    owncastVersion = $lock.owncast.version
+    owncastArchiveSha256 = $lock.owncast.sha256
+    releaseReady = $false
+    note = "Build provenance only; no UEFI boot, rollback or hardware verification."
+  }
+  $metadataDir = Split-Path -Parent $MetadataPath
+  if ($metadataDir) { New-Item -ItemType Directory -Force -Path $metadataDir | Out-Null }
+  $record | ConvertTo-Json -Depth 5 | Set-Content -Path $MetadataPath -Encoding utf8
+}
+) {
+  throw "A trusted Fedora bootc manifest digest is required."
+}
+Write-Host "Immutable Fedora base: $baseDigest"
+$sourceRevision = (& git -C $repoRoot rev-parse HEAD | Select-Object -First 1).Trim()
+if ($LASTEXITCODE -ne 0 -or $sourceRevision -notmatch '^[a-f0-9]{40}
+
+& $ContainerRuntime build `
+  --file (Join-Path $PSScriptRoot "Containerfile") `
+  --platform linux/amd64 `
+  --build-arg "FEDORA_BOOTC_IMAGE=$baseDigest" `
   --build-arg "MEDIAMTX_TARBALL_URL=$($lock.mediamtx.url)" `
   --build-arg "MEDIAMTX_SHA256=$($lock.mediamtx.sha256)" `
   --build-arg "OWNCAST_ZIP_URL=$($lock.owncast.url)" `
@@ -75,9 +114,8 @@ if (-not [string]::IsNullOrWhiteSpace($MetadataPath)) {
   $record | ConvertTo-Json -Depth 5 | Set-Content -Path $MetadataPath -Encoding utf8
 }
 ) {
-  throw "A trusted Fedora bootc manifest digest is required."
+  throw "Could not identify the checked out source revision."
 }
-Write-Host "Immutable Fedora base: $baseDigest"
 
 & $ContainerRuntime build `
   --file (Join-Path $PSScriptRoot "Containerfile") `
