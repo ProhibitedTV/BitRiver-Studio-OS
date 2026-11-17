@@ -103,7 +103,7 @@ fi
 # Pre-release migration: older bootstrap records have a password crypt hash
 # but no control-key digest. Generate a NEW strong control key rather than
 # storing or attempting to derive a plaintext password from the crypt hash.
-if ! jq -e '.controlKeySha256 | type == "string" and length == 64' "${credentials_path}" >/dev/null 2>&1; then
+if ! jq -e '.controlKeySha256 | (type == "string" and length == 64)' "${credentials_path}" >/dev/null 2>&1; then
   control_key="$(openssl rand -hex 32)"
   control_key_sha256="$(printf %s "${control_key}" | sha256sum | cut -d " " -f 1)"
   jq --arg digest "${control_key_sha256}" '.controlKeySha256 = $digest' "${credentials_path}" >"${credentials_path}.new"
@@ -129,7 +129,7 @@ issues=()
 if jq -e '.displayAttached == true' "${hardware_report_path}" >/dev/null; then
   display_mode="kiosk"
 else
-  issues+=("no local display detected; LAN control is available but kiosk and OBS remain skipped until HDMI or a dummy plug is attached")
+  issues+=("no local display detected; use a secure local tunnel for control, and attach HDMI for kiosk and OBS")
 fi
 
 if [[ -z "${primary_video}" ]]; then
