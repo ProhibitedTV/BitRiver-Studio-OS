@@ -74,14 +74,26 @@ func (store *Store) CurrentConfig() model.ControlConfig {
 }
 
 func (store *Store) UpdateDraft(config model.ControlConfig) (model.ConfigEnvelope, error) {
+	return store.UpdateDraftIfGeneration(config, "")
+}
+
+// UpdateDraftIfGeneration prevents a stale client from silently overwriting
+// a draft saved by another operator. The generation check and write share
+// one mutex; clients supplying an expected generation receive HTTP 409 on
+// conflicts. Empty expectedGeneration preserves existing API callers.
+func (store *Store) UpdateDraftIfGeneration(config model.ControlConfig, expectedGeneration string) (model.ConfigEnvelope, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
 
+	if expectedGeneration != "" && store.draft.Generation != expectedGeneration {
+		return model.ConfigEnvelope{}, model.NewConflictError("draft settings changed; reload before saving")
+	}
 	now := time.Now().UTC()
-	store.draft = model.NewDocument("draft-"+now.Format("20060102-150405"), now, config)
-	if err := store.persistUnlocked(store.paths.DraftPath, store.draft); err != nil {
+	next := model.NewDocument("draft-"+now.Format("20060102-150405.000000000"), now, config)
+	if err := store.persistUnlocked(store.paths.DraftPath, next); err != nil {
 		return model.ConfigEnvelope{}, err
 	}
+	store.draft = next
 
 	return model.EnvelopeFromDocument(store.draft), nil
 }
@@ -93,8 +105,18 @@ func (store *Store) ValidateDraft() model.ValidateConfigResponse {
 }
 
 func (store *Store) ApplyDraft(beforeCommit func(model.ConfigDocument) error) (model.OperationResponse, *model.ValidateConfigResponse, error) {
+	return store.ApplyDraftIfGeneration("", beforeCommit)
+}
+
+// ApplyDraftIfGeneration verifies that the validated draft is still the one
+// the operator reviewed, before any media router side effects occur.
+func (store *Store) ApplyDraftIfGeneration(expectedGeneration string, beforeCommit func(model.ConfigDocument) error) (model.OperationResponse, *model.ValidateConfigResponse, error) {
 	store.mu.Lock()
 	defer store.mu.Unlock()
+
+	if expectedGeneration != "" && store.draft.Generation != expectedGeneration {
+		return model.OperationResponse{}, nil, model.NewConflictError("draft settings changed after validation; reload and review again")
+	}
 
 	validation := ValidateConfig(store.draft.ControlConfig)
 	if !validation.Valid {
@@ -102,8 +124,8 @@ func (store *Store) ApplyDraft(beforeCommit func(model.ConfigDocument) error) (m
 	}
 
 	now := time.Now().UTC()
-	nextActive := model.NewDocument("gen-"+now.Format("20060102-150405"), now, store.draft.ControlConfig)
-	nextDraft := model.NewDocument("draft-next", now, nextActive.ControlConfig)
+	nextActive := model.NewDocument("gen-"+now.Format("20060102-150405.000000000"), now, store.draft.ControlConfig)
+	nextDraft := model.NewDocument("draft-"+now.Format("20060102-150405.000000000"), now, nextActive.ControlConfig)
 
 	if beforeCommit != nil {
 		if err := beforeCommit(nextActive); err != nil {

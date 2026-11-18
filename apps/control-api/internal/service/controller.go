@@ -455,7 +455,11 @@ func (controller *Controller) DraftConfig() model.ConfigEnvelope {
 }
 
 func (controller *Controller) UpdateDraft(config model.ControlConfig) (model.ConfigEnvelope, error) {
-	return controller.configStore.UpdateDraft(config)
+	return controller.UpdateDraftIfGeneration(config, "")
+}
+
+func (controller *Controller) UpdateDraftIfGeneration(config model.ControlConfig, expectedGeneration string) (model.ConfigEnvelope, error) {
+	return controller.configStore.UpdateDraftIfGeneration(config, expectedGeneration)
 }
 
 func (controller *Controller) ValidateDraft() model.ValidateConfigResponse {
@@ -463,17 +467,56 @@ func (controller *Controller) ValidateDraft() model.ValidateConfigResponse {
 }
 
 func (controller *Controller) ApplyDraft(ctx context.Context) (model.OperationResponse, *model.ValidateConfigResponse, error) {
-	response, validation, err := controller.configStore.ApplyDraft(func(document model.ConfigDocument) error {
+	return controller.ApplyDraftIfGeneration(ctx, "")
+}
+
+func (controller *Controller) ApplyDraftIfGeneration(ctx context.Context, expectedGeneration string) (model.OperationResponse, *model.ValidateConfigResponse, error) {
+	response, validation, err := controller.configStore.ApplyDraftIfGeneration(expectedGeneration, func(document model.ConfigDocument) error {
+		// Applying MediaMTX settings can restart the router, dropping program
+		// output or recordings. Re-check actual OBS state on the server, even
+		// if a client hid the Apply button. Fail closed if OBS is unavailable.
+		obs, err := controller.obsSnapshot(ctx)
+		if err != nil {
+			return model.NewUnavailableError("OBS", err)
+		}
+		if obs.StreamActive || obs.RecordingActive {
+			return model.NewConflictError("stop streaming and recording before applying settings")
+		}
 		if controller.mediaMTX == nil {
 			return nil
 		}
-		_, err := controller.mediaMTX.ApplyConfig(ctx, document.Generation, document.ControlConfig)
+		// MediaMTX may have contributors or viewers even when OBS itself is
+		// stopped. Applying the router configuration can disconnect those
+		// sessions, so also check the live router state before restarting it.
+		media, err := controller.mediaMTX.Snapshot(ctx)
+		if err != nil {
+			return model.NewUnavailableError("MediaMTX", err)
+		}
+		if mediaRouterHasActiveSessions(media) {
+			return model.NewConflictError("stop active MediaMTX publishers and readers before applying settings")
+		}
+		_, err = controller.mediaMTX.ApplyConfig(ctx, document.Generation, document.ControlConfig)
 		return err
 	})
 	if err == nil && validation == nil {
 		controller.publishSnapshotEvent(ctx, "settings.applied")
 	}
 	return response, validation, err
+}
+
+// mediaRouterHasActiveSessions errs on the side of not tearing down an
+// active contributor or viewer. MediaMTX paths may exist when nobody is
+// broadcasting, so empty/unready paths do not block configuration recovery.
+func mediaRouterHasActiveSessions(snapshot adapters.MediaMTXSnapshot) bool {
+	if len(snapshot.Sessions) > 0 {
+		return true
+	}
+	for _, path := range snapshot.Paths {
+		if path.Ready && (path.Publisher || path.Readers > 0) {
+			return true
+		}
+	}
+	return false
 }
 
 func (controller *Controller) UpdateStatus(context.Context) model.UpdateStatus {

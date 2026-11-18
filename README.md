@@ -22,6 +22,27 @@ previews in the local Asset Studio. No GitHub access is required on first boot;
 the full upstream scene catalog is optional. These provide OBS Browser Sources,
 not an automatically configured OBS scene collection.
 
+## BitRiver creator ecosystem
+
+Studio OS can fan out its program output over RTMP/SRT. The first
+[BitRiver-Live integration](docs/ECOSYSTEM_INTEGRATION.md) uses the **existing
+BitRiver-Live creator RTMP ingest contract**, with an optional, user-controlled
+stream-key file stored outside the published settings JSON. No login to a
+BitRiver-hosted service is required, and no private key or personal service
+URL is baked into the image.
+
+A **Connect BitRiver-Live** panel in the Studio dashboard imports a
+key-free creator profile and stages a disabled RTMP destination. It validates
+the draft, requiring an explicit apply when off-air; stream keys are still
+installed locally and outputs enabled separately.
+
+The larger goal connects self-hosted BitRiver-Live streams, curated
+[OBS Scene Assets](docs/CREATOR_ASSETS.md), user-approved media/AI/radio
+sources, and familiar OBS/Discord/Steam workflows. Twitch, YouTube, Rumble,
+Kick and other providers remain custom RTMP destinations until each
+integration is explicitly verified; this is **not** automatic account linking
+or platform certification.
+
 ## Key Capabilities
 
 - Boots like an appliance, not a workstation.

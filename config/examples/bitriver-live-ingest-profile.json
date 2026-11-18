@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "bitriver.studio.ingest/v1",
+  "provider": "bitriver-live",
+  "channelId": "0123456789abcdef0123456789abcdef",
+  "rtmpServer": "rtmp://ingest.example.test:1935/live",
+  "viewerUrl": "https://watch.example.test/viewer/channel"
+}

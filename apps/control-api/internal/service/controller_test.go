@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"path/filepath"
@@ -145,5 +146,74 @@ func TestDefaultUpdateStatusUsesVersion(t *testing.T) {
 	status := model.DefaultUpdateStatus(time.Unix(0, 0).UTC(), "test-version")
 	if status.CurrentVersion != "test-version" {
 		t.Fatalf("unexpected current version: %s", status.CurrentVersion)
+	}
+}
+
+func TestApplyDraftRejectsActiveBroadcastAndRecording(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name string
+		start func(*Controller, context.Context) (model.OperationResponse, error)
+		stop func(*Controller, context.Context) (model.OperationResponse, error)
+	}{
+		{"streaming", (*Controller).StartStream, (*Controller).StopStream},
+		{"recording", (*Controller).StartRecording, (*Controller).StopRecording},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			controller := newTestController(t)
+			original := controller.ActiveConfig()
+			config := original.Config
+			config.System.Name = "new-show-name"
+			if _, err := controller.UpdateDraft(config); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := tc.start(controller, ctx); err != nil {
+				t.Fatalf("activate OBS: %v", err)
+			}
+			_, validation, err := controller.ApplyDraft(ctx)
+			if validation != nil {
+				t.Fatalf("expected conflict, got validation %+v", validation)
+			}
+			var apiErr *model.APIError
+			if !errors.As(err, &apiErr) || apiErr.Status != 409 {
+				t.Fatalf("expected HTTP 409 conflict while %s, got %v", tc.name, err)
+			}
+			if controller.ActiveConfig().Generation != original.Generation {
+				t.Fatal("rejected settings apply changed active generation")
+			}
+			if controller.DraftConfig().Config.System.Name != "new-show-name" {
+				t.Fatal("rejected settings apply discarded the draft")
+			}
+			if _, err := tc.stop(controller, ctx); err != nil {
+				t.Fatalf("deactivate OBS: %v", err)
+			}
+			_, validation, err = controller.ApplyDraft(ctx)
+			if err != nil || validation != nil {
+				t.Fatalf("expected apply after OBS stops: validation=%+v err=%v", validation, err)
+			}
+			if controller.ActiveConfig().Config.System.Name != "new-show-name" {
+				t.Fatal("off-air apply did not promote draft")
+			}
+		})
+	}
+}
+
+func TestApplyDraftFailsClosedWhenOBSUnavailable(t *testing.T) {
+	t.Parallel()
+	controller := newTestController(t)
+	initial := controller.ActiveConfig().Generation
+	controller.obs = nil // an unreachable OBS adapter must not permit a router restart
+	_, validation, err := controller.ApplyDraft(context.Background())
+	if validation != nil {
+		t.Fatalf("unexpected config validation error: %+v", validation)
+	}
+	var apiErr *model.APIError
+	if !errors.As(err, &apiErr) || apiErr.Status != 503 {
+		t.Fatalf("expected OBS-unavailable 503, got %v", err)
+	}
+	if controller.ActiveConfig().Generation != initial {
+		t.Fatal("OBS-unavailable apply altered active settings")
 	}
 }

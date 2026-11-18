@@ -25,6 +25,9 @@ grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/
 echo 'Checking offline OBS starter scene pack...'
 python3 test/creator-assets/check-starter-pack.py
 
+echo 'Checking BitRiver Live publish-profile integration...'
+bash test/ecosystem/check-integration.sh
+
 echo 'Checking visual identity assets across README, UI and OS image...'
 bash test/branding/check-branding.sh
 

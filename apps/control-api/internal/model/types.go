@@ -326,11 +326,12 @@ type ConfigOwncast struct {
 }
 
 type ConfigMediaDestination struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Protocol  string `json:"protocol"`
-	TargetURL string `json:"targetUrl"`
-	Enabled   bool   `json:"enabled"`
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Protocol      string `json:"protocol"`
+	TargetURL     string `json:"targetUrl"`
+	StreamKeyFile string `json:"streamKeyFile,omitempty"`
+	Enabled       bool   `json:"enabled"`
 }
 
 type ConfigMediaRouter struct {

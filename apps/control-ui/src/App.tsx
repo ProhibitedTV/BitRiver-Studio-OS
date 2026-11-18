@@ -1,5 +1,6 @@
 import { StatusBadge } from "./components/StatusBadge";
 import { CreatorAssets } from "./components/CreatorAssets";
+import { LiveDestinationSetup } from "./components/LiveDestinationSetup";
 import { useDashboard } from "./hooks/useDashboard";
 
 function formatTimestamp(value: string | null) {
@@ -220,6 +221,13 @@ export function App() {
         </section>
 
         <CreatorAssets />
+
+        <LiveDestinationSetup
+          onAir={streamLive}
+          recording={recording}
+          activeDestinations={dashboard.activeConfig?.config.mediaRouter.publishDestinations ?? []}
+          onApplied={dashboard.refresh}
+        />
 
         <section className="panel panel--wide">
           <div className="panel__header">
