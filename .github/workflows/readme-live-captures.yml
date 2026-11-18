@@ -8,6 +8,9 @@ on:
       - ".github/workflows/readme-live-captures.yml"
       - "test/appliance/capture-qemu-ui.sh"
       - "test/appliance/capture-qemu-ui.mjs"
+      - "apps/control-ui/**"
+      - "docs/assets/bitriver-studio-*.svg"
+      - "deploy/image/rootfs-overlay/usr/local/share/bitriver/branding/**"
   workflow_dispatch:
 
 permissions:

@@ -197,6 +197,20 @@ export interface RecordingSummary {
 
 export type StorageSummary = RecordingSummary;
 
+export interface GPUDevice {
+  pciAddress: string;
+  vendor: "amd" | "intel" | "nvidia" | "other";
+  vendorId: string;
+  deviceId: string;
+  kernelDriver: string;
+}
+
+export interface NetworkAdapter {
+  name: string;
+  wireless: boolean;
+  kernelDriver: string;
+}
+
 export interface HardwareReport {
   detectedAt: string;
   architecture: string;
@@ -204,6 +218,10 @@ export interface HardwareReport {
   logicalCores: number;
   memoryMiB: number;
   displayAttached: boolean;
+  bootFirmware: "uefi" | "bios" | "unknown";
+  gpus: GPUDevice[];
+  networkAdapters: NetworkAdapter[];
+  compatibilityNotes: string[];
   videoDevices: string[];
   audioCaptureDevices: string[];
   networkInterfaces: string[];

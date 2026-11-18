@@ -29,6 +29,12 @@ try {
   // Capture the *unauthenticated* live sign-in page first, not a mock-up.
   await page.goto(base, { waitUntil: "domcontentloaded", timeout: 45000 });
   await page.getByRole("heading", { name: "Operator sign in" }).waitFor({ timeout: 45000 });
+  const loginBrand = page.locator("img.brand-lockup--login");
+  await loginBrand.waitFor({ timeout: 15000 });
+  await page.waitForFunction(() => {
+    const img = document.querySelector("img.brand-lockup--login");
+    return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+  }, undefined, { timeout: 15000 });
   await page.screenshot({
     path: path.join(output, "operator-login.png"),
     animations: "disabled"
@@ -39,6 +45,12 @@ try {
   await page.locator("#operator-key").fill(key);
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.locator(".program-card__screen").waitFor({ timeout: 45000 });
+  const dashboardBrand = page.locator("img.brand-lockup--dashboard");
+  await dashboardBrand.waitFor({ timeout: 15000 });
+  await page.waitForFunction(() => {
+    const img = document.querySelector("img.brand-lockup--dashboard");
+    return img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0;
+  }, undefined, { timeout: 15000 });
   await page.getByText("Program Output", { exact: true }).waitFor({ timeout: 45000 });
   await page.waitForTimeout(1500);
   // The API can be healthy while OBS is unconnected on a headless guest.

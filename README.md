@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — river signal emblem and wordmark" width="920">
+  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — flowing B emblem and studio wordmark" width="920">
 </p>
 
 # BitRiver Studio OS
@@ -17,6 +17,8 @@ BitRiver Studio OS is a bootable, self-hosted broadcast appliance that turns a s
 General-purpose streaming rigs are powerful, but they are also the source of most avoidable show-day anxiety. Desktop OS updates land at the wrong time. USB devices reorder themselves. Audio routing drifts. Remote control turns into a remote desktop session. What starts as a flexible creator setup becomes an unreliable pile of software held together by muscle memory.
 
 BitRiver Studio OS exists to package the useful parts of that stack into something narrower and safer: immutable image updates, direct boot into the product, OBS for real production control, MediaMTX for ingest and routing, and a browser-first control plane instead of a desktop workflow.
+
+Brand assets and usage guidelines: [BitRiver visual identity](docs/BRAND_IDENTITY.md). The same mark appears in the bundled local control UI, operator sign-in, browser tab and OS image assets.
 
 ## Real OS screenshots
 
@@ -48,7 +50,7 @@ These are **actual screenshots of BitRiver's control UI served by a booted Fedor
 
 Independent creators deserve something between a fragile gaming PC and enterprise broadcast gear. BitRiver is aimed at the point where the workflow is serious enough to need predictable operations, but still small enough that the operator wants one box, one browser UI, and one system they can understand.
 
-The first deliverable is a dependable broadcast appliance for independent creators; the broader goal is a flexible creator OS that can also run on everyday desktop and gaming computers.
+The goal is not to become a bloated media suite. The goal is to become the open broadcast appliance for independent creators.
 
 ## How It Works
 
@@ -129,6 +131,27 @@ Useful local commands:
 - `make openapi` regenerates the shared API contract from the Go source.
 - `make build` builds the API and UI artifacts that the appliance image consumes.
 
+## Screenshots And Motion
+
+These are the exact placeholder assets currently committed for the README and future demo captures:
+
+| View | File |
+| --- | --- |
+| Dashboard overview | `docs/assets/mockups/dashboard-overview.svg` |
+| Scene switching | `docs/assets/mockups/scenes-switcher.svg` |
+| Audio panel | `docs/assets/mockups/audio-panel.svg` |
+| Output destinations | `docs/assets/mockups/output-destinations.svg` |
+| Recordings panel | `docs/assets/mockups/recordings-panel.svg` |
+| Settings panel | `docs/assets/mockups/settings-panel.svg` |
+| Demo motion placeholder | `docs/assets/mockups/bitriver-demo-loop.svg` |
+
+| Asset | Placeholder |
+| --- | --- |
+| Dashboard | ![Dashboard placeholder](docs/assets/mockups/dashboard-overview.svg) |
+| Scenes | ![Scenes placeholder](docs/assets/mockups/scenes-switcher.svg) |
+| Outputs | ![Outputs placeholder](docs/assets/mockups/output-destinations.svg) |
+| Demo Loop | ![Demo loop placeholder](docs/assets/mockups/bitriver-demo-loop.svg) |
+
 ## Interface concepts (not running-system screenshots)
 
 For earlier design direction, the repository also retains
@@ -139,7 +162,7 @@ the running QEMU appliance.
 
 ## Why This Is Different
 
-- It prioritizes reliable Broadcast Mode first while developing optional general-purpose Creator Desktop and Gaming Mode; no specialized hardware purchase should be required.
+- It is opinionated on purpose. BitRiver is not trying to be a Linux distribution for creators.
 - It treats operational safety as a product feature, not a future polish pass.
 - It keeps the browser UI as the primary operator surface instead of assuming remote desktop forever.
 - It is built from proven media components, but the product model is appliance-first.
@@ -165,7 +188,7 @@ the running QEMU appliance.
 
 - Multi-destination publishing.
 - Stronger remote guest workflows.
-- Optional creator/gaming workflows without undermining dependable live production.
+- Better automation and show presets without turning BitRiver into a general-purpose media platform.
 
 ## Operator Login (Pre-release)
 
@@ -214,3 +237,14 @@ security, and recovery testing remain release gates. See [docs/RELEASE_READINESS
 ## License
 
 [MIT](LICENSE)
+
+## Ordinary PCs and gaming rigs
+
+BitRiver targets standard x86_64 desktops, gaming PCs, mini PCs and laptops,
+not only dedicated streaming appliances. The hardware-inventory work records
+**PCI GPU vendor/loaded driver, boot firmware mode, and wireless indicators**
+in the local probe. This is inventory, **not** proof that hardware encoding,
+OBS, Wi-Fi, or games work. Open-source Mesa and Fedora firmware are included;
+no proprietary NVIDIA driver, Steam, or other external app is silently installed.
+
+See [hardware compatibility plans](docs/HARDWARE_COMPATIBILITY.md).

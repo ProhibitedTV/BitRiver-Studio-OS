@@ -640,6 +640,32 @@ code {
   .operator-session .button { width: auto; }
 }
 
+/* Shared brand assets live in public/branding. Keep their source identical
+   to docs/assets and the immutable image copy (see test/branding). */
+.brand-lockup {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+.brand-lockup--dashboard {
+  width: clamp(210px, 29vw, 290px);
+  margin: -0.35rem 0 0.75rem -0.45rem;
+}
+.brand-lockup--login {
+  width: min(100%, 330px);
+  margin: -0.45rem 0 0.35rem -0.4rem;
+}
+.operator-session__mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  flex: none;
+}
+@media (max-width: 760px) {
+  .brand-lockup--dashboard { width: 240px; }
+}
 /* Headless machines can serve the control plane even while OBS is offline.
    Show explicit degraded state without mistaking unavailable for stopped. */
 .status-notice {

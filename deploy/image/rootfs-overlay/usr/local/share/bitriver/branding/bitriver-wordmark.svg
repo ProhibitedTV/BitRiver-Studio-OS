@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="740" height="156" viewBox="0 0 740 156" role="img" aria-labelledby="title description"><title id="title">BitRiver Studio OS wordmark</title><desc id="description">BitRiver Studio OS flowing B icon with illuminated wordmark</desc><defs>
+  <linearGradient id="river-bg" x1="0" x2="1" y1="0" y2="1">
+    <stop offset="0" stop-color="#11323E"/><stop offset="0.55" stop-color="#081B26"/><stop offset="1" stop-color="#05121B"/>
+  </linearGradient>
+  <linearGradient id="river-flow" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#E1FAFF"/><stop offset="0.4" stop-color="#61D6F4"/><stop offset="1" stop-color="#39C7A9"/>
+  </linearGradient>
+  <linearGradient id="river-wake" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#5CDCF3"/><stop offset="1" stop-color="#48D5B9"/>
+  </linearGradient>
+</defs><g transform="translate(10 10) scale(.53)"><rect width="256" height="256" rx="55" fill="url(#river-bg)"/>
+<rect x="9" y="9" width="238" height="238" rx="47" fill="none" stroke="#285461" stroke-width="2"/>
+<path d="M73 58V205" fill="none" stroke="#DFF9FF" stroke-width="19" stroke-linecap="round"/>
+<path d="M75 68H136C167 68 184 83 184 106C184 128 164 141 135 141H75" fill="none" stroke="url(#river-flow)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 141H141C173 141 193 157 193 180C193 204 174 215 140 215H75" fill="none" stroke="url(#river-flow)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M104 106C119 97 137 116 154 106" stroke="#62D6EB" stroke-width="6" opacity=".88" fill="none" stroke-linecap="round"/>
+<path d="M104 180C122 170 136 191 158 179" stroke="#49D6B5" stroke-width="6" opacity=".88" fill="none" stroke-linecap="round"/>
+<circle cx="210" cy="56" r="7" fill="#4ED9B8"/></g>
+<g font-family="Segoe UI, DejaVu Sans, Arial, sans-serif">
+  <text x="173" y="87" font-weight="800" font-size="73" letter-spacing="-3" fill="#F2FAFE">BitRiver</text>
+  <text x="179" y="125" font-weight="700" font-size="24" letter-spacing="9" fill="#77D9E8">STUDIO OS</text>
+</g></svg>
