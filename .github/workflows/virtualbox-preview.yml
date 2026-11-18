@@ -1,0 +1,137 @@
+name: virtualbox-preview
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/virtualbox-preview.yml"
+      - "test/appliance/**"
+      - "docs/VIRTUALBOX_PREVIEW.md"
+      - "deploy/image/**"
+      - "deploy/systemd/**"
+  push:
+    branches: [main]
+    # Only merging this workflow initiates the first preview publication.
+    paths:
+      - ".github/workflows/virtualbox-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install UEFI virtualization and ZIP tooling
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            podman qemu-system-x86 qemu-utils ovmf zip unzip
+
+      - name: Build complete pinned Fedora bootc OS image
+        shell: pwsh
+        run: ./deploy/image/build-image.ps1 -ContainerRuntime docker -ImageTag bitriver/studio-os:ci -MetadataPath artifacts/image-build-provenance.json
+
+      - name: Prepare inventory folder
+        run: mkdir -p artifacts/vm/sbom
+
+      - name: Scan assembled OCI image with pinned Syft
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          image: bitriver/studio-os:ci
+          syft-version: v1.57.2
+          format: spdx-json
+          output-file: artifacts/vm/sbom/appliance-image.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          dependency-snapshot: false
+
+      - name: Validate OCI SBOM
+        run: bash test/appliance/validate-oci-sbom.sh
+
+      - name: Generate disposable CI-only SSH identity
+        run: |
+          mkdir -p artifacts/vm
+          ssh-keygen -t ed25519 -N '' -C bitriver-ci-disposable -f artifacts/vm/id_ed25519
+          chmod 0600 artifacts/vm/id_ed25519
+
+      - name: Build throwaway CI QCOW2 (not for publishing)
+        run: bash test/appliance/build-qcow2.sh
+
+      - name: Verify actual OVMF firstboot, service health, and reboot persistence
+        run: bash test/appliance/smoke-uefi-qcow2.sh
+
+      - name: Build separate VirtualBox preview VDI and ZIP
+        run: bash test/appliance/build-virtualbox-preview.sh
+
+      - name: Validate distributable assets and ZIP structure
+        run: |
+          set -euo pipefail
+          cd artifacts/virtualbox/publish
+          sha256sum -c ASSETS-SHA256SUMS
+          test -s ZIP-SHA256SUMS
+          test -s VDI-SHA256SUMS
+          test -s README-VIRTUALBOX.txt
+          jq -e '.releaseReady == false and .diskType == "VirtualBox native VDI"' preview-provenance.json
+          if test -f BitRiver-Studio-OS-VirtualBox-Preview-1.zip; then
+            unzip -t BitRiver-Studio-OS-VirtualBox-Preview-1.zip | tail -4
+          else
+            test -s BitRiver-Studio-OS-VirtualBox-Preview-1.zip.part-00
+          fi
+
+      - name: Upload preview download candidate (not production release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-virtualbox-preview-1-download
+          path: artifacts/virtualbox/publish/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Upload non-release CI evidence (no VM SSH keys or disks)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-virtualbox-build-evidence
+          path: |
+            artifacts/image-build-provenance.json
+            artifacts/vm/sbom/
+            artifacts/vm/diagnostics/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  publish-preview:
+    needs: build-and-test
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: bitriver-virtualbox-preview-1-download
+          path: preview-download
+      - name: Publish one experimental GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v0.0.0-virtualbox-preview.1
+        run: |
+          set -euo pipefail
+          cd preview-download
+          sha256sum -c ASSETS-SHA256SUMS
+          test -s ZIP-SHA256SUMS
+          test -s VDI-SHA256SUMS
+          jq -e '.releaseReady == false' preview-provenance.json
+          if gh release view "${TAG}" -R "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "Preview tag already published; refusing to replace its assets."
+            exit 0
+          fi
+          gh release create "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "BitRiver Studio OS — VirtualBox Technical Preview 1 (NOT PRODUCTION)" \
+            --prerelease --notes-file ../docs/VIRTUALBOX_PREVIEW.md \
+            ./*
