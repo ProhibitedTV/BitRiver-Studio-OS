@@ -455,7 +455,11 @@ func (controller *Controller) DraftConfig() model.ConfigEnvelope {
 }
 
 func (controller *Controller) UpdateDraft(config model.ControlConfig) (model.ConfigEnvelope, error) {
-	return controller.configStore.UpdateDraft(config)
+	return controller.UpdateDraftIfGeneration(config, "")
+}
+
+func (controller *Controller) UpdateDraftIfGeneration(config model.ControlConfig, expectedGeneration string) (model.ConfigEnvelope, error) {
+	return controller.configStore.UpdateDraftIfGeneration(config, expectedGeneration)
 }
 
 func (controller *Controller) ValidateDraft() model.ValidateConfigResponse {
@@ -463,7 +467,11 @@ func (controller *Controller) ValidateDraft() model.ValidateConfigResponse {
 }
 
 func (controller *Controller) ApplyDraft(ctx context.Context) (model.OperationResponse, *model.ValidateConfigResponse, error) {
-	response, validation, err := controller.configStore.ApplyDraft(func(document model.ConfigDocument) error {
+	return controller.ApplyDraftIfGeneration(ctx, "")
+}
+
+func (controller *Controller) ApplyDraftIfGeneration(ctx context.Context, expectedGeneration string) (model.OperationResponse, *model.ValidateConfigResponse, error) {
+	response, validation, err := controller.configStore.ApplyDraftIfGeneration(expectedGeneration, func(document model.ConfigDocument) error {
 		// Applying MediaMTX settings can restart the router, dropping program
 		// output or recordings. Re-check actual OBS state on the server, even
 		// if a client hid the Apply button. Fail closed if OBS is unavailable.

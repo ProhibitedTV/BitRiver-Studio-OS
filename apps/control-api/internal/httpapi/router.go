@@ -393,17 +393,45 @@ func (handler *Handler) handleActiveSettings(writer http.ResponseWriter, request
 	writeJSON(writer, http.StatusOK, handler.controller.ActiveConfig())
 }
 
+// draftIfMatch accepts a single strong ETag-style generation. Older callers
+// without If-Match remain supported, but the Studio OS setup wizard sends
+// this precondition to avoid overwriting concurrent operator edits.
+func draftIfMatch(request *http.Request) (string, error) {
+	values := request.Header.Values("If-Match")
+	if len(values) == 0 {
+		return "", nil
+	}
+	if len(values) != 1 {
+		return "", model.NewInvalidError("expected exactly one If-Match generation", nil)
+	}
+	value := values[0]
+	if len(value) < 3 || !strings.HasPrefix(value, "\"") || !strings.HasSuffix(value, "\"") {
+		return "", model.NewInvalidError("If-Match must be a quoted draft generation", nil)
+	}
+	generation := value[1 : len(value)-1]
+	if len(generation) > 96 || !strings.HasPrefix(generation, "draft-") ||
+		strings.ContainsAny(generation, "\"\\ ,\r\n\t") {
+		return "", model.NewInvalidError("invalid draft generation in If-Match", nil)
+	}
+	return generation, nil
+}
+
 func (handler *Handler) handleDraftSettings(writer http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case http.MethodGet:
 		writeJSON(writer, http.StatusOK, handler.controller.DraftConfig())
 	case http.MethodPut:
+		expected, err := draftIfMatch(request)
+		if err != nil {
+			writeError(writer, err)
+			return
+		}
 		var config model.ControlConfig
 		if err := decodeJSON(request, &config); err != nil {
 			writeError(writer, model.NewInvalidError("request body must be a valid settings document", map[string]string{"body": err.Error()}))
 			return
 		}
-		payload, err := handler.controller.UpdateDraft(config)
+		payload, err := handler.controller.UpdateDraftIfGeneration(config, expected)
 		if err != nil {
 			writeError(writer, err)
 			return
@@ -427,7 +455,12 @@ func (handler *Handler) handleApplySettings(writer http.ResponseWriter, request 
 		methodNotAllowed(writer)
 		return
 	}
-	payload, validation, err := handler.controller.ApplyDraft(request.Context())
+	expected, err := draftIfMatch(request)
+	if err != nil {
+		writeError(writer, err)
+		return
+	}
+	payload, validation, err := handler.controller.ApplyDraftIfGeneration(request.Context(), expected)
 	if err != nil {
 		writeError(writer, err)
 		return

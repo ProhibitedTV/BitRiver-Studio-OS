@@ -75,6 +75,18 @@ unavailable. The status check does not itself prevent another operator from
 starting OBS during a narrow race; it does not yet solve concurrent draft
 editing or FFmpeg argv secret exposure.
 
+### Concurrent operator safety
+
+The browser wizard sends the draft generation as an `If-Match` ETag on
+`PUT /api/v1/settings/draft` and
+`POST /api/v1/settings/apply`. The server verifies that generation while
+holding the settings-store mutex, returning HTTP 409 if another operator
+changed or applied the draft. Generation identifiers now include nanoseconds
+rather than second-only timestamps, avoiding collisions during rapid edits.
+Older API clients can omit this optional precondition for compatibility, but
+are not protected against stale full-document overwrites; new clients must
+send `If-Match: "draft-..."`.
+
 ### Prepare a destination on Studio OS
 
 After downloading the JSON profile from a Live channel you own:

@@ -96,9 +96,10 @@ export function getDraftConfig() {
   return request<ConfigEnvelope>(controlApiRoutes.settingsDraft);
 }
 
-export function updateDraftConfig(config: ControlConfig) {
+export function updateDraftConfig(config: ControlConfig, expectedGeneration: string) {
   return request<ConfigEnvelope>(controlApiRoutes.settingsDraft, {
     method: "PUT",
+    headers: { "If-Match": JSON.stringify(expectedGeneration) },
     body: JSON.stringify(config)
   });
 }
@@ -107,8 +108,11 @@ export function validateDraftConfig() {
   return request<ValidateConfigResponse>(controlApiRoutes.settingsValidate, { method: "POST" });
 }
 
-export function applyDraftConfig() {
-  return request<OperationResponse>(controlApiRoutes.settingsApply, { method: "POST" });
+export function applyDraftConfig(expectedGeneration: string) {
+  return request<OperationResponse>(controlApiRoutes.settingsApply, {
+    method: "POST",
+    headers: { "If-Match": JSON.stringify(expectedGeneration) }
+  });
 }
 
 export function activateScene(sceneId: string) {

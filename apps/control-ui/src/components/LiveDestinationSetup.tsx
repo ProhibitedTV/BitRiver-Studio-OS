@@ -71,7 +71,7 @@ export function LiveDestinationSetup({ onAir, recording, activeDestinations, onA
           publishDestinations: [...draft.config.mediaRouter.publishDestinations, destination]
         }
       };
-      const updated = await updateDraftConfig(next);
+      const updated = await updateDraftConfig(next, draft.generation);
       setStagedGeneration(updated.generation);
       setValidatedGeneration("");
       setIssues([]);
@@ -127,7 +127,7 @@ export function LiveDestinationSetup({ onAir, recording, activeDestinations, onA
       }
       // The UI blocks active streams/recordings and the server independently
       // rechecks OBS status before it applies MediaMTX changes.
-      await applyDraftConfig();
+      await applyDraftConfig(validatedGeneration);
       setStagedGeneration("");
       setValidatedGeneration("");
       setIssues([]);
