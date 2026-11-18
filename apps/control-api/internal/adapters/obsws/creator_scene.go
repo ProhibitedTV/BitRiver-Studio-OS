@@ -45,6 +45,24 @@ func (client *Client) InstallBrowserScene(ctx context.Context, sceneName, inputN
 		}
 	}
 
+	// Check that OBS has loaded the browser plugin before creating any scene.
+	// The API can be reachable even when browser_source is not registered.
+	kindsJSON, err := connection.request("GetInputKindList", nil)
+	if err != nil {
+		return fmt.Errorf("check OBS Browser Source availability: %w", err)
+	}
+	var kinds struct { InputKinds []string `json:"inputKinds"` }
+	if err := decodeJSON(kindsJSON, &kinds); err != nil {
+		return fmt.Errorf("decode OBS available input kinds: %w", err)
+	}
+	browserReady := false
+	for _, kind := range kinds.InputKinds {
+		if kind == "browser_source" { browserReady = true; break }
+	}
+	if !browserReady {
+		return adapters.ErrBrowserSourceUnavailable
+	}
+
 	scenesJSON, err := connection.request("GetSceneList", nil)
 	if err != nil {
 		return fmt.Errorf("check OBS scenes: %w", err)
