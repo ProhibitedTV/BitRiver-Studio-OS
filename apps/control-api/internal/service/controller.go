@@ -477,6 +477,16 @@ func (controller *Controller) ApplyDraft(ctx context.Context) (model.OperationRe
 		if controller.mediaMTX == nil {
 			return nil
 		}
+		// MediaMTX may have contributors or viewers even when OBS itself is
+		// stopped. Applying the router configuration can disconnect those
+		// sessions, so also check the live router state before restarting it.
+		media, err := controller.mediaMTX.Snapshot(ctx)
+		if err != nil {
+			return model.NewUnavailableError("MediaMTX", err)
+		}
+		if mediaRouterHasActiveSessions(media) {
+			return model.NewConflictError("stop active MediaMTX publishers and readers before applying settings")
+		}
 		_, err = controller.mediaMTX.ApplyConfig(ctx, document.Generation, document.ControlConfig)
 		return err
 	})
@@ -484,6 +494,21 @@ func (controller *Controller) ApplyDraft(ctx context.Context) (model.OperationRe
 		controller.publishSnapshotEvent(ctx, "settings.applied")
 	}
 	return response, validation, err
+}
+
+// mediaRouterHasActiveSessions errs on the side of not tearing down an
+// active contributor or viewer. MediaMTX paths may exist when nobody is
+// broadcasting, so empty/unready paths do not block configuration recovery.
+func mediaRouterHasActiveSessions(snapshot adapters.MediaMTXSnapshot) bool {
+	if len(snapshot.Sessions) > 0 {
+		return true
+	}
+	for _, path := range snapshot.Paths {
+		if path.Ready && (path.Publisher || path.Readers > 0) {
+			return true
+		}
+	}
+	return false
 }
 
 func (controller *Controller) UpdateStatus(context.Context) model.UpdateStatus {
