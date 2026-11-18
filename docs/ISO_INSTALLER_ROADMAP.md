@@ -28,9 +28,11 @@ This branch introduces:
 3. `test/appliance/build-iso-candidate.sh`: builds the full BitRiver OCI
    payload and independent installer, embeds the payload, generates a
    `generic-iso` and validates ISO boot descriptors and expected files.
-4. `.github/workflows/appliance-iso.yml`: attempts the image build on
-   relevant PRs and manually. It preserves checksum, layout and provenance
-   **only**. It does **not** upload ISO bytes or publish a GitHub Release.
+4. `.github/workflows/appliance-iso.yml`: attempts the build for
+   relevant PRs and stores checksum, layout and boot-probe evidence. PR
+   runs **never upload ISO bytes**. A separately opted-in manual run may
+   upload short-lived, explicitly unvalidated QA chunks, but never a
+   GitHub Release or public installer.
 5. `test/appliance/check-iso-scaffold.sh`: basic static guard against
    network-dependent payloads and accidentally unattended installer defaults.
 
@@ -48,7 +50,7 @@ bash test/appliance/build-iso-candidate.sh
 The ISO is stored *only* under `artifacts/iso-candidate/` on that host.
 Use `ISO-SHA256SUMS`, `boot-record.txt`, and `iso-provenance.json` for
 initial structural inspection. The build refuses to reuse a dirty output
-directory. The GitHub workflow uploads these metadata files only.
+directory. Pull-request workflow runs upload these metadata files only. A manual-only QA download workflow is linked below.
 
 **Do not flash or install this image on a machine with valuable data.**
 The installer UI, post-install account provisioning, and update behavior
@@ -129,3 +131,17 @@ whether the frames differ. It still marks Anaconda UI verification as
 **false** until the installer is visibly inspected, and keeps disk
 installation / reboot verification false regardless. This prevents
 confusing an active QEMU process with a ready Anaconda installation.
+
+## Manual QA ISO workflow on default branch
+
+The `main` branch provides a deliberately separate GitHub Actions
+[experimental ISO VM QA launcher](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/workflows/iso-qa-download.yml).
+It checks out this experimental installer branch rather than merging
+unvalidated installer tooling to `main`. The operator must explicitly
+select `export_qa_iso`; no automatic PR, push, scheduled, or default
+dispatch publishes the ISO. It packages chunks and verified hashes
+for **isolated disposable-VM testing only**, not a release.
+
+See [VM install acceptance instructions](ISO_VM_INSTALL_QA.md) before
+testing. The test ISO still has no verified complete installation,
+installed-disk boot or secure update origin.
