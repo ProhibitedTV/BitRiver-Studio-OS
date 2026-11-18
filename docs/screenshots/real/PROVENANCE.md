@@ -6,8 +6,8 @@ QEMU q35 with OVMF UEFI. A loopback-only SSH tunnel reached
 the guest's real local API and a headless Chrome browser captured its
 operator login, authenticated dashboard and source list.
 
-- Source revision: 5b1e6ebc37f99ba2c5d29b90ccccbb707a552eb4
-- Build run: https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44235484169
+- Source revision: 014b7be6398005cf0baeaa4bca4ffd16b2fa9aa8
+- Build run: https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44237870079
 - Test-only guest: no physical capture card, real streaming or graphical
   Wayland/OBS session was certified
 - No operator keys, test SSH keys or CI QCOW2 images are committed
