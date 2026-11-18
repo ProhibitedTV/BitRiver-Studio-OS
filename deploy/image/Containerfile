@@ -70,6 +70,7 @@ RUN dnf -y install \
     mesa-vulkan-drivers \
     jq \
     obs-studio \
+    obs-studio-plugin-browser \
     openssh-server \
     openssl \
     pciutils \
@@ -83,6 +84,47 @@ RUN dnf -y install \
     wireplumber \
     xorg-x11-server-Xwayland \
   && dnf clean all
+
+# Browser Sources are a separate Fedora RPM from obs-studio. Without this
+# subpackage, the Creator Asset installer can reach OBS over websocket but
+# browser_source creation fails at runtime despite passing Go/UI tests.
+RUN rpm -q obs-studio-plugin-browser \
+  && rpm -ql obs-studio-plugin-browser | grep -E '/obs-browser[.]so, then extract the *correct* upstream formats.
+RUN curl -fL --retry 3 --proto '=https' --tlsv1.2 "${MEDIAMTX_TARBALL_URL}" -o /tmp/mediamtx.tar.gz \
+  && printf '%s  %s\n' "${MEDIAMTX_SHA256}" /tmp/mediamtx.tar.gz | sha256sum -c - \
+  && tar -xzf /tmp/mediamtx.tar.gz -C /usr/local/bin mediamtx \
+  && chmod 0755 /usr/local/bin/mediamtx \
+  && rm -f /tmp/mediamtx.tar.gz
+
+RUN mkdir -p /opt/owncast \
+  && curl -fL --retry 3 --proto '=https' --tlsv1.2 "${OWNCAST_ZIP_URL}" -o /tmp/owncast.zip \
+  && printf '%s  %s\n' "${OWNCAST_SHA256}" /tmp/owncast.zip | sha256sum -c - \
+  && unzip -q /tmp/owncast.zip -d /opt/owncast \
+  && test -f /opt/owncast/owncast \
+  && chmod 0755 /opt/owncast/owncast \
+  && ln -sf /opt/owncast/owncast /usr/local/bin/owncast \
+  && rm -f /tmp/owncast.zip
+
+COPY --from=api-build /out/bitriverd /usr/local/bin/bitriverd
+COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report
+COPY --from=api-build /out/bitriver-operator-key /usr/local/bin/bitriver-operator-key
+COPY --from=ui-build /src/apps/control-ui/dist /usr/local/share/bitriver/control-ui
+
+COPY deploy/systemd/ /usr/lib/systemd/system/
+COPY deploy/image/rootfs-overlay/ /
+
+# bootc treats the image root as immutable. Redirect /data to persistent
+# /var storage before firstboot initializes recordings and local assets.
+RUN ln -s /var/lib/bitriver/data /data
+
+RUN chmod +x /usr/local/bin/bitriverd /usr/local/bin/bitriver-hw-report /usr/local/bin/bitriver-operator-key \
+  && chmod +x /usr/local/libexec/bitriver/*.sh \
+  && systemctl enable bitriver.target systemd-networkd.service sshd.service \
+  && bootc container lint
+
+CMD ["/sbin/init"]
+ \
+  && test -s /usr/lib64/obs-plugins/obs-browser.so
 
 # Fail closed on asset changes, then extract the *correct* upstream formats.
 RUN curl -fL --retry 3 --proto '=https' --tlsv1.2 "${MEDIAMTX_TARBALL_URL}" -o /tmp/mediamtx.tar.gz \
