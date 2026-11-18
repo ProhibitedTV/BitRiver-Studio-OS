@@ -56,7 +56,7 @@ jobs:
         if: always()
         run: |
           mkdir -p artifacts/iso-evidence
-          for file in ISO-SHA256SUMS boot-record.txt iso-file-list.txt iso-provenance.json; do
+          for file in ISO-SHA256SUMS boot-record.txt iso-file-list.txt iso-provenance.json bios-grub.cfg uefi-grub.cfg; do
             test ! -f "artifacts/iso-candidate/$file" || cp "artifacts/iso-candidate/$file" "artifacts/iso-evidence/$file"
           done
           test ! -e artifacts/iso-evidence/install.iso
