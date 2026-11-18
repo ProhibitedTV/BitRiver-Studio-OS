@@ -162,6 +162,19 @@ until a TLS access path is available; the secure login is not yet an official
 remote-access or multi-user solution. See
 [Operator authentication](docs/OPERATOR_AUTH.md) for setup and limitations.
 
+## Try the VirtualBox Technical Preview
+
+A **non-production x86_64 VDI disk** can be built from the fully assembled
+Fedora bootc image after CI validates UEFI boot, BitRiver's local API, and
+reboot persistence. The VirtualBox publishing workflow is release-gated and
+publishes a separately generated disk, **never** the temporary privileged
+QEMU test VM. It is intended for isolated NAT-based experimentation, not
+real streams or internet-facing services.
+
+Follow [VirtualBox download, setup, and login instructions](docs/VIRTUALBOX_PREVIEW.md)
+and look for the clearly labeled technical preview under [Releases](https://github.com/ProhibitedTV/BitRiver-Studio-OS/releases).
+A usable desktop/kiosk under VirtualBox remains unverified until tested there.
+
 ## Release Readiness
 
 The project is pre-release; passing the API/UI CI suite does not certify a bootable appliance. The image now includes the first-boot hardware report utility and CI verifies its output contract and boot script syntax. Image-related PRs now attempt an OCI bootc image build using checksum-locked

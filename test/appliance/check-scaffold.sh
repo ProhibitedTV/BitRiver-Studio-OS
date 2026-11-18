@@ -31,6 +31,9 @@ bash -n test/appliance/check-release-assets.sh
 bash -n test/appliance/check-image-lock.sh
 bash -n test/appliance/check-npm-lock.sh
 bash -n test/appliance/build-qcow2.sh
+bash -n test/appliance/build-virtualbox-preview.sh
+grep -Fq 'preview ALL=(root) NOPASSWD: /usr/bin/cat /var/lib/bitriver/bootstrap/one-time-admin-password.txt' test/appliance/build-virtualbox-preview.sh
+grep -Fq 'if: ${{ github.event_name !=' .github/workflows/virtualbox-preview.yml
 bash -n test/appliance/validate-oci-sbom.sh
 bash -n test/appliance/smoke-uefi-qcow2.sh
 while IFS= read -r -d '' script; do

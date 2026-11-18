@@ -29,8 +29,11 @@ and reproducible images). The hardware probe work is one concrete step.
       documents, so UEFI CI uses a commit-pinned Syft scanner instead.
 - [x] Build UEFI QCOW2 and verify firstboot + reboot under OVMF/QEMU,
       including operator key rotation (successful run 44166997005, PR #8).
-- [ ] Create a user-installable release artifact, document flashing, and
-      verify secure update and rollback behavior.
+- [ ] Create a **signed, user-installable production release** and document
+      flashing, secure updates and rollback. A separate VirtualBox
+      experimental preview is intentionally not a production installer.
+- [ ] Evaluate VirtualBox preview VMSVGA graphics and kiosk/OBS functionality
+      on an actual VirtualBox host; QEMU covers only headless boot validation.
 - [ ] Add signed release artifacts, reproducible release notes and checksums.
 
 ## Gate 2: First boot and configuration
@@ -77,6 +80,21 @@ and reproducible images). The hardware probe work is one concrete step.
 - [ ] Add optional media library, AI and Discord integrations only behind
       explicit configuration and permission boundaries.
 - [ ] Keep desktop gaming/Steam isolated from dependable Broadcast Mode.
+
+## Experimental VirtualBox download (not a production release)
+
+The `.github/workflows/virtualbox-preview.yml` test-gates a **separate**
+VirtualBox-native VDI with the established OVMF/QEMU smoke suite, packages
+it as a ZIP (numbered pieces only if necessary), and publishes a
+**one-time explicitly pre-release** asset after successful testing on
+`main`. The public disk never includes the QEMU CI SSH key or unrestricted
+sudo access. It does include a documented local preview password and a
+narrowly scoped operator-key read allowance for local virtual machine
+testing; do not use it on bridged/public networks.
+
+See [VirtualBox testing instructions](VIRTUALBOX_PREVIEW.md).
+Passing QEMU headless tests does not certify VirtualBox display, OBS or
+physical broadcast hardware.
 
 ## UEFI VM validation
 
