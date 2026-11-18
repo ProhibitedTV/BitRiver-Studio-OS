@@ -464,10 +464,20 @@ func (controller *Controller) ValidateDraft() model.ValidateConfigResponse {
 
 func (controller *Controller) ApplyDraft(ctx context.Context) (model.OperationResponse, *model.ValidateConfigResponse, error) {
 	response, validation, err := controller.configStore.ApplyDraft(func(document model.ConfigDocument) error {
+		// Applying MediaMTX settings can restart the router, dropping program
+		// output or recordings. Re-check actual OBS state on the server, even
+		// if a client hid the Apply button. Fail closed if OBS is unavailable.
+		obs, err := controller.obsSnapshot(ctx)
+		if err != nil {
+			return model.NewUnavailableError("OBS", err)
+		}
+		if obs.StreamActive || obs.RecordingActive {
+			return model.NewConflictError("stop streaming and recording before applying settings")
+		}
 		if controller.mediaMTX == nil {
 			return nil
 		}
-		_, err := controller.mediaMTX.ApplyConfig(ctx, document.Generation, document.ControlConfig)
+		_, err = controller.mediaMTX.ApplyConfig(ctx, document.Generation, document.ControlConfig)
 		return err
 	})
 	if err == nil && validation == nil {
