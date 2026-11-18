@@ -1,0 +1,76 @@
+{
+  "summary": {
+    "schemaVersion": 1,
+    "title": "BitRiver Studio OS — Offline Starter Scenes",
+    "count": 4,
+    "source": "ProhibitedTV/OBS-Scene-Assets",
+    "sourceRevision": "e86b82f1df14c2defca0d1e0d69b9d8f1073d176",
+    "scope": "four pinned core scenes; no full library bundled"
+  },
+  "assets": [
+    {
+      "path": "scenes/starting-soon.html",
+      "title": "Starting Soon",
+      "category": "scenes",
+      "collection": "bitriver-offline-starter",
+      "description": "Pre-stream countdown and welcome slate",
+      "useCase": "Pre-stream countdown and welcome slate",
+      "width": 1920,
+      "height": 1080,
+      "preview": "previews/scenes/starting-soon.png",
+      "tags": [
+        "countdown",
+        "starting",
+        "stream"
+      ]
+    },
+    {
+      "path": "scenes/be-right-back.html",
+      "title": "Be Right Back",
+      "category": "scenes",
+      "collection": "bitriver-offline-starter",
+      "description": "Quick break slate with a timer",
+      "useCase": "Quick break slate with a timer",
+      "width": 1920,
+      "height": 1080,
+      "preview": "previews/scenes/be-right-back.png",
+      "tags": [
+        "break",
+        "brb",
+        "timer"
+      ]
+    },
+    {
+      "path": "scenes/just-chatting.html",
+      "title": "Just Chatting",
+      "category": "scenes",
+      "collection": "bitriver-offline-starter",
+      "description": "Conversational layout with webcam placeholder",
+      "useCase": "Conversational layout with webcam placeholder",
+      "width": 1920,
+      "height": 1080,
+      "preview": "previews/scenes/just-chatting.png",
+      "tags": [
+        "chatting",
+        "webcam",
+        "conversation"
+      ]
+    },
+    {
+      "path": "scenes/intermission.html",
+      "title": "Intermission",
+      "category": "scenes",
+      "collection": "bitriver-offline-starter",
+      "description": "Mid-stream intermission and schedule display",
+      "useCase": "Mid-stream intermission and schedule display",
+      "width": 1920,
+      "height": 1080,
+      "preview": "previews/scenes/intermission.png",
+      "tags": [
+        "intermission",
+        "schedule",
+        "show"
+      ]
+    }
+  ]
+}
