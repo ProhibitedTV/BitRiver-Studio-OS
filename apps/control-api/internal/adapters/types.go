@@ -114,6 +114,7 @@ type BrowserSceneInstaller interface {
 var (
 	ErrSceneInstallBusy = errors.New("OBS is streaming or recording")
 	ErrSceneInstallCollision = errors.New("OBS scene or input name already exists")
+	ErrBrowserSourceUnavailable = errors.New("OBS browser_source input kind is unavailable")
 )
 
 type MediaPath struct {
