@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="270" viewBox="0 0 1120 270" role="img" aria-labelledby="title desc">
+  <title id="title">BitRiver Studio OS</title>
+  <desc id="desc">An illuminated broadcast signal flowing into a stylized river, beside the BitRiver Studio OS wordmark.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#102834"/>
+      <stop offset="1" stop-color="#081318"/>
+    </linearGradient>
+    <linearGradient id="signal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#79E7FF"/>
+      <stop offset=".55" stop-color="#3DB8DC"/>
+      <stop offset="1" stop-color="#53D8A7"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#66D0F2"/>
+      <stop offset="1" stop-color="#53D8A7"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="1116" height="266" rx="28" fill="url(#panel)" stroke="#204858" stroke-width="3"/>
+  <g transform="translate(33 23)">
+    <rect width="222" height="222" rx="35" fill="#0B202B" stroke="#275769" stroke-width="2"/>
+    <path d="M26 146 C60 121 92 121 123 146 S186 171 199 147" stroke="#35697B" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M26 172 C60 147 92 147 123 172 S186 197 199 173" stroke="url(#signal)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M29 196 C62 181 96 181 125 197 S181 211 197 197" stroke="#53D8A7" stroke-width="6" stroke-linecap="round" fill="none" opacity=".7"/>
+    <circle cx="113" cy="75" r="15" fill="#79E7FF"/>
+    <path d="M85 104 Q113 78 141 104" fill="none" stroke="#66D0F2" stroke-width="8" stroke-linecap="round"/>
+    <path d="M65 101 Q113 47 161 101" fill="none" stroke="#4B9EBD" stroke-width="7" stroke-linecap="round" opacity=".8"/>
+    <path d="M49 92 Q113 12 177 92" fill="none" stroke="#275769" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <g fill="#EEF8FB" font-family="Inter, Segoe UI, Arial, sans-serif" font-weight="800">
+    <text x="292" y="129" font-size="92" letter-spacing="-3">BitRiver</text>
+  </g>
+  <text x="297" y="190" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="37" font-weight="700" letter-spacing="12" fill="#90CCDF">STUDIO OS</text>
+  <rect x="296" y="216" width="690" height="3" rx="1.5" fill="url(#accent)" opacity=".85"/>
+  <circle cx="1030" cy="107" r="6" fill="#53D8A7"/>
+  <text x="1048" y="113" font-family="Segoe UI, Arial, sans-serif" font-size="16" fill="#9CC8D6">LIVE</text>
+</svg>
