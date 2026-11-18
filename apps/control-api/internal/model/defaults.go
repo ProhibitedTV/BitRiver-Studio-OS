@@ -90,7 +90,7 @@ func DefaultConfig() ControlConfig {
 					Name:      "Twitch",
 					Protocol:  "rtmp",
 					TargetURL: "rtmp://live.twitch.tv/app",
-					Enabled:   true,
+					Enabled:   false,
 				},
 			},
 			WebRTCPreviewEnabled: false,
@@ -235,7 +235,7 @@ func NormalizeConfig(in ControlConfig) ControlConfig {
 					Name:      fallbackString(out.Destination.TargetLabel, "Primary Destination"),
 					Protocol:  destinationProtocol(out.Destination.Mode),
 					TargetURL: out.Destination.TargetURL,
-					Enabled:   true,
+					Enabled:   false,
 				},
 			}
 		} else {
