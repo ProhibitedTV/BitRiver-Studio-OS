@@ -11,7 +11,7 @@ jq -e '
   .schemaVersion == 2 and
   .toolImages.imageBuilderCli == "ghcr.io/osbuild/image-builder-cli@sha256:f33fa06204ab382eed24979bc99e880b221fbded5a369a0f40ded881d649d392" and
   (.builderImages | all(.[]; test("@sha256:[a-f0-9]{64}$"))) and
-  .builderImages.fedoraBootc == "quay.io/fedora/fedora-bootc@sha256:5f2947d685c24029b2eb4e1f0634dc4ac06116a88d9dd93da4b5571b2f0e28e1" and
+  .builderImages.fedoraBootc == "quay.io/fedora/fedora-bootc@sha256:5fdfeee1cb12af2a05d1fd2e4e654c7f605003eb06fa4ca0b4e27079f31c7b6f" and
   .builderImages.go == "docker.io/library/golang:1.22-bookworm@sha256:3d699e4d15d0f8f13c9195c0632a16702b8cbdece2955af1c23b37ae5d55a253" and
   .builderImages.node == "docker.io/library/node:22-bookworm@sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb"
 ' "${lock}" >/dev/null
