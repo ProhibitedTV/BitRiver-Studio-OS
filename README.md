@@ -20,7 +20,8 @@ New OS images contain four reviewed [OBS Scene Assets](docs/CREATOR_ASSETS.md)
 starters—Starting Soon, Be Right Back, Just Chatting and Intermission—with
 previews in the local Asset Studio. No GitHub access is required on first boot;
 the full upstream scene catalog is optional. These provide OBS Browser Sources. An operator can explicitly install a
-starter as a separate, inactive OBS scene; nothing is installed or broadcast
+starter as a separate, inactive OBS scene, then switch to it from the Scene Rail;
+nothing is installed or broadcast
 automatically.
 
 ## Key Capabilities
