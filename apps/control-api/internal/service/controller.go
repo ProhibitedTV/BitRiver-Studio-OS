@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -320,6 +322,9 @@ func (controller *Controller) Recordings(ctx context.Context) (model.RecordingSu
 	}, nil
 }
 
+// Scenes includes configured scenes and any additional scenes currently loaded
+// in OBS (including opt-in Creator Asset installs). Non-configured scenes use
+// deterministic opaque IDs so names never enter URL path segments.
 func (controller *Controller) Scenes(ctx context.Context) (model.ScenesState, error) {
 	config := controller.configStore.Active().Config
 	obs, err := controller.obsSnapshot(ctx)
@@ -327,17 +332,33 @@ func (controller *Controller) Scenes(ctx context.Context) (model.ScenesState, er
 		return model.ScenesState{}, err
 	}
 
-	items := make([]model.SceneSummary, 0, len(config.Scenes))
-	activeSceneID := ""
+	items := make([]model.SceneSummary, 0, len(config.Scenes)+len(obs.Scenes))
+	seenNames := make(map[string]bool, len(config.Scenes)+len(obs.Scenes))
+	activeSceneID := controller.activeSceneID(config, obs.ActiveScene)
 	for _, scene := range config.Scenes {
-		active := scene.Name == obs.ActiveScene
-		if active {
-			activeSceneID = scene.ID
+		if seenNames[scene.Name] {
+			continue
 		}
+		seenNames[scene.Name] = true
 		items = append(items, model.SceneSummary{
 			ID:     scene.ID,
 			Name:   scene.Name,
-			Active: active,
+			Active: scene.Name == obs.ActiveScene,
+		})
+	}
+	for _, scene := range obs.Scenes {
+		if scene.Name == "" || seenNames[scene.Name] {
+			continue
+		}
+		seenNames[scene.Name] = true
+		id := dynamicOBSSceneID(scene.Name)
+		if scene.Name == obs.ActiveScene {
+			activeSceneID = id
+		}
+		items = append(items, model.SceneSummary{
+			ID:     id,
+			Name:   scene.Name,
+			Active: scene.Name == obs.ActiveScene,
 		})
 	}
 
@@ -345,6 +366,11 @@ func (controller *Controller) Scenes(ctx context.Context) (model.ScenesState, er
 		ActiveSceneID: activeSceneID,
 		Items:         items,
 	}, nil
+}
+
+func dynamicOBSSceneID(name string) string {
+	digest := sha256.Sum256([]byte(name))
+	return "obs-" + hex.EncodeToString(digest[:])
 }
 
 func (controller *Controller) Sources(ctx context.Context) []model.SourceSummary {
@@ -577,6 +603,20 @@ func (controller *Controller) ActivateScene(ctx context.Context, sceneID string)
 		}
 	}
 	if sceneName == "" {
+		// Never trust an arbitrary caller-supplied scene name. Resolve only
+		// the opaque ID of a scene that OBS currently reports as installed.
+		obs, err := controller.obsSnapshot(ctx)
+		if err != nil {
+			return model.OperationResponse{}, err
+		}
+		for _, scene := range obs.Scenes {
+			if scene.Name != "" && dynamicOBSSceneID(scene.Name) == sceneID {
+				sceneName = scene.Name
+				break
+			}
+		}
+	}
+	if sceneName == "" {
 		return model.OperationResponse{}, model.NewNotFoundError("scene", sceneID)
 	}
 	if err := controller.obs.SetCurrentScene(ctx, sceneName); err != nil {
@@ -689,6 +729,9 @@ func (controller *Controller) activeSceneID(config model.ControlConfig, sceneNam
 		if scene.Name == sceneName {
 			return scene.ID
 		}
+	}
+	if sceneName != "" {
+		return dynamicOBSSceneID(sceneName)
 	}
 	return ""
 }
