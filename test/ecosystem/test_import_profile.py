@@ -42,7 +42,8 @@ class IngestProfileTests(unittest.TestCase):
                     "rtmp://example.test/live|malicious"]:
             with self.subTest(url=url):
                 self.assertRaises(ValueError, module.profile_from_bytes, json.dumps({**PROFILE, "rtmpServer": url}).encode())
-        for name in ["..", "../data", "name.dots", "a" * 65]:
+                self.assertRaises(ValueError, module.profile_from_bytes, json.dumps({**PROFILE, "viewerUrl": "https://watch.example.test/?token=secret"}).encode())
+for name in ["..", "../data", "name.dots", "a" * 65]:
             self.assertRaises(ValueError, module.destination_for, PROFILE, name)
 
     def test_stored_key_is_private_and_rejects_overwrite(self):
