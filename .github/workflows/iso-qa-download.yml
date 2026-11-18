@@ -1,0 +1,84 @@
+name: "BitRiver ISO — experimental VM QA download (manual only)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_qa_iso:
+        description: "I understand this ISO is UNVALIDATED and may only be tested in a disposable virtual machine"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bitriver-iso-manual-qa
+  cancel-in-progress: false
+
+jobs:
+  build-vm-qa-iso:
+    if: ${{ inputs.export_qa_iso == true }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      # The installer is deliberately still an unmerged development branch.
+      # The launcher lives on main solely to make manual workflow dispatch
+      # discoverable. No GitHub Release, USB flasher or automatic PR upload.
+      - name: Check out experimental ISO builder (NOT production main)
+        uses: actions/checkout@v4
+        with:
+          ref: build/experimental-offline-installer-iso
+          persist-credentials: false
+
+      - name: Show exact tested source revision
+        run: |
+          git rev-parse HEAD
+          test -s docs/ISO_VM_INSTALL_QA.md
+          test -s test/appliance/package-iso-qa.sh
+          test -s test/appliance/reassemble-iso-qa.ps1
+
+      - name: Check ISO safety and source pin
+        run: bash test/appliance/check-iso-scaffold.sh
+
+      - name: Install read-only validation and container build utilities
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends podman xorriso qemu-system-x86 qemu-utils ovmf socat
+
+      - name: Build pinned BitRiver bootc OS payload
+        shell: pwsh
+        run: ./deploy/image/build-image.ps1 -ContainerRuntime docker -ImageTag bitriver/studio-os:ci -MetadataPath artifacts/image-build-provenance.json
+
+      - name: Build offline experimental installer ISO and verify BIOS/UEFI structure
+        run: bash test/appliance/build-iso-candidate.sh
+
+      - name: Capture disposable UEFI boot framebuffer (diagnostic only)
+        continue-on-error: true
+        run: bash test/appliance/smoke-iso-uefi.sh
+
+      - name: Stage explicitly unvalidated QA ISO with hash and reassembly instructions
+        env:
+          BITRIVER_QA_OPT_IN: ${{ inputs.export_qa_iso }}
+        run: bash test/appliance/package-iso-qa.sh
+
+      - name: Upload short-lived manual VM-QA-only ISO parts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-experimental-iso-ISOLATED-VM-QA-NOT-RELEASE
+          path: artifacts/iso-qa-download/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Upload non-release diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-iso-qa-build-evidence
+          path: |
+            artifacts/iso-evidence/
+            artifacts/iso-candidate/iso-provenance.json
+            artifacts/image-build-provenance.json
+          if-no-files-found: ignore
+          retention-days: 7

@@ -131,6 +131,22 @@ Developers can validate without the image build:
 This checks shell syntax, image wiring and the generated JSON report. It does
 not boot the image, download media archives, or test any broadcast hardware.
 
+
+## Fedora 44 base digest verification (2026-11-18)
+
+The previous immutable Fedora bootc base digest became unavailable on Quay
+(`manifest unknown`), interrupting fresh OS/ISO/UEFI/VirtualBox builds.
+[Digest verification workflow 44315376939](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44315376939)
+resolved the official Fedora 44 tag to
+`quay.io/fedora/fedora-bootc@sha256:5fdfeee1cb12af2a05d1fd2e4e654c7f605003eb06fa4ca0b4e27079f31c7b6f`,
+**pulled that exact digest on linux/amd64**, verified architecture and
+`VERSION_ID=44`. This is an immutable replacement, not a mutable release
+build or a successful install/boot test. The lock, Containerfile, image builder
+wrapper, drift guard and image workflow assertions are rotated atomically.
+Full-image and UEFI/VirtualBox validation for the replacement digest now
+passed in GitHub Actions on PR #21. This **does not** establish installer
+disk installation, update origin/rollback, or physical hardware readiness.
+
 ## Installer ISO: proof-of-concept workstream
 
 - [ ] Generate an experimental Fedora 44 offline `generic-iso` installer with

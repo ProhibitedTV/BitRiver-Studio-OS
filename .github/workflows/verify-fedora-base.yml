@@ -1,0 +1,61 @@
+name: verify Fedora 44 bootc base digest (non-release)
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/verify-fedora-base.yml"
+      - "deploy/image/releases.lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-immutable-base:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve Fedora 44 tag to immutable manifest and independently pull by digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/base-probe
+          tag="quay.io/fedora/fedora-bootc:44"
+
+          # This is ONLY a non-release digest discovery job. All real image
+          # builds must keep using the immutable digest from a reviewed lock.
+          docker buildx imagetools inspect --raw "$tag" > artifacts/base-probe/tag-manifest.json
+          digest="$(sha256sum artifacts/base-probe/tag-manifest.json | awk '{print $1}')"
+          [[ "$digest" =~ ^[0-9a-f]{64}$ ]]
+          ref="quay.io/fedora/fedora-bootc@sha256:$digest"
+
+          # A digest hash alone isn't enough: verify it remains available,
+          # resolves to the requested linux/amd64 image, and identifies F44.
+          docker pull --platform linux/amd64 "$ref"
+          [[ "$(docker image inspect "$ref" --format '{{.Os}}/{{.Architecture}}')" == "linux/amd64" ]]
+          docker run --rm --platform linux/amd64 --entrypoint /usr/bin/cat "$ref" /etc/os-release \
+            > artifacts/base-probe/os-release.txt
+          grep -Eq '^VERSION_ID="?44"?$' artifacts/base-probe/os-release.txt
+
+          # Print the digest for the follow-on reviewed, coordinated lock
+          # update; no mutable tag or auto-generated pin is used by release.
+          printf 'VERIFIED_FEDORA_BOOTC_REF=%s\n' "$ref" | tee artifacts/base-probe/verified-ref.txt
+          jq -n --arg ref "$ref" --arg tag "$tag" \
+            '{schemaVersion:1, originalTag:$tag, verifiedRef:$ref,
+              platform:"linux/amd64", fedoraVersion:44,
+              releaseReady:false,
+              instruction:"Review and update all pinned consumers; never substitute a mutable tag in build jobs"}' \
+            > artifacts/base-probe/evidence.json
+          test -s artifacts/base-probe/verified-ref.txt
+      - name: Upload digest-only evidence (no OS artifacts)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fedora-44-bootc-base-verification
+          path: |
+            artifacts/base-probe/evidence.json
+            artifacts/base-probe/verified-ref.txt
+            artifacts/base-probe/os-release.txt
+          if-no-files-found: ignore
+          retention-days: 14
