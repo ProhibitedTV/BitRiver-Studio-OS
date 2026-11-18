@@ -29,7 +29,8 @@ class IngestProfileTests(unittest.TestCase):
         self.assertEqual(destination["streamKeyFile"], "/var/lib/bitriver/secrets/stream-keys/studio-stream")
         self.assertEqual(destination["targetUrl"], PROFILE["rtmpServer"])
         self.assertFalse(destination["enabled"])
-        self.assertNotIn("streamKey", json.dumps(destination))
+        self.assertNotIn("streamKey", destination)
+        self.assertIn("streamKeyFile", destination)
         self.assertNotIn("streamKey", json.dumps(parsed))
 
     def test_key_and_unsafe_urls_rejected(self):
