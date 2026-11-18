@@ -100,7 +100,7 @@ export function CreatorAssets() {
         <div className="creator-assets__empty" role="status">
           <strong>Asset library not connected</strong>
           <p>{error}</p>
-          <p>Install OBS-Scene-Assets under /data/creator-assets and restart the BitRiver control API. See docs/CREATOR_ASSETS.md.</p>
+          <p>The four bundled starter scenes should be available without setup. If you changed the asset path, install OBS-Scene-Assets there and restart the control API. See docs/CREATOR_ASSETS.md.</p>
         </div>
       ) : !catalog ? (
         <p className="creator-assets__hint" role="status">Loading catalog...</p>
