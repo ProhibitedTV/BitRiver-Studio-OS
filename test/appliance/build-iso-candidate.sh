@@ -51,7 +51,9 @@ test -s "$iso"
 # Capture diagnostics before assertions; GitHub preserves metadata only.
 # Image Builder generic-iso layouts differ from older live installer layouts.
 xorriso -indev "$iso" -report_el_torito plain > "$out/boot-record.txt" 2>&1
-xorriso -indev "$iso" -find / -print > "$out/iso-file-list.txt" 2>&1
+# xorriso -find defaults to the "echo" action. "-print" is not a
+# supported xorriso find option (unlike GNU find).
+xorriso -indev "$iso" -find / -type f > "$out/iso-file-list.txt" 2>&1
 (cd "$(dirname "$iso")" && sha256sum "$(basename "$iso")") > "$out/ISO-SHA256SUMS"
 
 # The actual generic-iso boot record must include an UEFI El Torito image.
