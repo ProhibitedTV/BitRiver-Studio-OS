@@ -112,3 +112,20 @@ El Torito entry with a successful installation. A second gate must install
 to a disposable disk, remove ISO, reboot the installed OS, verify systemd,
 API, firstboot and persistent storage, then run rollback testing before
 publishing a download as a supported release.
+
+## Evidence-based boot diagnostic (2026-11-18)
+
+The [experimental ISO workflow run 44317503522](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44317503522)
+successfully built the ISO and booted it using QEMU/OVMF. Its saved serial
+output reached the GRUB menu and `Booting Install BitRiver Studio OS`.
+**The framebuffer after 70 seconds did not show Anaconda.** It instead
+showed early dracut messages including a missing `.buildstamp` warning
+and a failure to insert the `edd` module. These warnings are
+**observations, not yet a proven fatal root cause**.
+
+The boot harness now captures an early and a later frame (after 75 and
+215 seconds), sends graphical-entry kernel messages to serial, and records
+whether the frames differ. It still marks Anaconda UI verification as
+**false** until the installer is visibly inspected, and keeps disk
+installation / reboot verification false regardless. This prevents
+confusing an active QEMU process with a ready Anaconda installation.

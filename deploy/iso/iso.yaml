@@ -5,7 +5,9 @@ grub2:
   timeout: 8
   entries:
     - name: "Install BitRiver Studio OS (experimental)"
-      linux: ${kernelpath} ${root} inst.graphical
+      # Experimental CI debugging: mirror kernel/systemd messages to the
+      # serial log while keeping the primary graphical console available.
+      linux: ${kernelpath} ${root} inst.graphical console=tty0 console=ttyS0,115200n8
       initrd: ${initrdpath}
     - name: "Install BitRiver Studio OS (experimental text)"
       linux: ${kernelpath} ${root} inst.text console=ttyS0,115200n8
