@@ -116,6 +116,36 @@ input or assets, **409** for on-air/recording state or name collisions, and
 The catalog and PNG preview endpoints remain read-only. All API endpoints are
 protected by the appliance operator-auth boundary when enabled.
 
+## Browser Source plugin and appliance checks
+
+The Fedora 44 bootc image explicitly installs the `obs-studio-plugin-browser`
+subpackage (including the CEF `obs-browser.so` plugin); installing `obs-studio`
+alone is insufficient. Image-build verification checks the shared library;
+the QEMU/OVMF boot test checks the installed RPM and bundled HTML both
+before and after reboot. These are packaging checks, **not** proof that
+OBS/CEF actually renders under VirtualBox graphics drivers.
+
+Before creating a scene, the OBS websocket adapter calls `GetInputKindList`
+and requires `browser_source`. If OBS has not loaded the plugin, the API
+returns **503** with an actionable error and **does not create a scene**.
+On a guest, check `rpm -q obs-studio-plugin-browser` and
+`test -s /usr/lib64/obs-plugins/obs-browser.so`; then restart OBS only when
+it is safe to interrupt the operator session. Never restart during a stream.
+
+Manual VirtualBox acceptance still requires these explicit checks:
+
+1. Boot the *new PR candidate* (not the older published Preview 1), using
+   NAT networking, and verify the kiosk and OBS start on the VM's display.
+2. Sign in locally and choose one of the four offline Asset Studio scenes.
+3. Click **Install as new OBS scene** while streaming and recording are off.
+4. Confirm the scene appears in the Scene Rail but the active scene stays put.
+5. Explicitly select it, then inspect the actual Browser Source rendering
+   in OBS. Verify title/subtitle, sizing, and absence of blank/black frames.
+6. Reboot, confirm the scene remains installed and renders again, and
+   inspect OBS logs if CEF, GPU or font rendering errors occur.
+
+Do not mark this visual gate complete from Go mocks, RPM queries, CI image
+builds, or QEMU headless service checks alone.
 ## Next milestone
 
 Test asset installation and rendering with a real Fedora bootc QEMU guest and
