@@ -3,6 +3,7 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$root"
 bash -n test/appliance/build-iso-candidate.sh
+bash -n test/appliance/smoke-iso-uefi.sh
 python3 test/appliance/test-iso-layout.py -v
 grep -Fq 'python3 test/appliance/check-iso-layout.py' test/appliance/build-iso-candidate.sh
 test -s deploy/iso/Containerfile

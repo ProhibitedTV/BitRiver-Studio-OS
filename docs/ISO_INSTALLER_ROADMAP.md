@@ -95,3 +95,20 @@ BIOS+UEFI entries, root image, bootloader, kernel and initrd.
 This proves **structure**, not boot, graphical Anaconda readiness, disk
 installation, bootc payload completeness or installed-OS reboot. Public
 installer publication stays blocked until those checks pass.
+
+
+### First-stage disposable UEFI launch proof (non-release)
+
+The experimental ISO workflow now attempts to start the candidate under
+QEMU/OVMF with **no network**, a new throwaway 32 GiB sparse disk in /tmp
+and no host storage passed through. It captures a framebuffer PPM screenshot
+and serial log as CI diagnostics for manual review. This first version of
+the boot probe is **non-gating**: a candidate may still pass structural CI
+without proving Anaconda is visible. The screenshot and serial log must be
+inspected before treating it as a boot test.
+
+Do not equate a QEMU process being alive, a screenshot being captured or an
+El Torito entry with a successful installation. A second gate must install
+to a disposable disk, remove ISO, reboot the installed OS, verify systemd,
+API, firstboot and persistent storage, then run rollback testing before
+publishing a download as a supported release.

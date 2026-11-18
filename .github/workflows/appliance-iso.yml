@@ -11,6 +11,7 @@ on:
       - "test/appliance/check-iso-scaffold.sh"
       - "test/appliance/check-iso-layout.py"
       - "test/appliance/test-iso-layout.py"
+      - "test/appliance/smoke-iso-uefi.sh"
 
 permissions:
   contents: read
@@ -28,7 +29,7 @@ jobs:
       - name: Install ISO inspection and OCI tooling
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y --no-install-recommends podman xorriso
+          sudo apt-get install -y --no-install-recommends podman xorriso qemu-system-x86 qemu-utils ovmf socat
 
       - name: Build complete pinned BitRiver bootc payload
         shell: pwsh
@@ -36,6 +37,13 @@ jobs:
 
       - name: Build independent Anaconda ISO image with offline BitRiver payload
         run: bash test/appliance/build-iso-candidate.sh
+
+      # First pass captures an actual UEFI QEMU framebuffer; initial
+      # failures are evidence-only while we harden the VM boot harness.
+      # Do NOT treat this as Anaconda launch or installed-OS reboot proof.
+      - name: Boot candidate in isolated disposable UEFI VM (visual evidence, non-gating)
+        continue-on-error: true
+        run: bash test/appliance/smoke-iso-uefi.sh
 
       - name: Validate evidence (not installation validation)
         run: |
