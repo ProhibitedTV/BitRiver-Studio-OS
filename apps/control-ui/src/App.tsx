@@ -187,7 +187,7 @@ export function App() {
                   onClick={() => dashboard.activateScene(scene.id)}
                 >
                   <span>{scene.name}</span>
-                  <small>{scene.id}</small>
+                  <small>{scene.id.startsWith("obs-") ? "Installed in OBS" : scene.id}</small>
                 </button>
               );
             })}
