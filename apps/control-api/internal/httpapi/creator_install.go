@@ -94,6 +94,8 @@ func (handler *Handler) handleCreatorAssetInstall(writer http.ResponseWriter, re
 		switch {
 		case errors.Is(err, adapters.ErrSceneInstallBusy):
 			writeJSON(writer, http.StatusConflict, map[string]string{"error": "Stop OBS streaming and recording before installing a scene."})
+		case errors.Is(err, adapters.ErrBrowserSourceUnavailable):
+			writeJSON(writer, http.StatusServiceUnavailable, map[string]string{"error": "OBS Browser Source is unavailable. Install the obs-studio-plugin-browser package and restart OBS."})
 		case errors.Is(err, adapters.ErrSceneInstallCollision):
 			writeJSON(writer, http.StatusConflict, map[string]string{"error": "The BitRiver scene or browser input already exists in OBS. Nothing was overwritten."})
 		default:
