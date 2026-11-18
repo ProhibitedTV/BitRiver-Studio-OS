@@ -125,6 +125,23 @@ USB capture devices, kiosk/Wayland display, long-duration streaming, secure
 updates or rollback. Neither a CI QCOW2 nor an OCI container is a signed,
 installable **consumer release**.
 
+## VirtualBox experimental preview image
+
+The separate [VirtualBox preview workflow](../../.github/workflows/virtualbox-preview.yml)
+runs the same headless UEFI first-boot/reboot suite and, on passing runs,
+uses the pinned Image Builder to create a **different** QCOW2 with only a
+non-admin console preview account (no CI SSH key and no blanket sudo).
+It converts that disk to a VirtualBox-native `.vdi` with `qemu-img`,
+compresses it into a downloadable ZIP, and publishes SHA-256 checksums.
+Large ZIPs are split into parts smaller than GitHub's per-asset limit.
+On a successful run from `main`, an explicitly experimental GitHub
+prerelease can publish these files; PR runs provide only a temporary
+Actions artifact. See [VirtualBox preview guide](../../docs/VIRTUALBOX_PREVIEW.md).
+
+This preview is **not** a signed installer, does not validate 3D graphics
+or live streaming in VirtualBox, and deliberately has a documented
+local-only login. No real deployment or internet exposure is supported.
+
 ## UEFI builder provenance and SPDX evidence
 
 The QCOW2 conversion tool is pinned to an immutable
