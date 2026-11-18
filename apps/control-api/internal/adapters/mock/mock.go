@@ -3,6 +3,7 @@ package mock
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -329,6 +330,34 @@ func (adapter *OBSAdapter) SetInputVolume(_ context.Context, name string, gainDB
 		}
 	}
 	return errors.New("input not found")
+}
+
+// InstallBrowserScene simulates OBS scene creation without changing the
+// active program, useful for offline UI and API tests.
+func (adapter *OBSAdapter) InstallBrowserScene(_ context.Context, sceneName, inputName, _ string, width, height int) error {
+	suite := adapter.suite
+	suite.mu.Lock()
+	defer suite.mu.Unlock()
+	if suite.obs.StreamActive || suite.obs.RecordingActive {
+		return adapters.ErrSceneInstallBusy
+	}
+	if sceneName == "" || inputName == "" || width < 1 || height < 1 {
+		return errors.New("invalid browser scene")
+	}
+	for _, scene := range suite.obs.Scenes {
+		if scene.Name == sceneName {
+			return fmt.Errorf("%w: %s", adapters.ErrSceneInstallCollision, sceneName)
+		}
+	}
+	for _, input := range suite.obs.Inputs {
+		if input.Name == inputName {
+			return fmt.Errorf("%w: %s", adapters.ErrSceneInstallCollision, inputName)
+		}
+	}
+	suite.obs.Scenes = append(suite.obs.Scenes, adapters.OBSScene{Name: sceneName, Index: len(suite.obs.Scenes)})
+	suite.obs.Inputs = append(suite.obs.Inputs, adapters.OBSInput{Name: inputName, Kind: "browser_source", Available: true})
+	suite.touchLocked()
+	return nil
 }
 
 func (adapter *MediaMTXAdapter) Snapshot(context.Context) (adapters.MediaMTXSnapshot, error) {
