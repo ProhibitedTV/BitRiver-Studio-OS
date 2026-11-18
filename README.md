@@ -1,4 +1,10 @@
+<p align="center">
+  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — river signal emblem and wordmark" width="920">
+</p>
+
 # BitRiver Studio OS
+
+<p align="center"><strong>Open-source-first creator and broadcast OS for real PCs.</strong></p>
 
 BitRiver Studio OS is a bootable, self-hosted broadcast appliance that turns a small x86_64 PC into a dedicated live production box controlled from a browser on the LAN.
 
