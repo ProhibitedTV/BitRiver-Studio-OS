@@ -48,7 +48,7 @@ def profile_from_bytes(content: bytes) -> dict:
     if not isinstance(profile["viewerUrl"], str) or len(profile["viewerUrl"]) > 2048:
         raise ValueError("invalid viewer URL")
     viewer = urlsplit(profile["viewerUrl"])
-    if viewer.scheme not in ("http", "https") or not viewer.hostname or viewer.username or viewer.password or viewer.fragment:
+    if viewer.scheme not in ("http", "https") or not viewer.hostname or viewer.username or viewer.password or viewer.query or viewer.fragment:
         raise ValueError("invalid BitRiver-Live viewer URL")
     return profile
 
