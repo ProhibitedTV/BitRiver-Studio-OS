@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bitriver/studio-os/apps/control-api/internal/model"
@@ -103,6 +104,17 @@ type OBS interface {
 	ToggleInputMuted(context.Context, string) (bool, error)
 	SetInputVolume(context.Context, string, float64) error
 }
+
+// BrowserSceneInstaller is opt-in: existing OBS control implementations do not
+// have to support local scene installation.
+type BrowserSceneInstaller interface {
+	InstallBrowserScene(context.Context, string, string, string, int, int) error
+}
+
+var (
+	ErrSceneInstallBusy = errors.New("OBS is streaming or recording")
+	ErrSceneInstallCollision = errors.New("OBS scene or input name already exists")
+)
 
 type MediaPath struct {
 	Name        string
