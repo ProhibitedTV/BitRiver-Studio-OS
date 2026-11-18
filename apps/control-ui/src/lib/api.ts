@@ -58,10 +58,25 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const message = await response.text();
-    throw new Error(message || `Request failed with status ${response.status}`);
+    let detail: { error?: string } = {};
+    try { detail = JSON.parse(message) as { error?: string }; } catch { /* not JSON */ }
+    throw new Error(detail.error ?? message ?? `Request failed with status ${response.status}`);
   }
 
   return response.json() as Promise<T>;
+}
+
+export interface InstalledCreatorScene {
+  sceneName: string;
+  inputName: string;
+  message: string;
+}
+
+export function installCreatorAsset(path: string, title: string, subtitle: string) {
+  return request<InstalledCreatorScene>("/api/v1/creator-assets/install", {
+    method: "POST",
+    body: JSON.stringify({ path, title, subtitle })
+  });
 }
 
 export function getSystem() {

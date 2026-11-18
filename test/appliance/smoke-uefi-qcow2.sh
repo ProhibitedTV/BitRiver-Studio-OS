@@ -116,6 +116,14 @@ test "$(stat -c '%U' /var/lib/bitriver/bootstrap/admin-credentials.json)" = bitr
 test -L /data
 test -d /data/recordings
 test "$(stat -c '%U' /data/recordings)" = studio
+# The OBS Browser Source plugin is a SEPARATE Fedora RPM. Without it,
+# the Creator Asset websocket endpoint cannot create a browser_source.
+rpm -q obs-studio obs-studio-plugin-browser >/dev/null
+test -s /usr/lib64/obs-plugins/obs-browser.so
+test -s /usr/local/share/bitriver/creator-assets/assets/scenes/starting-soon.html
+jq -e '.assets | any(.path == "scenes/starting-soon.html")' \
+  /usr/local/share/bitriver/creator-assets/assets/catalog.json >/dev/null
+echo "Browser plugin and offline HTML catalog exist in the booted appliance."
 echo "Firstboot, systemd target, credentials, health API and persistent /data passed."
 GUEST
 then
@@ -157,6 +165,8 @@ systemctl is-active --quiet bitriver.target
 systemctl is-active --quiet bitriver-control-api.service
 curl --fail --silent --show-error http://127.0.0.1:8080/healthz >/dev/null
 test -d /data/recordings
+test -s /usr/lib64/obs-plugins/obs-browser.so
+test -s /usr/local/share/bitriver/creator-assets/assets/scenes/starting-soon.html
 GUEST
 then
   diagnostics

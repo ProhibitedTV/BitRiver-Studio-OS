@@ -30,6 +30,52 @@ func TestControllerSceneActivationUsesConfiguredSceneIDs(t *testing.T) {
 	}
 }
 
+func TestControllerInstalledOBSScenesCanBeSwitchedByStableIDs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	controller := newTestController(t)
+	if err := controller.InstallBrowserScene(ctx, "BitRiver - Just Chatting", "BitRiver overlay - just-chatting",
+		"file:///usr/local/share/bitriver/creator-assets/assets/scenes/just-chatting.html", 1920, 1080); err != nil {
+		t.Fatalf("install OBS scene: %v", err)
+	}
+
+	before, err := controller.Scenes(ctx)
+	if err != nil { t.Fatal(err) }
+	if len(before.Items) != 4 {
+		t.Fatalf("expected 3 configured + 1 newly installed scene, got %+v", before.Items)
+	}
+	if before.ActiveSceneID != "starting-soon" {
+		t.Fatalf("install must not activate new scene: %+v", before)
+	}
+	installed := before.Items[3]
+	if installed.Name != "BitRiver - Just Chatting" || installed.Active || len(installed.ID) != 68 ||
+		installed.ID[:4] != "obs-" {
+		t.Fatalf("invalid installed scene metadata: %+v", installed)
+	}
+	// Mapping is deterministic across calls, so the scene rail can keep the
+	// same key even if OBS session restarts.
+	again, err := controller.Scenes(ctx)
+	if err != nil { t.Fatal(err) }
+	if again.Items[3].ID != installed.ID { t.Fatal("OBS scene ID was not stable") }
+
+	if _, err := controller.ActivateScene(ctx, installed.ID); err != nil {
+		t.Fatalf("switch to installed scene: %v", err)
+	}
+	after, err := controller.Scenes(ctx)
+	if err != nil { t.Fatal(err) }
+	if after.ActiveSceneID != installed.ID || !after.Items[3].Active {
+		t.Fatalf("installed scene is not active: %+v", after)
+	}
+	stream, err := controller.Stream(ctx)
+	if err != nil { t.Fatal(err) }
+	if stream.ActiveSceneID != installed.ID {
+		t.Fatalf("stream summary lost installed scene: %+v", stream)
+	}
+	if _, err := controller.ActivateScene(ctx, "obs-invalid"); err == nil {
+		t.Fatal("arbitrary names/IDs must not activate OBS scenes")
+	}
+}
+
 func TestControllerMuteUsesConfiguredAudioRouteIDs(t *testing.T) {
 	t.Parallel()
 

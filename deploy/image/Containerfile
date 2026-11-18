@@ -70,6 +70,7 @@ RUN dnf -y install \
     mesa-vulkan-drivers \
     jq \
     obs-studio \
+    obs-studio-plugin-browser \
     openssh-server \
     openssl \
     pciutils \
@@ -83,6 +84,12 @@ RUN dnf -y install \
     wireplumber \
     xorg-x11-server-Xwayland \
   && dnf clean all
+
+# Browser Sources are a separate Fedora RPM from obs-studio. Without this
+# subpackage, the Creator Asset installer can reach OBS over websocket but
+# browser_source creation fails at runtime despite passing Go/UI tests.
+RUN rpm -q obs-studio-plugin-browser \
+  && test -s /usr/lib64/obs-plugins/obs-browser.so
 
 # Fail closed on asset changes, then extract the *correct* upstream formats.
 RUN curl -fL --retry 3 --proto '=https' --tlsv1.2 "${MEDIAMTX_TARBALL_URL}" -o /tmp/mediamtx.tar.gz \

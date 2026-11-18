@@ -74,6 +74,7 @@ func newHandler(logger *slog.Logger, controller *service.Controller, uiDir, asse
 	mux.HandleFunc("/api/v1/recordings", api.handleRecordings)
 	mux.HandleFunc("/api/v1/media-router", api.handleMediaRouter)
 	mux.HandleFunc("/api/v1/creator-assets/catalog", api.handleCreatorAssetCatalog)
+	mux.HandleFunc("/api/v1/creator-assets/install", api.handleCreatorAssetInstall)
 	mux.HandleFunc("/api/v1/creator-assets/preview/", api.handleCreatorAssetPreview)
 	mux.HandleFunc("/api/v1/recordings/start", api.handleRecordingStart)
 	mux.HandleFunc("/api/v1/recordings/stop", api.handleRecordingStop)

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { installCreatorAsset } from "../lib/api";
 
 interface CreatorAsset {
   path: string;
@@ -38,6 +39,8 @@ export function CreatorAssets() {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
+  const [installStatus, setInstallStatus] = useState("");
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +76,20 @@ export function CreatorAssets() {
   const obsURL = selected && catalog
     ? obsFileURL(catalog.libraryRoot, selected.path, title, subtitle)
     : "";
+
+  async function installInOBS() {
+    if (!selected || installing) return;
+    setInstalling(true);
+    setInstallStatus("");
+    try {
+      const result = await installCreatorAsset(selected.path, title, subtitle);
+      setInstallStatus(result.message);
+    } catch (reason: unknown) {
+      setInstallStatus(reason instanceof Error ? reason.message : "OBS scene installation failed.");
+    } finally {
+      setInstalling(false);
+    }
+  }
 
   async function copySourceURL() {
     if (!obsURL) return;
@@ -127,7 +144,7 @@ export function CreatorAssets() {
                 type="button"
                 className={"creator-assets__card" + (selectedPath === asset.path ? " creator-assets__card--selected" : "")}
                 aria-pressed={selectedPath === asset.path}
-                onClick={() => { setSelectedPath(asset.path); setTitle(""); setSubtitle(""); setCopyStatus(""); }}
+                onClick={() => { setSelectedPath(asset.path); setTitle(""); setSubtitle(""); setCopyStatus(""); setInstallStatus(""); }}
               >
                 <img src={apiBase + "/api/v1/creator-assets/preview/" + pathURL(asset.preview)} alt="" loading="lazy" />
                 <strong>{asset.title}</strong>
@@ -141,7 +158,7 @@ export function CreatorAssets() {
               <div>
                 <strong>{selected.title}</strong>
                 <p>{selected.useCase || selected.description}</p>
-                <p>Use a {selected.width} × {selected.height} OBS Browser Source. Copying a URL does not install a source automatically.</p>
+                <p>Use a {selected.width} × {selected.height} OBS Browser Source. Installing creates a new, inactive OBS scene; it does not change your program output.</p>
               </div>
               <div className="creator-assets__filters">
                 <label>
@@ -154,9 +171,14 @@ export function CreatorAssets() {
                 </label>
               </div>
               <div className="creator-assets__copy">
+                <button className="button button--primary" type="button" disabled={installing} onClick={() => void installInOBS()}>
+                  {installing ? "Installing..." : "Install as new OBS scene"}
+                </button>
                 <button className="button button--secondary" type="button" onClick={() => void copySourceURL()}>Copy OBS Browser Source URL</button>
                 <input aria-label="OBS Browser Source URL" readOnly value={obsURL} onFocus={(event) => event.target.select()} />
               </div>
+              <p className="creator-assets__hint">Stop streaming and recording before installing. The existing active scene is never replaced; review the new scene in OBS before going live.</p>
+              {installStatus && <p className="creator-assets__hint" role="status">{installStatus}</p>}
               {copyStatus && <p className="creator-assets__hint" role="status">{copyStatus}</p>}
             </div>
           )}

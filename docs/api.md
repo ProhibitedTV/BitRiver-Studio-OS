@@ -26,6 +26,7 @@ OBS, MediaMTX, Owncast, and systemd stay behind this local API boundary.
 | `/api/v1/stream` | stream state plus start/stop actions |
 | `/api/v1/outputs` | current destination status, including optional Owncast |
 | `/api/v1/media-router` | rendered MediaMTX state, active paths, and router sessions |
+| `/api/v1/creator-assets/*` | authenticated local asset catalog, PNG previews and explicit inactive OBS scene installation |
 | `/api/v1/recordings` | recording state, current file, recording path capacity |
 | `/api/v1/scenes` | configured scenes and active scene switching |
 | `/api/v1/sources` | local capture availability and network ingest readiness |

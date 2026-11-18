@@ -22,6 +22,10 @@ grep -Fq -- '-adapter-mode appliance' deploy/systemd/bitriver-control-api.servic
 grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
 
+echo 'Checking required Fedora OBS Browser Source plugin packaging...'
+grep -Fq '    obs-studio-plugin-browser' deploy/image/Containerfile
+grep -Fq 'test -s /usr/lib64/obs-plugins/obs-browser.so' deploy/image/Containerfile
+
 echo 'Checking offline OBS starter scene pack...'
 python3 test/creator-assets/check-starter-pack.py
 

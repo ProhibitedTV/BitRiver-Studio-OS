@@ -19,8 +19,10 @@ Brand assets and usage guidelines: [BitRiver visual identity](docs/BRAND_IDENTIT
 New OS images contain four reviewed [OBS Scene Assets](docs/CREATOR_ASSETS.md)
 starters—Starting Soon, Be Right Back, Just Chatting and Intermission—with
 previews in the local Asset Studio. No GitHub access is required on first boot;
-the full upstream scene catalog is optional. These provide OBS Browser Sources,
-not an automatically configured OBS scene collection.
+the full upstream scene catalog is optional. These provide OBS Browser Sources. An operator can explicitly install a
+starter as a separate, inactive OBS scene, then switch to it from the Scene Rail;
+nothing is installed or broadcast
+automatically.
 
 ## Key Capabilities
 
@@ -72,7 +74,7 @@ What is real in this repo today:
 - Managed MediaMTX integration with generated `mediamtx.yml`, safe reload-to-restart fallback, path and session inspection, and router health in the API.
 - Immutable-image scaffold, appliance `systemd` units, first-boot state, and kiosk boot path.
 - Typed shared contracts and an initial React control surface scaffold.
-- Optional local Creator Asset Studio browser with metadata search, previews, and copyable OBS URLs.
+- Optional local Creator Asset Studio browser with metadata search, previews, copyable OBS URLs, and opt-in inactive OBS scene installation.
 
 What is still in progress:
 
@@ -84,7 +86,7 @@ What is still in progress:
 
 ## Creator Asset Studio (Optional)
 
-BitRiver now includes a read-only Creator Asset Studio panel for a **locally installed** copy of [OBS Scene Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets). Once the catalog is installed, the dashboard can search, filter, and preview designs and create copyable OBS Browser Source URLs with optional titles and subtitles. The control API serves PNG previews only, never overlay HTML; sources are not automatically installed in OBS yet.
+BitRiver includes a Creator Asset Studio panel with four bundled starters and support for a **locally installed** full copy of [OBS Scene Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets). Once the catalog is installed, the dashboard can search, filter, and preview designs and create copyable OBS Browser Source URLs with optional titles and subtitles. The control API serves PNG previews only, never overlay HTML. The operator can explicitly install an asset as a new OBS scene, but no scene is activated and no stream is started automatically.
 
 See [docs/CREATOR_ASSETS.md](docs/CREATOR_ASSETS.md) for setup, API details, and security boundaries. An absent library does not affect live production.
 
