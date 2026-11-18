@@ -68,10 +68,12 @@ destination does not enable it or start streaming. A creator must still
 install the key on the local OS with the CLI helper described below and
 explicitly enable the destination using the settings API.
 
-The UI blocks apply when its stream/record indicators are active, but
-**server-side on-air interlocks are not yet implemented**; settings may
-restart MediaMTX. It does not solve another operator editing the draft
-concurrently, or FFmpeg argv secret exposure.
+The UI blocks apply when its stream/record indicators are active. The
+control API also reads OBS stream/record status just before changing MediaMTX
+and rejects an on-air apply with HTTP 409, failing closed when OBS is
+unavailable. The status check does not itself prevent another operator from
+starting OBS during a narrow race; it does not yet solve concurrent draft
+editing or FFmpeg argv secret exposure.
 
 ### Prepare a destination on Studio OS
 
