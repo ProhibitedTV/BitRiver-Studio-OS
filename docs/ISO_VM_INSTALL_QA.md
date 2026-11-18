@@ -3,8 +3,10 @@
 **Pre-release QA only.** This is a reproducible checklist for judging whether
 an experimental ISO is usable. Do not install the candidate on a real PC or a
 disk containing important data. **No clean installation has yet passed this
-checklist.** The ISO pipeline currently retains diagnostics, not a public
-installer download.
+checklist.** The ISO pipeline normally retains only build evidence. It also offers
+a **manual, short-lived unvalidated QA artifact** behind a separate explicit
+opt-in on the `appliance-iso-experimental` workflow; this is not a public
+installer download or production release.
 
 ## Test environment
 
@@ -89,3 +91,26 @@ and include: the SHA256, which numbered step failed, the relevant
 `journalctl -b --no-pager -u bitriver-firstboot.service -u bitriver-control-api.service`
 output with credentials redacted, and a screenshot of the failure if safe.
 Do not attach whole virtual disks or authenticated browser profiles.
+
+## Obtaining a test ISO (manual opt-in only)
+
+From the repository's **Actions → appliance-iso-experimental → Run workflow**,
+select branch `build/experimental-offline-installer-iso` and explicitly check
+`export_qa_iso`. The workflow must successfully generate and structurally
+validate one ISO before packaging any download. GitHub Actions then retains
+the `bitriver-experimental-iso-ISOLATED-VM-QA-NOT-RELEASE` artifact for
+seven days. Pull requests and ordinary pushes **never** upload an ISO.
+
+Download/extract the full artifact, including its numbered `chunks/`
+directory, `ISO-SHA256SUMS` and `READ-ME-FIRST.txt`.
+
+On **Windows PowerShell**, from the extracted folder run
+`./reassemble-iso-qa.ps1`. It refuses to overwrite an existing ISO and
+checks SHA256 before reporting success. On Linux/macOS, concatenate chunks
+in filename order and verify the `ISO-SHA256SUMS` manifest.
+
+The result is `bitriver-studio-os-qa.iso`, an **experimental test input**
+for an **isolated virtual machine with an empty disposable disk**. The
+download does not demonstrate successful installation, rollback, an
+update origin, hardware support or security. **Never flash this QA build
+onto a real PC.**

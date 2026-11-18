@@ -2,6 +2,12 @@ name: appliance-iso-experimental
 
 on:
   workflow_dispatch:
+    inputs:
+      export_qa_iso:
+        description: "EXPERIMENTAL: export unvalidated installer ONLY for isolated disposable-VM testing"
+        type: boolean
+        required: true
+        default: false
   pull_request:
     paths:
       - ".github/workflows/appliance-iso.yml"
@@ -12,6 +18,8 @@ on:
       - "test/appliance/check-iso-layout.py"
       - "test/appliance/test-iso-layout.py"
       - "test/appliance/smoke-iso-uefi.sh"
+      - "test/appliance/package-iso-qa.sh"
+      - "test/appliance/reassemble-iso-qa.ps1"
 
 permissions:
   contents: read
@@ -71,3 +79,21 @@ jobs:
             artifacts/image-build-provenance.json
           if-no-files-found: ignore
           retention-days: 14
+
+      # NOT a GitHub Release. Generated only from an explicitly opted-in
+      # manual dispatch, never when someone opens/pushes a pull request.
+      - name: Package unvalidated ISO for isolated VM QA (manual opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.export_qa_iso == true }}
+        env:
+          BITRIVER_QA_OPT_IN: ${{ inputs.export_qa_iso }}
+        run: bash test/appliance/package-iso-qa.sh
+
+      - name: Upload short-lived unvalidated ISO QA chunks (never a release)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.export_qa_iso == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-experimental-iso-ISOLATED-VM-QA-NOT-RELEASE
+          path: artifacts/iso-qa-download/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
