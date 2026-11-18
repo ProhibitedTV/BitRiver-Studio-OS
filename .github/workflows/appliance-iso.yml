@@ -39,13 +39,14 @@ jobs:
         run: |
           test -s artifacts/iso-candidate/ISO-SHA256SUMS
           test -s artifacts/iso-candidate/boot-record.txt
+          test -s artifacts/iso-candidate/iso-file-list.txt
           jq -e '.releaseReady == false and .bootSmokePassed == false and .installationSmokePassed == false' artifacts/iso-candidate/iso-provenance.json
 
       - name: Keep only non-release build evidence, never the ISO
         if: always()
         run: |
           mkdir -p artifacts/iso-evidence
-          for file in ISO-SHA256SUMS boot-record.txt iso-provenance.json; do
+          for file in ISO-SHA256SUMS boot-record.txt iso-file-list.txt iso-provenance.json; do
             test ! -f "artifacts/iso-candidate/$file" || cp "artifacts/iso-candidate/$file" "artifacts/iso-evidence/$file"
           done
           test ! -e artifacts/iso-evidence/install.iso
