@@ -79,3 +79,19 @@ The generated image must never be treated as a production deployment.
 
 Related: [Release Readiness](RELEASE_READINESS.md) and
 [Release blocker #4](https://github.com/ProhibitedTV/BitRiver-Studio-OS/issues/4).
+
+
+### ISO structure evidence update (2026-11-18)
+
+[Workflow 44238158073](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44238158073)
+successfully assembled a 2,583 MiB hybrid BIOS/UEFI ISO but failed the
+**post-build** root-image check. Inspection of its retained xorriso file list
+shows Fedora's actual `/LiveOS/squashfs.img` and
+`/images/pxeboot/{vmlinuz,initrd.img}`; earlier grep tests expected
+unquoted paths, but xorriso outputs single-quoted file names. A new
+fixture-tested parser recognizes the real output and still requires
+BIOS+UEFI entries, root image, bootloader, kernel and initrd.
+
+This proves **structure**, not boot, graphical Anaconda readiness, disk
+installation, bootc payload completeness or installed-OS reboot. Public
+installer publication stays blocked until those checks pass.

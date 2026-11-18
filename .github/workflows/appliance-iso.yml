@@ -9,6 +9,8 @@ on:
       - "deploy/image/**"
       - "test/appliance/build-iso-candidate.sh"
       - "test/appliance/check-iso-scaffold.sh"
+      - "test/appliance/check-iso-layout.py"
+      - "test/appliance/test-iso-layout.py"
 
 permissions:
   contents: read
