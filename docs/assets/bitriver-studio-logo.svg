@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="title description"><title id="title">BitRiver Studio OS</title><desc id="description">BitRiver Studio OS brand banner with flowing B emblem, bold wordmark and creator mission</desc><defs>
+  <linearGradient id="river-bg" x1="0" x2="1" y1="0" y2="1">
+    <stop offset="0" stop-color="#11323E"/><stop offset="0.55" stop-color="#081B26"/><stop offset="1" stop-color="#05121B"/>
+  </linearGradient>
+  <linearGradient id="river-flow" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#E1FAFF"/><stop offset="0.4" stop-color="#61D6F4"/><stop offset="1" stop-color="#39C7A9"/>
+  </linearGradient>
+  <linearGradient id="river-wake" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#5CDCF3"/><stop offset="1" stop-color="#48D5B9"/>
+  </linearGradient>
+</defs><rect width="1280" height="320" rx="30" fill="#071923"/>
+<rect x="2" y="2" width="1276" height="316" rx="28" fill="none" stroke="#285563" stroke-width="3"/>
+<path d="M648 315C826 233 1015 383 1276 240" fill="none" stroke="#145060" stroke-width="16" opacity=".35"/>
+<path d="M742 315C945 222 1077 341 1275 211" fill="none" stroke="#287E7E" stroke-width="4" opacity=".36"/>
+<g transform="translate(43 32)"><rect width="256" height="256" rx="55" fill="url(#river-bg)"/>
+<rect x="9" y="9" width="238" height="238" rx="47" fill="none" stroke="#285461" stroke-width="2"/>
+<path d="M73 58V205" fill="none" stroke="#DFF9FF" stroke-width="19" stroke-linecap="round"/>
+<path d="M75 68H136C167 68 184 83 184 106C184 128 164 141 135 141H75" fill="none" stroke="url(#river-flow)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M75 141H141C173 141 193 157 193 180C193 204 174 215 140 215H75" fill="none" stroke="url(#river-flow)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M104 106C119 97 137 116 154 106" stroke="#62D6EB" stroke-width="6" opacity=".88" fill="none" stroke-linecap="round"/>
+<path d="M104 180C122 170 136 191 158 179" stroke="#49D6B5" stroke-width="6" opacity=".88" fill="none" stroke-linecap="round"/>
+<circle cx="210" cy="56" r="7" fill="#4ED9B8"/></g>
+<g font-family="Segoe UI, DejaVu Sans, Arial, sans-serif">
+  <text x="344" y="150" font-weight="800" font-size="101" letter-spacing="-4" fill="#F2FAFE">BitRiver</text>
+  <text x="352" y="217" font-weight="700" font-size="34" letter-spacing="15" fill="#78DCEB">STUDIO OS</text>
+  <text x="353" y="272" font-weight="500" font-size="19" letter-spacing="4" fill="#92AFBE">CREATE  ·  BROADCAST  ·  EXPLORE</text>
+</g></svg>

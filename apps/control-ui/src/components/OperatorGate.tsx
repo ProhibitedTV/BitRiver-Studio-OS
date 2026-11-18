@@ -52,7 +52,13 @@ export function OperatorGate() {
     return (
       <main className="operator-gate">
         <section className="operator-gate__panel" role="status">
-          <p className="eyebrow">BitRiver Studio OS</p>
+          <img
+            className="brand-lockup brand-lockup--login"
+            src="/branding/bitriver-wordmark.svg"
+            alt="BitRiver Studio OS"
+            width="740"
+            height="156"
+          />
           <h1>Connecting to control API</h1>
           <p>{error || "Checking operator session..."}</p>
           {error && <button className="button button--secondary" onClick={() => window.location.reload()}>Retry</button>}
@@ -65,7 +71,13 @@ export function OperatorGate() {
     return (
       <main className="operator-gate">
         <form className="operator-gate__panel" onSubmit={(event) => void login(event)}>
-          <p className="eyebrow">BitRiver Studio OS</p>
+          <img
+            className="brand-lockup brand-lockup--login"
+            src="/branding/bitriver-wordmark.svg"
+            alt="BitRiver Studio OS"
+            width="740"
+            height="156"
+          />
           <h1>Operator sign in</h1>
           <p>Enter the control key from the appliance's local first-boot notice. Do not send this key over public or unsecured networks.</p>
           <label htmlFor="operator-key">Operator control key</label>
@@ -91,6 +103,7 @@ export function OperatorGate() {
     <>
       {session.enabled && (
         <div className="operator-session">
+          <img className="operator-session__mark" src="/branding/bitriver-mark.svg" alt="" aria-hidden="true" width="28" height="28" />
           <span>Operator session active</span>
           <button className="button button--ghost" type="button" onClick={() => void logout()} disabled={busy}>Sign out</button>
           {error && <span role="alert">{error}</span>}

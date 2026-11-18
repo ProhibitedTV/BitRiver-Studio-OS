@@ -1,10 +1,18 @@
+<p align="center">
+  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — flowing B emblem and studio wordmark" width="920">
+</p>
+
 # BitRiver Studio OS
+
+<p align="center"><strong>Open-source-first creator and broadcast OS for real PCs.</strong></p>
 
 BitRiver Studio OS is a bootable, self-hosted broadcast appliance that turns a small x86_64 PC into a dedicated live production box controlled from a browser on the LAN.
 
 General-purpose streaming rigs are powerful, but they are also the source of most avoidable show-day anxiety. Desktop OS updates land at the wrong time. USB devices reorder themselves. Audio routing drifts. Remote control turns into a remote desktop session. What starts as a flexible creator setup becomes an unreliable pile of software held together by muscle memory.
 
 BitRiver Studio OS exists to package the useful parts of that stack into something narrower and safer: immutable image updates, direct boot into the product, OBS for real production control, MediaMTX for ingest and routing, and a browser-first control plane instead of a desktop workflow.
+
+Brand assets and usage guidelines: [BitRiver visual identity](docs/BRAND_IDENTITY.md). The same mark appears in the bundled local control UI, operator sign-in, browser tab and OS image assets.
 
 ## Key Capabilities
 
@@ -199,6 +207,17 @@ security, and recovery testing remain release gates. See [docs/RELEASE_READINESS
 ## License
 
 [MIT](LICENSE)
+
+## Ordinary PCs and gaming rigs
+
+BitRiver targets standard x86_64 desktops, gaming PCs, mini PCs and laptops,
+not only dedicated streaming appliances. The hardware-inventory work records
+**PCI GPU vendor/loaded driver, boot firmware mode, and wireless indicators**
+in the local probe. This is inventory, **not** proof that hardware encoding,
+OBS, Wi-Fi, or games work. Open-source Mesa and Fedora firmware are included;
+no proprietary NVIDIA driver, Steam, or other external app is silently installed.
+
+See [hardware compatibility plans](docs/HARDWARE_COMPATIBILITY.md).
 
 ## Installer ISO roadmap (experimental)
 
