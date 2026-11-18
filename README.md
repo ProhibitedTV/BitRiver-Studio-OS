@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — river signal emblem and wordmark" width="920">
+  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — flowing B emblem and studio wordmark" width="920">
 </p>
 
 # BitRiver Studio OS
@@ -11,6 +11,8 @@ BitRiver Studio OS is a bootable, self-hosted broadcast appliance that turns a s
 General-purpose streaming rigs are powerful, but they are also the source of most avoidable show-day anxiety. Desktop OS updates land at the wrong time. USB devices reorder themselves. Audio routing drifts. Remote control turns into a remote desktop session. What starts as a flexible creator setup becomes an unreliable pile of software held together by muscle memory.
 
 BitRiver Studio OS exists to package the useful parts of that stack into something narrower and safer: immutable image updates, direct boot into the product, OBS for real production control, MediaMTX for ingest and routing, and a browser-first control plane instead of a desktop workflow.
+
+Brand assets and usage guidelines: [BitRiver visual identity](docs/BRAND_IDENTITY.md). The same mark appears in the bundled local control UI, operator sign-in, browser tab and OS image assets.
 
 ## Key Capabilities
 

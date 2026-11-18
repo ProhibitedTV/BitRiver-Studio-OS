@@ -23,7 +23,13 @@ export function App() {
 
       <header className="topbar">
         <div>
-          <p className="eyebrow">BitRiver Studio OS</p>
+          <img
+            className="brand-lockup brand-lockup--dashboard"
+            src="/branding/bitriver-wordmark.svg"
+            alt="BitRiver Studio OS"
+            width="740"
+            height="156"
+          />
           <h1>LAN-Controlled Broadcast Appliance</h1>
           <p className="lede">
             Immutable appliance UX for switching, ingest, recording, and safe operations.
