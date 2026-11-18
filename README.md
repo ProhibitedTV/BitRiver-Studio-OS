@@ -85,7 +85,7 @@ What is still in progress:
 
 ## Creator Asset Studio (Optional)
 
-BitRiver now includes a read-only Creator Asset Studio panel for a **locally installed** copy of [OBS Scene Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets). Once the catalog is installed, the dashboard can search, filter, and preview designs and create copyable OBS Browser Source URLs with optional titles and subtitles. The control API serves PNG previews only, never overlay HTML. The operator can explicitly install an asset as a new OBS scene, but no scene is activated and no stream is started automatically.
+BitRiver includes a Creator Asset Studio panel with four bundled starters and support for a **locally installed** full copy of [OBS Scene Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets). Once the catalog is installed, the dashboard can search, filter, and preview designs and create copyable OBS Browser Source URLs with optional titles and subtitles. The control API serves PNG previews only, never overlay HTML. The operator can explicitly install an asset as a new OBS scene, but no scene is activated and no stream is started automatically.
 
 See [docs/CREATOR_ASSETS.md](docs/CREATOR_ASSETS.md) for setup, API details, and security boundaries. An absent library does not affect live production.
 
