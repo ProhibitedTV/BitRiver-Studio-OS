@@ -118,6 +118,13 @@ func ValidateConfig(config model.ControlConfig) model.ValidateConfigResponse {
 			})
 		}
 
+		if err := model.ValidatePublishTarget(destination); err != nil {
+			issues = append(issues, model.ValidationIssue{
+				Field:    "mediaRouter.publishDestinations.targetUrl",
+				Severity: "error",
+				Message:  err.Error(),
+			})
+		}
 		if err := model.ValidateStreamKeyFile(destination); err != nil {
 			issues = append(issues, model.ValidationIssue{
 				Field:    "mediaRouter.publishDestinations.streamKeyFile",

@@ -181,6 +181,9 @@ func validateManagedConfig(config model.ControlConfig) error {
 		if destination.Name == "" {
 			return fmt.Errorf("mediaRouter.publishDestinations.name is required")
 		}
+		if err := model.ValidatePublishTarget(destination); err != nil {
+			return fmt.Errorf("destination %q publish URL: %w", destination.ID, err)
+		}
 		if err := model.ValidateStreamKeyFile(destination); err != nil {
 			return fmt.Errorf("destination %q credential reference: %w", destination.ID, err)
 		}
