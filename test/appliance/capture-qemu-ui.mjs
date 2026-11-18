@@ -41,9 +41,23 @@ try {
   await page.locator(".program-card__screen").waitFor({ timeout: 45000 });
   await page.getByText("Program Output", { exact: true }).waitFor({ timeout: 45000 });
   await page.waitForTimeout(1500);
-  if (await page.locator(".alert").count()) {
-    throw new Error("Live appliance dashboard reported an API error");
+  // The API can be healthy while OBS is unconnected on a headless guest.
+  // Still require a real system endpoint and a populated host name.
+  const healthResponse = await page.request.get(new URL("/api/v1/system", base).toString());
+  if (!healthResponse.ok()) {
+    throw new Error("Live appliance system endpoint failed: HTTP " + healthResponse.status());
   }
+  const system = await healthResponse.json();
+  if (!system?.network?.hostname) {
+    throw new Error("No real host metadata available from BitRiver API");
+  }
+  if (await page.locator(".alert").count()) {
+    throw new Error("Live appliance system API failed (headless OBS warnings are allowed)");
+  }
+  // Warnings remain VISIBLE on the captured UI. Never hide API errors just
+  // to make screenshots appear production-ready.
+  const notice = await page.locator(".status-notice").count();
+  if (notice) console.log("Appliance UI exposes degraded optional subsystems (expected on headless QEMU).");
   await page.screenshot({
     path: path.join(output, "appliance-dashboard.png"),
     animations: "disabled"

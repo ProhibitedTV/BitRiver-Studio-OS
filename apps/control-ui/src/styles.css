@@ -639,3 +639,16 @@ code {
   .operator-session { padding: 0.45rem 1rem; }
   .operator-session .button { width: auto; }
 }
+
+/* Headless machines can serve the control plane even while OBS is offline.
+   Show explicit degraded state without mistaking unavailable for stopped. */
+.status-notice {
+  margin-bottom: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgba(240, 185, 93, .4);
+  border-radius: 1rem;
+  background: rgba(91, 69, 31, .18);
+  color: var(--text);
+}
+.status-notice strong { color: #f4cf88; }
+.status-notice p { margin: .4rem 0 0; color: var(--muted); line-height: 1.4; }

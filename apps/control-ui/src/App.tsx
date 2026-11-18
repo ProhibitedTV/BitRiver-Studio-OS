@@ -46,20 +46,26 @@ export function App() {
         </div>
       </header>
 
-      {dashboard.error ? <div className="alert">{dashboard.error}</div> : null}
+      {dashboard.error ? <div className="alert" role="alert">{dashboard.error}</div> : null}
+      {dashboard.warning ? (
+        <div className="status-notice" role="status">
+          <strong>Limited hardware / service readiness</strong>
+          <p>{dashboard.warning}</p>
+        </div>
+      ) : null}
 
       <main className="grid">
         <section className="panel panel--hero">
           <div className="panel__header">
             <div>
               <p className="eyebrow">Show Control</p>
-              <h2>{dashboard.show?.activeSceneId ?? "Loading scene graph"}</h2>
+              <h2>{dashboard.show?.activeSceneId ?? (dashboard.loading ? "Loading scene graph" : "OBS not connected")}</h2>
             </div>
             <div className="panel__status-row">
-              <StatusBadge label={dashboard.show?.streamState ?? "stopped"} tone={dashboard.show?.streamState ?? "stopped"} />
+              <StatusBadge label={dashboard.show?.streamState ?? "unknown"} tone={dashboard.show?.streamState ?? "degraded"} />
               <StatusBadge
-                label={dashboard.show?.recordState ?? "stopped"}
-                tone={dashboard.show?.recordState ?? "stopped"}
+                label={dashboard.show?.recordState ?? "unknown"}
+                tone={dashboard.show?.recordState ?? "degraded"}
               />
             </div>
           </div>
@@ -76,14 +82,14 @@ export function App() {
             <div className="program-card__controls">
               <button
                 className={`button ${streamLive ? "button--danger" : "button--primary"}`}
-                disabled={dashboard.busy || dashboard.loading}
+                disabled={dashboard.busy || dashboard.loading || !dashboard.show}
                 onClick={() => (streamLive ? dashboard.stopStream() : dashboard.startStream())}
               >
                 {streamLive ? "Stop Stream" : "Start Stream"}
               </button>
               <button
                 className={`button ${recording ? "button--danger" : "button--secondary"}`}
-                disabled={dashboard.busy || dashboard.loading}
+                disabled={dashboard.busy || dashboard.loading || !dashboard.show}
                 onClick={() => (recording ? dashboard.stopRecording() : dashboard.startRecording())}
               >
                 {recording ? "Stop Recording" : "Start Recording"}
@@ -101,7 +107,7 @@ export function App() {
               <p className="eyebrow">System</p>
               <h2>{dashboard.system?.name ?? "studio-a"}</h2>
             </div>
-            <StatusBadge label={dashboard.system?.health.overall ?? "healthy"} tone={dashboard.system?.health.overall ?? "healthy"} />
+            <StatusBadge label={dashboard.system?.health.overall ?? "unknown"} tone={dashboard.system?.health.overall ?? "degraded"} />
           </div>
 
           <div className="metrics">
