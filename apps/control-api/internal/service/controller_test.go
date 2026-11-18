@@ -199,3 +199,21 @@ func TestApplyDraftRejectsActiveBroadcastAndRecording(t *testing.T) {
 		})
 	}
 }
+
+func TestApplyDraftFailsClosedWhenOBSUnavailable(t *testing.T) {
+	t.Parallel()
+	controller := newTestController(t)
+	initial := controller.ActiveConfig().Generation
+	controller.obs = nil // an unreachable OBS adapter must not permit a router restart
+	_, validation, err := controller.ApplyDraft(context.Background())
+	if validation != nil {
+		t.Fatalf("unexpected config validation error: %+v", validation)
+	}
+	var apiErr *model.APIError
+	if !errors.As(err, &apiErr) || apiErr.Status != 503 {
+		t.Fatalf("expected OBS-unavailable 503, got %v", err)
+	}
+	if controller.ActiveConfig().Generation != initial {
+		t.Fatal("OBS-unavailable apply altered active settings")
+	}
+}
