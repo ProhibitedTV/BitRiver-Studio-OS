@@ -23,7 +23,10 @@ grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriv
 grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
 
 echo 'Checking required Fedora OBS Browser Source plugin packaging...'
-grep -Eq '^    obs-studio-plugin-browser \\
+grep -Fq '    obs-studio-plugin-browser' deploy/image/Containerfile
+grep -Fq 'test -s /usr/lib64/obs-plugins/obs-browser.so' deploy/image/Containerfile
+
+echo 'Checking offline OBS starter scene pack...'
 python3 test/creator-assets/check-starter-pack.py
 
 echo 'Checking visual identity assets across README, UI and OS image...'
