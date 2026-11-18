@@ -61,6 +61,15 @@ xorriso -indev "$iso" -find / -type f > "$out/iso-file-list.txt" 2>&1
 # regexes falsely rejected images which were built successfully.
 python3 test/appliance/check-iso-layout.py "$out/boot-record.txt" "$out/iso-file-list.txt"
 
+# Retain the REAL generated boot parameters for a subsequent isolated
+# Anaconda install/reboot test; don't invent a kernel command line.
+xorriso -indev "$iso" -osirrox on -extract /boot/grub2/grub.cfg \
+  "$out/bios-grub.cfg" > "$out/bios-grub-extract.log" 2>&1
+xorriso -indev "$iso" -osirrox on -extract /EFI/BOOT/grub.cfg \
+  "$out/uefi-grub.cfg" > "$out/uefi-grub-extract.log" 2>&1
+test -s "$out/bios-grub.cfg"
+test -s "$out/uefi-grub.cfg"
+
 jq -n --arg builder "$builder" --arg source "${GITHUB_SHA:-unknown}" \
   '{schemaVersion:1, releaseReady:false, artifactType:"experimental offline installer ISO",
     sourceRevision:$source, imageBuilderRef:$builder,
