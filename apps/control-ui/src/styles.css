@@ -666,3 +666,45 @@ code {
 @media (max-width: 760px) {
   .brand-lockup--dashboard { width: 240px; }
 }
+
+/* BitRiver-Live: staged, disabled publish destinations only. */
+.live-setup__steps,
+.live-setup__review,
+.live-setup__issues {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0.95rem 0;
+  padding: 1rem;
+  background: rgba(8, 19, 24, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+}
+.live-setup__steps p,
+.live-setup__review p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.live-setup__steps input[type="file"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.7rem;
+  padding: 0.8rem;
+  border: 1px dashed var(--accent);
+  background: var(--bg-soft);
+  border-radius: 0.65rem;
+  color: var(--text);
+}
+.live-setup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.live-setup__error { color: var(--danger); }
+.live-setup__notice { color: var(--success); }
+.live-setup__issues { color: var(--accent-warm); }
+.live-setup__review code { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .live-setup__actions { display: grid; }
+}

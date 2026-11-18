@@ -23,6 +23,11 @@ stream-key file stored outside the published settings JSON. No login to a
 BitRiver-hosted service is required, and no private key or personal service
 URL is baked into the image.
 
+A **Connect BitRiver-Live** panel in the Studio dashboard imports a
+key-free creator profile and stages a disabled RTMP destination. It validates
+the draft, requiring an explicit apply when off-air; stream keys are still
+installed locally and outputs enabled separately.
+
 The larger goal connects self-hosted BitRiver-Live streams, curated
 [OBS Scene Assets](docs/CREATOR_ASSETS.md), user-approved media/AI/radio
 sources, and familiar OBS/Discord/Steam workflows. Twitch, YouTube, Rumble,

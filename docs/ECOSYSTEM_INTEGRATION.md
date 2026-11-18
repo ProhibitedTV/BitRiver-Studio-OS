@@ -52,6 +52,27 @@ cookie or other credential. The user picks their own Live instance and obtains
 its actual RTMP server from that instance; the OS does not assume
 `bitriver.tv` is hosting a public Live server.
 
+### Creator dashboard import (new)
+
+The Studio OS control dashboard now includes **Connect BitRiver-Live**,
+a browser-local JSON file selector with strict schema/URL checks. It can
+**stage a disabled** RTMP destination by preserving the existing settings
+draft, inspect validation messages, and explicitly apply that disabled
+configuration while the dashboard reports no stream or recording.
+
+The downloaded profile is parsed locally; the browser sends only the
+credential-free RTMP server, channel-derived destination ID, and managed
+`streamKeyFile` reference to the authenticated, CSRF-protected settings API.
+It does **not** receive or persist a stream key. Applying a disabled
+destination does not enable it or start streaming. A creator must still
+install the key on the local OS with the CLI helper described below and
+explicitly enable the destination using the settings API.
+
+The UI blocks apply when its stream/record indicators are active, but
+**server-side on-air interlocks are not yet implemented**; settings may
+restart MediaMTX. It does not solve another operator editing the draft
+concurrently, or FFmpeg argv secret exposure.
+
 ### Prepare a destination on Studio OS
 
 After downloading the JSON profile from a Live channel you own:

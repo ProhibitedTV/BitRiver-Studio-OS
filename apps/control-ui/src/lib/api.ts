@@ -2,6 +2,8 @@ import {
   controlApiRoutes,
   type AudioState,
   type ConfigEnvelope,
+  type ControlConfig,
+  type ValidateConfigResponse,
   type GainRequest,
   type OperationResponse,
   type ShowState,
@@ -86,6 +88,27 @@ export function getStorage() {
 
 export function getActiveConfig() {
   return request<ConfigEnvelope>(controlApiRoutes.activeConfig);
+}
+
+// Draft-only calls. The API's existing operator cookie and CSRF protections
+// apply; no streaming key is ever sent to these endpoints.
+export function getDraftConfig() {
+  return request<ConfigEnvelope>(controlApiRoutes.settingsDraft);
+}
+
+export function updateDraftConfig(config: ControlConfig) {
+  return request<ConfigEnvelope>(controlApiRoutes.settingsDraft, {
+    method: "PUT",
+    body: JSON.stringify(config)
+  });
+}
+
+export function validateDraftConfig() {
+  return request<ValidateConfigResponse>(controlApiRoutes.settingsValidate, { method: "POST" });
+}
+
+export function applyDraftConfig() {
+  return request<OperationResponse>(controlApiRoutes.settingsApply, { method: "POST" });
 }
 
 export function activateScene(sceneId: string) {
