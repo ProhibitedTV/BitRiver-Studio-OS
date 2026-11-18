@@ -89,7 +89,9 @@ RUN dnf -y install \
 # subpackage, the Creator Asset installer can reach OBS over websocket but
 # browser_source creation fails at runtime despite passing Go/UI tests.
 RUN rpm -q obs-studio-plugin-browser \
-  && rpm -ql obs-studio-plugin-browser | grep -E '/obs-browser[.]so, then extract the *correct* upstream formats.
+  && test -s /usr/lib64/obs-plugins/obs-browser.so
+
+# Fail closed on asset changes, then extract the *correct* upstream formats.
 RUN curl -fL --retry 3 --proto '=https' --tlsv1.2 "${MEDIAMTX_TARBALL_URL}" -o /tmp/mediamtx.tar.gz \
   && printf '%s  %s\n' "${MEDIAMTX_SHA256}" /tmp/mediamtx.tar.gz | sha256sum -c - \
   && tar -xzf /tmp/mediamtx.tar.gz -C /usr/local/bin mediamtx \
