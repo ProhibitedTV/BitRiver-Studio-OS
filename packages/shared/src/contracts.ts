@@ -301,6 +301,7 @@ export interface ConfigMediaDestination {
   name: string;
   protocol: "rtmp" | "srt";
   targetUrl: string;
+  streamKeyFile?: string;
   enabled: boolean;
 }
 

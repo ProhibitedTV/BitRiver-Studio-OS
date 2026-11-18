@@ -14,6 +14,22 @@ BitRiver Studio OS exists to package the useful parts of that stack into somethi
 
 Brand assets and usage guidelines: [BitRiver visual identity](docs/BRAND_IDENTITY.md). The same mark appears in the bundled local control UI, operator sign-in, browser tab and OS image assets.
 
+## BitRiver creator ecosystem
+
+Studio OS can fan out its program output over RTMP/SRT. The first
+[BitRiver-Live integration](docs/ECOSYSTEM_INTEGRATION.md) uses the **existing
+BitRiver-Live creator RTMP ingest contract**, with an optional, user-controlled
+stream-key file stored outside the published settings JSON. No login to a
+BitRiver-hosted service is required, and no private key or personal service
+URL is baked into the image.
+
+The larger goal connects self-hosted BitRiver-Live streams, curated
+[OBS Scene Assets](docs/CREATOR_ASSETS.md), user-approved media/AI/radio
+sources, and familiar OBS/Discord/Steam workflows. Twitch, YouTube, Rumble,
+Kick and other providers remain custom RTMP destinations until each
+integration is explicitly verified; this is **not** automatic account linking
+or platform certification.
+
 ## Key Capabilities
 
 - Boots like an appliance, not a workstation.

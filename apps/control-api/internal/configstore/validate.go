@@ -118,6 +118,13 @@ func ValidateConfig(config model.ControlConfig) model.ValidateConfigResponse {
 			})
 		}
 
+		if err := model.ValidateStreamKeyFile(destination); err != nil {
+			issues = append(issues, model.ValidationIssue{
+				Field:    "mediaRouter.publishDestinations.streamKeyFile",
+				Severity: "error",
+				Message:  err.Error(),
+			})
+		}
 		switch destination.Protocol {
 		case "rtmp":
 			if !strings.HasPrefix(destination.TargetURL, "rtmp://") && !strings.HasPrefix(destination.TargetURL, "rtmps://") {

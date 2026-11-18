@@ -73,6 +73,7 @@ RUN dnf -y install \
     openssh-server \
     openssl \
     pciutils \
+    python3 \
     pipewire \
     systemd-networkd \
     sway \
@@ -105,6 +106,7 @@ COPY --from=api-build /out/bitriver-hw-report /usr/local/bin/bitriver-hw-report
 COPY --from=api-build /out/bitriver-operator-key /usr/local/bin/bitriver-operator-key
 COPY --from=ui-build /src/apps/control-ui/dist /usr/local/share/bitriver/control-ui
 
+COPY scripts/import-bitriver-live-profile.py /usr/local/libexec/bitriver/import-bitriver-live-profile.py
 COPY deploy/systemd/ /usr/lib/systemd/system/
 COPY deploy/image/rootfs-overlay/ /
 

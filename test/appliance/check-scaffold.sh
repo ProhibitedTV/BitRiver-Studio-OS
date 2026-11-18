@@ -22,6 +22,9 @@ grep -Fq -- '-adapter-mode appliance' deploy/systemd/bitriver-control-api.servic
 grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
 
+echo 'Checking BitRiver Live publish-profile integration...'
+bash test/ecosystem/check-integration.sh
+
 echo 'Checking visual identity assets across README, UI and OS image...'
 bash test/branding/check-branding.sh
 
