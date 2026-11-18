@@ -1,0 +1,12 @@
+# Only interactive entries. Never append inst.ks=, inst.cmdline or
+# kickstart partitioning directives to a distribution ISO by default.
+label: "BITRIVER-ISO"
+grub2:
+  timeout: 8
+  entries:
+    - name: "Install BitRiver Studio OS (experimental)"
+      linux: ${kernelpath} ${root} inst.graphical
+      initrd: ${initrdpath}
+    - name: "Install BitRiver Studio OS (experimental text)"
+      linux: ${kernelpath} ${root} inst.text console=ttyS0,115200n8
+      initrd: ${initrdpath}

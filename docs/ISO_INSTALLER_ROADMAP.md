@@ -1,0 +1,81 @@
+# Installer ISO milestone: technical proof of concept
+
+**State: experimental build path. Not install-tested and NOT a public ISO release.**
+
+The VirtualBox `.vdi` preview runs BitRiver from a pre-installed disk. A
+consumer `.iso` must instead boot an **installer**, let a user choose an
+explicit destination, install BitRiver, provision an operator identity, and
+boot the installed disk without the ISO.
+
+## Why a separate ISO image
+
+The unified osbuild `image-builder` CLI supports a `generic-iso` built from
+an installer *bootc* container. The BitRiver OS OCI image is separately
+embedded as an offline payload with `--bootc-installer-payload-ref`. This
+avoids relying on the deprecated `anaconda-iso` path or requiring the
+installer to download BitRiver from a network registry.
+
+Sources:
+- https://osbuild.org/docs/developer-guide/projects/image-builder/advanced/bootc/isos/
+- https://osbuild.org/docs/bootc/deprecation-notice/
+
+This branch introduces:
+
+1. `deploy/iso/Containerfile`: Fedora 44 Anaconda installer environment,
+   aligned with the locked BitRiver bootc base, plus its ISO GRUB layout.
+2. `deploy/iso/interactive-defaults.ks`: local bootc image source only.
+   **No unattended partitioning, destructive default or embedded password**.
+3. `test/appliance/build-iso-candidate.sh`: builds the full BitRiver OCI
+   payload and independent installer, embeds the payload, generates a
+   `generic-iso` and validates ISO boot descriptors and expected files.
+4. `.github/workflows/appliance-iso.yml`: attempts the image build on
+   relevant PRs and manually. It preserves checksum, layout and provenance
+   **only**. It does **not** upload ISO bytes or publish a GitHub Release.
+5. `test/appliance/check-iso-scaffold.sh`: basic static guard against
+   network-dependent payloads and accidentally unattended installer defaults.
+
+## Running the developer-only build
+
+On a Linux host with Docker, rootful Podman, PowerShell 7, xorriso, and access
+to pinned upstream container images:
+
+```bash
+pwsh ./deploy/image/build-image.ps1 -ContainerRuntime docker -ImageTag bitriver/studio-os:ci
+bash test/appliance/check-iso-scaffold.sh
+bash test/appliance/build-iso-candidate.sh
+```
+
+The ISO is stored *only* under `artifacts/iso-candidate/` on that host.
+Use `ISO-SHA256SUMS`, `boot-record.txt`, and `iso-provenance.json` for
+initial structural inspection. The build refuses to reuse a dirty output
+directory. The GitHub workflow uploads these metadata files only.
+
+**Do not flash or install this image on a machine with valuable data.**
+The installer UI, post-install account provisioning, and update behavior
+are **not verified**. The temporary target OCI ref
+`localhost/bitriver-studio-os:ci` is not a real remote update origin.
+The generated image must never be treated as a production deployment.
+
+## Required proof before publishing an ISO artifact
+
+- [ ] Pinned ISO builder actually supports `generic-iso` on Fedora 44;
+      experimental CI must generate a valid ISO and preserve build evidence.
+- [ ] QEMU UEFI smoke: boot the ISO, reach interactive Anaconda, confirm
+      there is **no automatic disk selection or destructive default**.
+- [ ] Install to a disposable blank virtual disk (no other attached disks),
+      detach ISO and boot from disk under UEFI.
+- [ ] Validate installed bootc identity, `bitriver.target`, all required
+      services, `/healthz`, writable recordings and shutdown/reboot.
+- [ ] First-run operator claim/provisioning without hardcoded demo passwords
+      or the disposable QEMU CI sudo/SSH account; credentials survive reboot.
+- [ ] Configure a real, version-pinned signed OCI update origin and test
+      safe staging, upgrade, failed update rollback and recovery.
+- [ ] Smoke both VirtualBox EFI and QEMU EFI; test a second disk, wrong-disk
+      cancellation, disconnected network and interrupted installation.
+- [ ] Verify Fedora/Anaconda redistribution notices, SPDX/license inventory,
+      boot and ISO artifact checksums/signatures, and clean release provenance.
+- [ ] Validate actual graphics, audio, USB capture and stream/recovery on
+      supported hardware before calling it an official BitRiver release.
+
+Related: [Release Readiness](RELEASE_READINESS.md) and
+[Release blocker #4](https://github.com/ProhibitedTV/BitRiver-Studio-OS/issues/4).

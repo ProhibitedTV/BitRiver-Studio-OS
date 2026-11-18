@@ -199,3 +199,13 @@ security, and recovery testing remain release gates. See [docs/RELEASE_READINESS
 ## License
 
 [MIT](LICENSE)
+
+## Installer ISO roadmap (experimental)
+
+A bootable installer ISO is now being prototyped separately from the
+[VirtualBox disk preview](docs/VIRTUALBOX_PREVIEW.md). The work uses a Fedora
+Anaconda boot environment with a locally embedded BitRiver bootc image.
+The [ISO roadmap](docs/ISO_INSTALLER_ROADMAP.md) tracks the build, UEFI ISO
+boot test, interactive install, first boot, secure operator enrollment,
+and update/rollback gates. The initial ISO workflow **does not publish an
+ISO** or claim installability; it retains non-release build evidence only.

@@ -25,3 +25,9 @@ bin/
 apps/control-ui/dist/
 packages/shared/dist/
 deploy/image/out/
+
+# ISO/VDI images, provenance and temporary build outputs must not be committed.
+artifacts/
+*.iso
+*.vdi
+*.qcow2

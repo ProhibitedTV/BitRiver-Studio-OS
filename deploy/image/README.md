@@ -184,3 +184,18 @@ The final image is designed to:
 - ship the BitRiver control plane and control UI
 - install the curated runtime stack for OBS, PipeWire, Chromium, and sway
 - enable the BitRiver unit set at boot
+
+## Offline installer ISO experiment (non-release)
+
+The [ISO roadmap](../../docs/ISO_INSTALLER_ROADMAP.md) and
+[experimental installer workflow](../../.github/workflows/appliance-iso.yml)
+use the unified Image Builder `generic-iso` path. A separate Fedora 44
+Anaconda boot container embeds the regular BitRiver bootc image as an offline
+installer payload. This is **not** the VirtualBox VDI conversion and it
+**does not** share disposable CI SSH credentials.
+
+The workflow builds and checks ISO structure but publishes *only* manifest,
+SHA256 and boot-record metadata, never the ISO itself. Before an installable
+artifact can be released, the installer needs an actual UEFI boot test,
+non-destructive target-disk selection, installed-OS first boot validation,
+secure account claim, real signed OCI update origin and rollback tests.

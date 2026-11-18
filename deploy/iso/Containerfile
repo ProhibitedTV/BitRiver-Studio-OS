@@ -1,0 +1,54 @@
+# EXPERIMENTAL ISO installer environment, deliberately separate from the
+# production BitRiver bootc payload. Keep Fedora aligned with the locked
+# base in deploy/image/releases.lock.json.
+ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc@sha256:5f2947d685c24029b2eb4e1f0634dc4ac06116a88d9dd93da4b5571b2f0e28e1
+FROM ${FEDORA_BOOTC_IMAGE}
+
+# Fedora Anaconda and generic-iso boot requirements. Package versions are
+# not snapshot-locked yet; this is NOT a reproducible, supported installer.
+RUN dnf -y install \
+      anaconda anaconda-install-img-deps anaconda-dracut \
+      dracut-config-generic dracut-network dracut-live \
+      grub2-efi-x64-cdboot grub2-common grub2-pc-modules \
+      plymouth default-fonts-core-sans default-fonts-other-sans \
+      google-noto-sans-cjk-fonts net-tools \
+      xorrisofs squashfs-tools implantisomd5 \
+      podman python3 jq \
+    && dnf clean all
+
+# New image-builder generic-iso requires UEFI boot media in the bootc image.
+RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
+COPY deploy/iso/iso.yaml /usr/lib/image-builder/bootc/iso.yaml
+COPY deploy/iso/interactive-defaults.ks /usr/share/anaconda/interactive-defaults.ks
+
+# Adapt the Fedora bootc base to boot Anaconda, never the BitRiver service
+# target. The installer is interactive, not a preseeded disk-wiping image.
+RUN set -eux; \
+    echo "install:x:0:0:root:/root:/usr/libexec/anaconda/run-anaconda" >> /etc/passwd; \
+    echo "install::14438:0:99999:7:::" >> /etc/shadow; \
+    passwd -d root; \
+    mv /usr/share/anaconda/list-harddrives-stub /usr/bin/list-harddrives; \
+    if [ -d /usr/share/dnf5/repos.d ]; then \
+      mv /usr/share/dnf5/repos.d /etc/anaconda.repos.d; \
+    else \
+      mv /etc/yum.repos.d /etc/anaconda.repos.d; \
+    fi; \
+    ln -sf /usr/lib/systemd/system/anaconda.target /etc/systemd/system/default.target; \
+    rm -f /usr/lib/systemd/system-generators/systemd-gpt-auto-generator; \
+    ln -sf /usr/lib/systemd/system/anaconda-shell@.service /usr/lib/systemd/system/autovt@.service; \
+    mkdir -p "$(realpath /root)" /usr/lib/systemd/logind.conf.d; \
+    printf '[Login]\nReserveVT=2\n' > /usr/lib/systemd/logind.conf.d/anaconda-shell.conf
+
+# Anaconda and dmsquash-live are required inside the initramfs for an ISO
+# to boot into the installer rather than the installed BitRiver appliance.
+RUN set -eux; \
+    kver="$(find /usr/lib/modules -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | head -n 1)"; \
+    test -n "$kver"; \
+    DRACUT_NO_XATTR=1 dracut --force --zstd --no-hostonly \
+      --add "anaconda livenet dmsquash-live" \
+      "/usr/lib/modules/$kver/initramfs.img" "$kver"
+
+# Anaconda may launch PipeWire as root in the installer environment only.
+RUN mkdir -p /etc/systemd/user/pipewire.service.d /etc/systemd/user/pipewire.socket.d \
+    && printf '[Unit]\nConditionUser=\n' > /etc/systemd/user/pipewire.service.d/allowroot.conf \
+    && printf '[Unit]\nConditionUser=\n' > /etc/systemd/user/pipewire.socket.d/allowroot.conf

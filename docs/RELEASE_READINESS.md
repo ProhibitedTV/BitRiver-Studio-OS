@@ -130,3 +130,20 @@ Developers can validate without the image build:
 
 This checks shell syntax, image wiring and the generated JSON report. It does
 not boot the image, download media archives, or test any broadcast hardware.
+
+## Installer ISO: proof-of-concept workstream
+
+- [ ] Generate an experimental Fedora 44 offline `generic-iso` installer with
+      independent Anaconda boot container and embedded BitRiver OCI payload.
+      Initial CI intentionally uploads **only evidence**, not the ISO.
+- [ ] Boot ISO under UEFI to a **manual** installer, verify there is no
+      unattended repartitioning, and install to a disposable blank VM disk.
+- [ ] Detach ISO, reboot into the installed BitRiver OS and verify the
+      API/systemd services, firstboot identity and persistent recording paths.
+- [ ] Replace the development-only `localhost` payload update target with
+      a real version-pinned, signed remote origin; verify safe updates and
+      failed-update rollback before publishing installable media.
+- [ ] Verify license inventory, signatures and physical hardware matrix.
+
+See [ISO installer roadmap](ISO_INSTALLER_ROADMAP.md). The VirtualBox VDI
+preview is **not** evidence that the ISO installation flow is safe.

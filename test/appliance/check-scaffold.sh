@@ -73,3 +73,7 @@ echo 'Building offline operator recovery command...'
   go build -o "${tmp_dir}/bitriver-operator-key" ./cmd/bitriver-operator-key
 )
 echo 'Appliance scaffold and hardware report checks passed.'
+
+# Separately verify that the ISO proof of concept cannot quietly become an
+# unattended installer or sneak a network-only payload into the workflow.
+bash test/appliance/check-iso-scaffold.sh
