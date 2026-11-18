@@ -21,6 +21,7 @@ tags:
   - name: stream
   - name: outputs
   - name: media-router
+  - name: creator-assets
   - name: recordings
   - name: scenes
   - name: sources
@@ -122,6 +123,68 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MediaRouterSummary"
+  /api/v1/creator-assets/catalog:
+    get:
+      tags: [creator-assets]
+      operationId: getCreatorAssetCatalog
+      description: List validated local asset metadata without rendering HTML.
+      responses:
+        "200":
+          description: Safe metadata for local creator assets
+        "503":
+          description: The local creator asset catalog is unavailable
+  /api/v1/creator-assets/install:
+    post:
+      tags: [creator-assets]
+      operationId: installCreatorAsset
+      description: >
+        Create a new inactive OBS scene with a locally catalog-listed browser
+        source. Requires an operator session and CSRF token in appliance mode.
+        Never switches the program or starts an output. Do not retry blindly
+        after a websocket failure because the result may be ambiguous.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [path]
+              properties:
+                path:
+                  type: string
+                  example: scenes/starting-soon.html
+                title:
+                  type: string
+                  maxLength: 120
+                subtitle:
+                  type: string
+                  maxLength: 120
+      responses:
+        "201":
+          description: OBS scene and browser source created but not activated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sceneName, inputName, message]
+                properties:
+                  sceneName:
+                    type: string
+                  inputName:
+                    type: string
+                  message:
+                    type: string
+        "400":
+          description: Invalid selection or text
+        "404":
+          description: The selected local asset is not available
+        "409":
+          description: OBS is busy streaming/recording or a scene/input name already exists
+        "422":
+          description: Invalid asset dimensions or title
+        "503":
+          description: Local library or OBS connection unavailable
   /api/v1/recordings:
     get:
       tags: [recordings]
