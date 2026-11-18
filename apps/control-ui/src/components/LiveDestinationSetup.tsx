@@ -125,9 +125,8 @@ export function LiveDestinationSetup({ onAir, recording, activeDestinations, onA
           selected.streamKeyFile !== destination.streamKeyFile) {
         throw new Error("The draft was modified since validation. Re-validate before applying.");
       }
-      // A settings apply can restart MediaMTX. UI blocks this while the
-      // dashboard reports an active stream or recording. Server-side on-air
-      // interlocks are a separate hardening gate.
+      // The UI blocks active streams/recordings and the server independently
+      // rechecks OBS status before it applies MediaMTX changes.
       await applyDraftConfig();
       setStagedGeneration("");
       setValidatedGeneration("");
