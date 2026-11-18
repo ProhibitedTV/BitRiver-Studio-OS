@@ -215,6 +215,9 @@ type fakeOBSServer struct {
 	closeAfterSession   map[int]bool
 	sessionEventPlan    map[int][]map[string]any
 	currentProgramScene string
+	scenes              []string
+	lastBrowserURL      string
+	failCreateInput     bool
 	streamActive        bool
 	recordActive        bool
 	recordPath          string
@@ -247,6 +250,7 @@ func newFakeOBSServer(t *testing.T) *fakeOBSServer {
 		closeAfterSession:   make(map[int]bool),
 		sessionEventPlan:    make(map[int][]map[string]any),
 		currentProgramScene: "Starting Soon",
+		scenes: []string{"Starting Soon", "Host Camera", "Host + Guest"},
 		recordPath:          "/data/recordings/bitriver-session-001.mkv",
 		inputs: []fakeInput{
 			{Name: "Host Mic", Kind: "pulse_input_capture", HasAudio: true, Muted: false, GainDB: 0},
@@ -451,6 +455,9 @@ func (server *fakeOBSServer) handleRequest(requestType string, requestData map[s
 			"availableRequests": []string{
 				"GetVersion",
 				"GetSceneList",
+				"CreateScene",
+				"CreateInput",
+				"RemoveScene",
 				"GetInputList",
 				"GetInputMute",
 				"GetInputVolume",
@@ -474,14 +481,45 @@ func (server *fakeOBSServer) handleRequest(requestType string, requestData map[s
 			},
 		}, nil
 	case "GetSceneList":
-		return map[string]any{
-			"currentProgramSceneName": server.currentProgramScene,
-			"scenes": []map[string]any{
-				{"sceneIndex": 0, "sceneName": "Starting Soon"},
-				{"sceneIndex": 1, "sceneName": "Host Camera"},
-				{"sceneIndex": 2, "sceneName": "Host + Guest"},
-			},
-		}, nil
+		scenes := make([]map[string]any, 0, len(server.scenes))
+		for i, name := range server.scenes {
+			scenes = append(scenes, map[string]any{"sceneIndex": i, "sceneName": name})
+		}
+		return map[string]any{"currentProgramSceneName": server.currentProgramScene, "scenes": scenes}, nil
+	case "CreateScene":
+		name := stringValue(requestData["sceneName"])
+		for _, existing := range server.scenes {
+			if existing == name {
+				return nil, errors.New("scene already exists")
+			}
+		}
+		server.scenes = append(server.scenes, name)
+		return map[string]any{}, nil
+	case "RemoveScene":
+		name := stringValue(requestData["sceneName"])
+		for i, existing := range server.scenes {
+			if existing == name && name != server.currentProgramScene {
+				server.scenes = append(server.scenes[:i], server.scenes[i+1:]...)
+				return map[string]any{}, nil
+			}
+		}
+		return nil, errors.New("scene cannot be removed")
+	case "CreateInput":
+		if server.failCreateInput { return nil, errors.New("browser source unavailable") }
+		sceneName := stringValue(requestData["sceneName"])
+		foundScene := false
+		for _, name := range server.scenes { if name == sceneName { foundScene = true } }
+		if !foundScene { return nil, errors.New("target scene not found") }
+		name := stringValue(requestData["inputName"])
+		for _, input := range server.inputs {
+			if input.Name == name { return nil, errors.New("input already exists") }
+		}
+		if stringValue(requestData["inputKind"]) != "browser_source" { return nil, errors.New("unsupported source kind") }
+		settings, ok := requestData["inputSettings"].(map[string]any)
+		if !ok { return nil, errors.New("missing input settings") }
+		server.lastBrowserURL = stringValue(settings["url"])
+		server.inputs = append(server.inputs, fakeInput{Name: name, Kind: "browser_source"})
+		return map[string]any{"sceneItemId": 12}, nil
 	case "GetInputList":
 		inputs := make([]map[string]any, 0, len(server.inputs))
 		for _, input := range server.inputs {
