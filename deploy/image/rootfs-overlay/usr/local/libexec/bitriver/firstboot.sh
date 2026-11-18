@@ -28,7 +28,7 @@ install -d -o studio -g studio -m 0750 /data/recordings
 
 default_hardware="$(jq -n \
   --arg detectedAt "${started_at}" \
-  '{detectedAt: $detectedAt, architecture: "unknown", cpuModel: "unknown", logicalCores: 0, memoryMiB: 0, displayAttached: false, videoDevices: [], audioCaptureDevices: [], networkInterfaces: [], capabilities: {kioskEligible: false, obsEligible: false, recommendedForMvp: false}}')"
+  '{detectedAt: $detectedAt, architecture: "unknown", cpuModel: "unknown", logicalCores: 0, memoryMiB: 0, displayAttached: false, bootFirmware: "unknown", gpus: [], networkAdapters: [], compatibilityNotes: [], videoDevices: [], audioCaptureDevices: [], networkInterfaces: [], capabilities: {kioskEligible: false, obsEligible: false, recommendedForMvp: false}}')"
 
 printf '%s\n' "$(
   jq -n \

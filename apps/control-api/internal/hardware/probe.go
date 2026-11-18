@@ -33,12 +33,16 @@ func Probe(root string, now time.Time) model.HardwareReport {
 		LogicalCores:        cores,
 		MemoryMiB:           memory,
 		DisplayAttached:     displayAttached,
+		BootFirmware:        bootFirmware(root),
+		GPUs:                pciGraphicsDevices(root),
+		NetworkAdapters:     networkAdapters(root),
 		VideoDevices:        devices(root, "dev/video[0-9]*"),
 		AudioCaptureDevices: devices(root, "dev/snd/pcmC*D*c"),
 		NetworkInterfaces:   networkInterfaces(filepath.Join(root, "sys", "class", "net")),
 	}
 	// These are resource heuristics, not hardware certification. GPU/encoder
 	// capability and capture reliability still require real appliance testing.
+	report.CompatibilityNotes = compatibilityNotes(report)
 	report.Capabilities = model.HardwareCapabilities{
 		KioskEligible:     displayAttached,
 		OBSEligible:       displayAttached && memory >= 4096,
