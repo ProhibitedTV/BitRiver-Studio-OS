@@ -666,3 +666,14 @@ code {
 @media (max-width: 760px) {
   .brand-lockup--dashboard { width: 240px; }
 }
+
+/* Creator overlay install is an explicit action; keep both controls usable on phones. */
+.creator-assets__copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+.creator-assets__copy input {
+  flex: 1 1 100%;
+}
