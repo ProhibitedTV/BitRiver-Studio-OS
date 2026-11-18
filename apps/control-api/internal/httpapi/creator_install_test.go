@@ -65,6 +65,36 @@ func TestInstallCreatorSceneIsOptInAndNoOverwrite(t *testing.T) {
 	if stream.State != "stopped" {
 		t.Fatalf("installation unexpectedly started streaming: %#v", stream)
 	}
+	// The newly installed scene must be discoverable and switchable through
+	// the exact API used by the dashboard, without editing settings JSON.
+	showResponse, err := http.Get(server.URL + "/api/v1/show")
+	if err != nil { t.Fatal(err) }
+	var show struct {
+		ActiveSceneID string `json:"activeSceneId"`
+		Scenes []struct { ID string `json:"id"`; Name string `json:"name"`; Active bool `json:"active"` } `json:"scenes"`
+	}
+	if err := json.NewDecoder(showResponse.Body).Decode(&show); err != nil { t.Fatal(err) }
+	showResponse.Body.Close()
+	if show.ActiveSceneID != "starting-soon" || len(show.Scenes) != 4 {
+		t.Fatalf("install changed program or failed to expose scene in show: %#v", show)
+	}
+	newID := show.Scenes[3].ID
+	if show.Scenes[3].Name != installed.SceneName || !strings.HasPrefix(newID, "obs-") {
+		t.Fatalf("installed scene has no stable ID in show: %#v", show.Scenes[3])
+	}
+	switchResponse, err := http.Post(server.URL + "/api/v1/show/scene/" + newID + "/activate", "application/json", nil)
+	if err != nil { t.Fatal(err) }
+	switchResponse.Body.Close()
+	if switchResponse.StatusCode != http.StatusOK {
+		t.Fatalf("scene switch failed: %d", switchResponse.StatusCode)
+	}
+	afterResponse, err := http.Get(server.URL + "/api/v1/show")
+	if err != nil { t.Fatal(err) }
+	defer afterResponse.Body.Close()
+	if err := json.NewDecoder(afterResponse.Body).Decode(&show); err != nil { t.Fatal(err) }
+	if show.ActiveSceneID != newID {
+		t.Fatalf("new scene not active after explicit operator switch: %#v", show)
+	}
 	duplicate := postCreatorInstall(t, server, body)
 	defer duplicate.Body.Close()
 	if duplicate.StatusCode != http.StatusConflict {
