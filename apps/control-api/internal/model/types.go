@@ -230,6 +230,20 @@ type HardwareCapabilities struct {
 	RecommendedForMVP bool `json:"recommendedForMvp"`
 }
 
+type GPUDevice struct {
+	PCIAddress   string `json:"pciAddress"`
+	Vendor       string `json:"vendor"`
+	VendorID     string `json:"vendorId"`
+	DeviceID     string `json:"deviceId"`
+	KernelDriver string `json:"kernelDriver"`
+}
+
+type NetworkAdapter struct {
+	Name         string `json:"name"`
+	Wireless     bool   `json:"wireless"`
+	KernelDriver string `json:"kernelDriver"`
+}
+
 type HardwareReport struct {
 	DetectedAt          time.Time            `json:"detectedAt"`
 	Architecture        string               `json:"architecture"`
@@ -237,6 +251,10 @@ type HardwareReport struct {
 	LogicalCores        int                  `json:"logicalCores"`
 	MemoryMiB           int                  `json:"memoryMiB"`
 	DisplayAttached     bool                 `json:"displayAttached"`
+	BootFirmware        string               `json:"bootFirmware"`
+	GPUs                []GPUDevice          `json:"gpus"`
+	NetworkAdapters     []NetworkAdapter     `json:"networkAdapters"`
+	CompatibilityNotes  []string             `json:"compatibilityNotes"`
 	VideoDevices        []string             `json:"videoDevices"`
 	AudioCaptureDevices []string             `json:"audioCaptureDevices"`
 	NetworkInterfaces   []string             `json:"networkInterfaces"`

@@ -106,6 +106,10 @@ func DefaultHardwareReport(now time.Time) HardwareReport {
 		LogicalCores:        4,
 		MemoryMiB:           16384,
 		DisplayAttached:     false,
+		BootFirmware:        "unknown",
+		GPUs:                []GPUDevice{},
+		NetworkAdapters:     []NetworkAdapter{},
+		CompatibilityNotes:  []string{"No hardware validation has been performed yet."},
 		VideoDevices:        []string{},
 		AudioCaptureDevices: []string{},
 		NetworkInterfaces:   []string{"eth0"},
@@ -321,6 +325,9 @@ func CloneSetupStatus(in SetupStatus) SetupStatus {
 	out.Hardware.VideoDevices = CloneStrings(in.Hardware.VideoDevices)
 	out.Hardware.AudioCaptureDevices = CloneStrings(in.Hardware.AudioCaptureDevices)
 	out.Hardware.NetworkInterfaces = CloneStrings(in.Hardware.NetworkInterfaces)
+	out.Hardware.GPUs = append([]GPUDevice(nil), in.Hardware.GPUs...)
+	out.Hardware.NetworkAdapters = append([]NetworkAdapter(nil), in.Hardware.NetworkAdapters...)
+	out.Hardware.CompatibilityNotes = CloneStrings(in.Hardware.CompatibilityNotes)
 	return out
 }
 

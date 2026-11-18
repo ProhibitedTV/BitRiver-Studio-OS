@@ -205,3 +205,14 @@ security, and recovery testing remain release gates. See [docs/RELEASE_READINESS
 ## License
 
 [MIT](LICENSE)
+
+## Ordinary PCs and gaming rigs
+
+BitRiver targets standard x86_64 desktops, gaming PCs, mini PCs and laptops,
+not only dedicated streaming appliances. The hardware-inventory work records
+**PCI GPU vendor/loaded driver, boot firmware mode, and wireless indicators**
+in the local probe. This is inventory, **not** proof that hardware encoding,
+OBS, Wi-Fi, or games work. Open-source Mesa and Fedora firmware are included;
+no proprietary NVIDIA driver, Steam, or other external app is silently installed.
+
+See [hardware compatibility plans](docs/HARDWARE_COMPATIBILITY.md).

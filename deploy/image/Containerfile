@@ -65,6 +65,9 @@ RUN dnf -y install \
     chromium \
     curl \
     ffmpeg \
+    linux-firmware \
+    mesa-dri-drivers \
+    mesa-vulkan-drivers \
     jq \
     obs-studio \
     openssh-server \

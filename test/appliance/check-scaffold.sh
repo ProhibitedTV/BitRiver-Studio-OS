@@ -59,6 +59,10 @@ jq -e '
   (.logicalCores | type == "number") and
   (.memoryMiB | type == "number") and
   (.displayAttached | type == "boolean") and
+  (.bootFirmware == "uefi" or .bootFirmware == "bios" or .bootFirmware == "unknown") and
+  (.gpus | type == "array") and
+  (.networkAdapters | type == "array") and
+  (.compatibilityNotes | type == "array") and
   (.videoDevices | type == "array") and
   (.audioCaptureDevices | type == "array") and
   (.networkInterfaces | type == "array") and
