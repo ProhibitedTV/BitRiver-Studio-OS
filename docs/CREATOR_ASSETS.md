@@ -12,12 +12,13 @@ are preserved alongside the pack.
 Its metadata catalog and PNG previews appear in the Asset Studio panel of
 the control dashboard. You can search and filter assets, customize common
 title/subtitle query parameters, and copy an OBS Browser Source file URL.
-The full upstream library remains optional. **Bundled assets are not
-automatically installed into an OBS scene collection.**
+The full upstream library remains optional. **Assets are never installed
+silently**. An operator can explicitly install an asset as a new, inactive
+OBS scene or copy its file URL for manual setup. Installation does not
+switch the current scene, start an output, or overwrite existing OBS inputs.
 
-This initial integration is deliberately read-only: it does not modify OBS,
-install scene collections, execute overlays in the admin browser, or download
-untrusted content automatically. One-click OBS source installation is future work.
+Only locally installed, catalog-listed HTML can be selected. The control API
+never renders overlay HTML in its own browser origin or downloads remote assets.
 
 ## Use the included offline scenes
 
@@ -27,8 +28,15 @@ Source URL, for example:
 
     file:///usr/local/share/bitriver/creator-assets/assets/scenes/starting-soon.html
 
-Add the URL in OBS with a 1920 × 1080 Browser Source and review the scene
-before going live. The files are read-only and shared across all users;
+Choose **Install as new OBS scene** to create a separate inactive scene
+(named `BitRiver - Starting Soon`) with a local 1920 × 1080 Browser Source.
+The operator must **stop streaming and recording first**; OBS refuses duplicate
+scene/input names, and a failed input creation attempts to remove only the
+new scene. Never assume a failed request is safe to retry without inspecting
+OBS, because a websocket disconnect may leave creation status unknown.
+
+Alternatively, copy the URL and add it manually with a 1920 × 1080 Browser
+Source. Review the result in OBS and switch scenes manually before going live. The files are read-only and shared across all users;
 this prevents a creator's edits from silently modifying the base image.
 To customize permanently, copy an asset into a persistent directory and
 change the OBS source URL. No streaming keys are bundled.
@@ -74,6 +82,12 @@ Studio card. A copied URL is not an automatic OBS scene installation.
   arbitrary JavaScript on the same origin as administrator controls.
 - OBS itself loads the selected local HTML as a Browser Source. Review packs
   before installation, especially any JavaScript and external network assets.
+- Installation requires an operator session and CSRF token in appliance mode.
+  A missing or invalid asset, out-of-library symlink, invalid dimensions, or
+  duplicate OBS names is rejected. Active streams and recordings block installs.
+- OBS commands are not retried after uncertain mutation outcomes. If OBS
+  disconnects during creation, inspect the scene collection before retrying.
+  No destructive cleanup touches pre-existing scenes or global sources.
 - Private personal media libraries, AI model secrets, Discord credentials and
   Steam authentication are **not** part of this integration.
 - Do not expose the LAN control API or local asset library directly to the
@@ -90,11 +104,19 @@ GET /api/v1/creator-assets/preview/previews/<path>.png: reads only PNG
 previews from the configured local library. Returns HTTP 404 for invalid
 paths or missing files.
 
-Both endpoints are read-only. The catalog does not invoke OBS commands.
+POST /api/v1/creator-assets/install: accepts `{ "path": "scenes/starting-soon.html", "title": "My Show", "subtitle": "Episode 1" }`.
+The file path must match a local catalog asset. Creates a new OBS scene and a
+Browser Source with the catalog dimensions and encoded title/subtitle.
+Returns **201** with scene details on success; **400/404/422** for invalid
+input or assets, **409** for on-air/recording state or name collisions, and
+**503** when the library or OBS is unavailable. Does not activate the scene.
+
+The catalog and PNG preview endpoints remain read-only. All API endpoints are
+protected by the appliance operator-auth boundary when enabled.
 
 ## Next milestone
 
-Connect Asset Studio selection to the authenticated OBS adapter using
-CreateInput/SetInputSettings from obs-websocket, after validating scene
-existence, naming collisions, active-stream safety, and input rollback. Keep
-the overlay in OBS's rendering context, never in the control API origin.
+Test asset installation and rendering with a real Fedora bootc QEMU guest and
+OBS browser plugin. Validate packaged HTML behavior, persistent OBS scene
+collections, and visual results under VirtualBox/physical GPU drivers. Provide
+a reviewed uninstall/reinstall action without disturbing user-created scenes.
