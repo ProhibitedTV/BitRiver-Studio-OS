@@ -40,13 +40,16 @@ export function useDashboard() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setError(null);
 
     try {
-      const [system, show, sources, audio, storage, activeConfig] = await Promise.all([
+      // A missing OBS or audio device must not hide a healthy headless OS.
+      // Never synthesize "stopped"/"healthy" states for unreadable endpoints.
+      const [system, show, sources, audio, storage, activeConfig] = await Promise.allSettled([
         getSystem(),
         getShow(),
         getSources(),
@@ -54,9 +57,31 @@ export function useDashboard() {
         getStorage(),
         getActiveConfig()
       ]);
+      const failures: string[] = [];
+      if (system.status === "rejected") failures.push("system");
+      if (show.status === "rejected") failures.push("OBS show");
+      if (sources.status === "rejected") failures.push("sources");
+      if (audio.status === "rejected") failures.push("audio");
+      if (storage.status === "rejected") failures.push("storage");
+      if (activeConfig.status === "rejected") failures.push("settings");
 
-      setData({ system, show, sources, audio, storage, activeConfig });
-      setLastUpdated(new Date().toISOString());
+      setData({
+        system: system.status === "fulfilled" ? system.value : undefined,
+        show: show.status === "fulfilled" ? show.value : undefined,
+        sources: sources.status === "fulfilled" ? sources.value : [],
+        audio: audio.status === "fulfilled" ? audio.value : undefined,
+        storage: storage.status === "fulfilled" ? storage.value : undefined,
+        activeConfig: activeConfig.status === "fulfilled" ? activeConfig.value : undefined
+      });
+      if (system.status === "rejected") {
+        setError("Cannot load system status from the BitRiver appliance.");
+      }
+      setWarning(failures.length
+        ? "Unavailable subsystems: " + failures.join(", ") + ". Controls for missing subsystems are disabled; check local services before broadcasting."
+        : null);
+      if (system.status === "fulfilled") {
+        setLastUpdated(new Date().toISOString());
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unknown request error");
     } finally {
@@ -97,6 +122,7 @@ export function useDashboard() {
     loading,
     busy,
     error,
+    warning,
     lastUpdated,
     refresh,
     activateScene: (sceneId: string) => runAction(() => activateScene(sceneId)),

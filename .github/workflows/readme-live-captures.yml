@@ -1,0 +1,74 @@
+name: readme-live-appliance-captures
+
+on:
+  push:
+    branches:
+      - docs/readme-brand-live-captures
+    paths:
+      - ".github/workflows/readme-live-captures.yml"
+      - "test/appliance/capture-qemu-ui.sh"
+      - "test/appliance/capture-qemu-ui.mjs"
+      - "apps/control-ui/**"
+      - "docs/assets/bitriver-studio-*.svg"
+      - "deploy/image/rootfs-overlay/usr/local/share/bitriver/branding/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture-actual-running-appliance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out snapshot branch
+        uses: actions/checkout@v4
+
+      - name: Install QEMU and OVMF
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends \
+            podman qemu-system-x86 qemu-utils ovmf file
+
+      - name: Build full BitRiver OS container
+        shell: pwsh
+        run: ./deploy/image/build-image.ps1 -ContainerRuntime docker -ImageTag bitriver/studio-os:ci -MetadataPath artifacts/image-build-provenance.json
+
+      - name: Create disposable CI SSH key
+        run: |
+          mkdir -p artifacts/vm
+          ssh-keygen -t ed25519 -N '' -C bitriver-ci-capture -f artifacts/vm/id_ed25519
+          chmod 0600 artifacts/vm/id_ed25519
+
+      - name: Create throwaway UEFI QCOW2 (never publish)
+        run: bash test/appliance/build-qcow2.sh
+
+      - name: Capture real operator login and authenticated dashboard
+        run: bash test/appliance/capture-qemu-ui.sh
+
+      - name: Upload verified screenshots only
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-real-running-appliance-ui
+          path: |
+            docs/screenshots/real/*.png
+            docs/screenshots/real/PROVENANCE.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Commit actual capture images to dedicated docs branch
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/docs/readme-brand-live-captures' }}
+        run: |
+          set -euo pipefail
+          test -s docs/screenshots/real/appliance-dashboard.png
+          test -s docs/screenshots/real/operator-login.png
+          test -s docs/screenshots/real/appliance-sources.png
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/screenshots/real/
+          if git diff --cached --quiet; then
+            echo 'No screenshot changes'
+            exit 0
+          fi
+          git commit -m 'docs: attach real running-VM UI captures'
+          git push origin HEAD:refs/heads/docs/readme-brand-live-captures
