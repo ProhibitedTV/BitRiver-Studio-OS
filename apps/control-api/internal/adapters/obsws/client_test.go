@@ -218,6 +218,7 @@ type fakeOBSServer struct {
 	scenes              []string
 	lastBrowserURL      string
 	failCreateInput     bool
+	browserPluginMissing bool
 	streamActive        bool
 	recordActive        bool
 	recordPath          string
@@ -520,6 +521,11 @@ func (server *fakeOBSServer) handleRequest(requestType string, requestData map[s
 		server.lastBrowserURL = stringValue(settings["url"])
 		server.inputs = append(server.inputs, fakeInput{Name: name, Kind: "browser_source"})
 		return map[string]any{"sceneItemId": 12}, nil
+	case "GetInputKindList":
+		if server.browserPluginMissing {
+			return map[string]any{"inputKinds": []string{"pulse_input_capture"}}, nil
+		}
+		return map[string]any{"inputKinds": []string{"pulse_input_capture", "browser_source"}}, nil
 	case "GetInputList":
 		inputs := make([]map[string]any, 0, len(server.inputs))
 		for _, input := range server.inputs {
