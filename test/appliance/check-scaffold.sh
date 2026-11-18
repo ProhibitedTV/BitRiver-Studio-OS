@@ -22,6 +22,9 @@ grep -Fq -- '-adapter-mode appliance' deploy/systemd/bitriver-control-api.servic
 grep -Fq 'controlKeySha256' deploy/image/rootfs-overlay/usr/local/libexec/bitriver/firstboot.sh
 grep -Fq 'http://127.0.0.1:8080/' deploy/image/rootfs-overlay/etc/sway/config.d/bitriver-kiosk.conf
 
+echo 'Checking visual identity assets across README, UI and OS image...'
+bash test/branding/check-branding.sh
+
 echo 'Checking immutable OCI builder image references...'
 bash test/appliance/check-image-lock.sh
 bash test/appliance/check-npm-lock.sh
