@@ -30,7 +30,9 @@ Source URL, for example:
 
 Choose **Install as new OBS scene** to create a separate inactive scene
 (named `BitRiver - Starting Soon`) with a local 1920 × 1080 Browser Source.
-The operator must **stop streaming and recording first**; OBS refuses duplicate
+The newly installed scene also appears in the BitRiver **Scene Rail** with a
+stable ID; you can switch to it manually from there. The operator must
+**stop streaming and recording first**; OBS refuses duplicate
 scene/input names, and a failed input creation attempts to remove only the
 new scene. Never assume a failed request is safe to retry without inspecting
 OBS, because a websocket disconnect may leave creation status unknown.
