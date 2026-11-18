@@ -79,6 +79,7 @@ type Client struct {
 	reconnectMax     time.Duration
 	requestRetries   int
 
+	installMu   sync.Mutex
 	mu          sync.RWMutex
 	version     adapters.OBSVersion
 	snapshot    adapters.OBSSnapshot
