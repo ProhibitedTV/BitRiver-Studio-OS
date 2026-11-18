@@ -521,6 +521,20 @@ func (controller *Controller) Snapshot(ctx context.Context) (model.Snapshot, err
 	}, nil
 }
 
+// InstallBrowserScene delegates to an opt-in OBS implementation. It never
+// switches the active scene or starts an output.
+func (controller *Controller) InstallBrowserScene(ctx context.Context, sceneName, inputName, sourceURL string, width, height int) error {
+	installer, ok := controller.obs.(adapters.BrowserSceneInstaller)
+	if !ok {
+		return errors.New("OBS browser scene installation is unsupported")
+	}
+	if err := installer.InstallBrowserScene(ctx, sceneName, inputName, sourceURL, width, height); err != nil {
+		return err
+	}
+	controller.publishSnapshotEvent(ctx, "creator.scene_installed")
+	return nil
+}
+
 func (controller *Controller) StartStream(ctx context.Context) (model.OperationResponse, error) {
 	if err := controller.obs.StartStream(ctx); err != nil {
 		return model.OperationResponse{}, wrapUnavailable("OBS", err)
