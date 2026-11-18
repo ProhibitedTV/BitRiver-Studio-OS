@@ -14,6 +14,14 @@ BitRiver Studio OS exists to package the useful parts of that stack into somethi
 
 Brand assets and usage guidelines: [BitRiver visual identity](docs/BRAND_IDENTITY.md). The same mark appears in the bundled local control UI, operator sign-in, browser tab and OS image assets.
 
+## Ready-to-use offline OBS scenes
+
+New OS images contain four reviewed [OBS Scene Assets](docs/CREATOR_ASSETS.md)
+starters—Starting Soon, Be Right Back, Just Chatting and Intermission—with
+previews in the local Asset Studio. No GitHub access is required on first boot;
+the full upstream scene catalog is optional. These provide OBS Browser Sources,
+not an automatically configured OBS scene collection.
+
 ## BitRiver creator ecosystem
 
 Studio OS can fan out its program output over RTMP/SRT. The first
