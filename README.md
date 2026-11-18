@@ -1,10 +1,38 @@
+<p align="center">
+  <img src="docs/assets/bitriver-studio-logo.svg" alt="BitRiver Studio OS — river signal emblem and wordmark" width="920">
+</p>
+
 # BitRiver Studio OS
+
+<p align="center"><strong>Open-source-first creator and broadcast OS for real PCs.</strong></p>
+
+<p align="center">
+  <a href="#real-os-screenshots">See the running system</a> ·
+  <a href="#try-the-virtualbox-technical-preview">Try VirtualBox</a> ·
+  <a href="docs/RELEASE_READINESS.md">Release status</a>
+</p>
 
 BitRiver Studio OS is a bootable, self-hosted broadcast appliance that turns a small x86_64 PC into a dedicated live production box controlled from a browser on the LAN.
 
 General-purpose streaming rigs are powerful, but they are also the source of most avoidable show-day anxiety. Desktop OS updates land at the wrong time. USB devices reorder themselves. Audio routing drifts. Remote control turns into a remote desktop session. What starts as a flexible creator setup becomes an unreliable pile of software held together by muscle memory.
 
 BitRiver Studio OS exists to package the useful parts of that stack into something narrower and safer: immutable image updates, direct boot into the product, OBS for real production control, MediaMTX for ingest and routing, and a browser-first control plane instead of a desktop workflow.
+
+## Real OS screenshots
+
+These are **actual screenshots of BitRiver's control UI served by a booted Fedora bootc appliance in a disposable QEMU/OVMF UEFI virtual machine**. The browser connects to the running guest's loopback-only API through an SSH tunnel. They are **not design renderings or mock-mode captures**. The screenshot capture is automated and [documented with provenance](docs/screenshots/real/PROVENANCE.md).
+
+[![BitRiver Studio OS — authenticated live appliance dashboard](docs/screenshots/real/appliance-dashboard.png)](docs/screenshots/real/appliance-dashboard.png)
+
+<table>
+<tr>
+<td width="50%"><a href="docs/screenshots/real/operator-login.png"><img alt="Live BitRiver operator sign-in on the booted appliance" src="docs/screenshots/real/operator-login.png"></a></td>
+<td width="50%"><a href="docs/screenshots/real/appliance-sources.png"><img alt="Actual running appliance UI with sources and ingest slots" src="docs/screenshots/real/appliance-sources.png"></a></td>
+</tr>
+<tr><td><strong>Local operator sign-in</strong> — pre-release authenticated access</td><td><strong>Sources &amp; ingest</strong> — real guest API in a disposable VM</td></tr>
+</table>
+
+*Validation scope:* the images prove the **web control UI is served by a running virtualized BitRiver OS**, not that OBS/Wayland, capture cards, GPU acceleration, gaming features, or a user-installable ISO have passed graphical/hardware testing. The separate [VirtualBox preview](docs/VIRTUALBOX_PREVIEW.md) still needs hands-on GUI validation.
 
 ## Key Capabilities
 
@@ -20,7 +48,7 @@ BitRiver Studio OS exists to package the useful parts of that stack into somethi
 
 Independent creators deserve something between a fragile gaming PC and enterprise broadcast gear. BitRiver is aimed at the point where the workflow is serious enough to need predictable operations, but still small enough that the operator wants one box, one browser UI, and one system they can understand.
 
-The goal is not to become a bloated media suite. The goal is to become the open broadcast appliance for independent creators.
+The first deliverable is a dependable broadcast appliance for independent creators; the broader goal is a flexible creator OS that can also run on everyday desktop and gaming computers.
 
 ## How It Works
 
@@ -101,30 +129,17 @@ Useful local commands:
 - `make openapi` regenerates the shared API contract from the Go source.
 - `make build` builds the API and UI artifacts that the appliance image consumes.
 
-## Screenshots And Motion
+## Interface concepts (not running-system screenshots)
 
-These are the exact placeholder assets currently committed for the README and future demo captures:
-
-| View | File |
-| --- | --- |
-| Dashboard overview | `docs/assets/mockups/dashboard-overview.svg` |
-| Scene switching | `docs/assets/mockups/scenes-switcher.svg` |
-| Audio panel | `docs/assets/mockups/audio-panel.svg` |
-| Output destinations | `docs/assets/mockups/output-destinations.svg` |
-| Recordings panel | `docs/assets/mockups/recordings-panel.svg` |
-| Settings panel | `docs/assets/mockups/settings-panel.svg` |
-| Demo motion placeholder | `docs/assets/mockups/bitriver-demo-loop.svg` |
-
-| Asset | Placeholder |
-| --- | --- |
-| Dashboard | ![Dashboard placeholder](docs/assets/mockups/dashboard-overview.svg) |
-| Scenes | ![Scenes placeholder](docs/assets/mockups/scenes-switcher.svg) |
-| Outputs | ![Outputs placeholder](docs/assets/mockups/output-destinations.svg) |
-| Demo Loop | ![Demo loop placeholder](docs/assets/mockups/bitriver-demo-loop.svg) |
+For earlier design direction, the repository also retains
+[concept mockups](docs/assets/mockups) for scene switching, audio, outputs,
+recordings, and settings. **These conceptual SVGs are not OS screenshots.**
+The gallery at the top of this README shows separately verified captures from
+the running QEMU appliance.
 
 ## Why This Is Different
 
-- It is opinionated on purpose. BitRiver is not trying to be a Linux distribution for creators.
+- It prioritizes reliable Broadcast Mode first while developing optional general-purpose Creator Desktop and Gaming Mode; no specialized hardware purchase should be required.
 - It treats operational safety as a product feature, not a future polish pass.
 - It keeps the browser UI as the primary operator surface instead of assuming remote desktop forever.
 - It is built from proven media components, but the product model is appliance-first.
@@ -150,7 +165,7 @@ These are the exact placeholder assets currently committed for the README and fu
 
 - Multi-destination publishing.
 - Stronger remote guest workflows.
-- Better automation and show presets without turning BitRiver into a general-purpose media platform.
+- Optional creator/gaming workflows without undermining dependable live production.
 
 ## Operator Login (Pre-release)
 

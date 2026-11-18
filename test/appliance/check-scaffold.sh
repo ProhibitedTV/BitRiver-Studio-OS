@@ -73,3 +73,12 @@ echo 'Building offline operator recovery command...'
   go build -o "${tmp_dir}/bitriver-operator-key" ./cmd/bitriver-operator-key
 )
 echo 'Appliance scaffold and hardware report checks passed.'
+
+echo 'Validating live appliance screenshot pipeline...'
+test -s docs/assets/bitriver-studio-logo.svg
+test -s test/appliance/capture-qemu-ui.mjs
+test -s .github/workflows/readme-live-captures.yml
+bash -n test/appliance/capture-qemu-ui.sh
+node --check test/appliance/capture-qemu-ui.mjs
+grep -Fq 'docs/screenshots/real/appliance-dashboard.png' README.md
+grep -Fq 'readme-live-captures.yml' docs/screenshots/README.md
