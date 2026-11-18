@@ -48,14 +48,28 @@ test "${#iso_files[@]}" -eq 1 || { echo "Expected exactly one generated ISO" >&2
 iso="${iso_files[0]}"
 test -s "$iso"
 
-# Validate actual ISO filesystem entries and UEFI boot descriptors.
+# Capture diagnostics before assertions; GitHub preserves metadata only.
+# Image Builder generic-iso layouts differ from older live installer layouts.
 xorriso -indev "$iso" -report_el_torito plain > "$out/boot-record.txt" 2>&1
-grep -Eiq 'UEFI|EFI' "$out/boot-record.txt"
-for entry in /LiveOS/squashfs.img /images/pxeboot/vmlinuz /images/pxeboot/initrd.img; do
-  xorriso -indev "$iso" -find "$entry" -print 2>/dev/null | grep -Fq "$entry"
-done
-
+xorriso -indev "$iso" -find / -print > "$out/iso-file-list.txt" 2>&1
 (cd "$(dirname "$iso")" && sha256sum "$(basename "$iso")") > "$out/ISO-SHA256SUMS"
+
+# The actual generic-iso boot record must include an UEFI El Torito image.
+grep -Eiq 'El Torito boot img :[[:space:]]+[0-9]+[[:space:]]+UEFI' "$out/boot-record.txt" || {
+  echo "ISO has no verified UEFI El Torito boot entry" >&2; exit 1;
+}
+# Accept the osbuild generic-iso layout as well as the legacy live-media layout,
+# but require an installer root image, kernel and initramfs in the ISO.
+if ! grep -Eq '/(LiveOS/squashfs[.]img|images/install[.]img|images/rootfs[.]img)([[:space:]]|$)' "$out/iso-file-list.txt"; then
+  echo "ISO root image not found; inspect iso-file-list.txt evidence" >&2; exit 1
+fi
+if ! grep -Eq '/(vmlinuz|vmlinuz-[^/[:space:]]+)([[:space:]]|$)' "$out/iso-file-list.txt"; then
+  echo "ISO boot kernel not found; inspect iso-file-list.txt evidence" >&2; exit 1
+fi
+if ! grep -Eq '/(initrd[.]img|initramfs[^/[:space:]]*[.]img)([[:space:]]|$)' "$out/iso-file-list.txt"; then
+  echo "ISO boot initramfs not found; inspect iso-file-list.txt evidence" >&2; exit 1
+fi
+
 jq -n --arg builder "$builder" --arg source "${GITHUB_SHA:-unknown}" \
   '{schemaVersion:1, releaseReady:false, artifactType:"experimental offline installer ISO",
     sourceRevision:$source, imageBuilderRef:$builder,
