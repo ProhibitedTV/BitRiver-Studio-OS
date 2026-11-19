@@ -218,3 +218,18 @@ The next diagnostic iteration disables the *experimental ISO graphical boot*
 splash via `rd.plymouth=0 plymouth.enable=0` but retains `inst.graphical`.
 The last QEMU screenshot moves from ~395 to ~615 seconds; installer UI,
 offline disk installation and installed-disk reboot remain unverified.
+
+## Fedora bootc locked-image recovery (2026-11-19)
+
+The previously reviewed Fedora 44 digest `sha256:5fdfeee1cb12af2a05d1fd2e4e654c7f605003eb06fa4ca0b4e27079f31c7b6f` returned
+`manifest unknown` on fresh GitHub-hosted runners, blocking the VirtualBox,
+QEMU and ISO builds before the installer boot probe could run. This is an
+**upstream manifest-availability failure**, not installer UI proof.
+
+A read-only [Fedora base probe run 44556792647](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44556792647)
+resolved Fedora 44 to `sha256:21be546e96dd831f5c92ecd0c84ea54205b2659a1724d1efa0b24ba465bc1556`, pulled the exact
+immutable image on `linux/amd64`, and verified `VERSION_ID=44`.
+The reviewed digest is now used consistently by the lockfile, both Fedora
+Containerfiles, PowerShell guard and the archive verifier. No mutable-tag
+fallback was introduced. Installation, reboot and stable release remain
+blocked pending fresh CI and actual disposable-VM acceptance evidence.

@@ -1,7 +1,7 @@
 # EXPERIMENTAL ISO installer environment, deliberately separate from the
 # production BitRiver bootc payload. Keep Fedora aligned with the locked
 # base in deploy/image/releases.lock.json.
-ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc@sha256:5fdfeee1cb12af2a05d1fd2e4e654c7f605003eb06fa4ca0b4e27079f31c7b6f
+ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc@sha256:21be546e96dd831f5c92ecd0c84ea54205b2659a1724d1efa0b24ba465bc1556
 FROM ${FEDORA_BOOTC_IMAGE}
 
 # Fedora Anaconda and generic-iso boot requirements. Package versions are
