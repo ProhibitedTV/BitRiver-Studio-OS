@@ -64,7 +64,8 @@ jobs:
           jq -e '.bootPrerequisitePassed == true and .systemdBasicTargetSeen == true and
             .anacondaPreServiceSeen == true and .anacondaPreServiceStarted == true and
             (.anacondaPreServiceFinished | type == "boolean") and
-            (.finalFramebufferUniform | type == "boolean") and
+            .finalFramebufferUniform == false and
+            .finalFramebufferNonUniform == true and
             (.serialGuestBootMessagesSeen | type == "boolean") and
             (.anacondaVirtioLogNonempty | type == "boolean") and
             .anacondaUserInterfaceVerified == false and

@@ -44,6 +44,7 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertFalse(result["diskInstallationVerified"])
         self.assertFalse(result["releaseReady"])
         self.assertTrue(result["finalFramebufferUniform"])
+        self.assertFalse(result["finalFramebufferNonUniform"])
         self.assertEqual(result["finalFramebufferSolidRgb"], "39a9e2")
         self.assertTrue(result["earlyToMiddleFramebufferChanged"])
         self.assertTrue(result["middleToLaterFramebufferChanged"])
@@ -77,6 +78,7 @@ class BootEvidenceTests(unittest.TestCase):
             "Starting anaconda-pre.service...\n"
         )
         self.assertFalse(result["finalFramebufferUniform"])
+        self.assertTrue(result["finalFramebufferNonUniform"])
         self.assertIsNone(result["finalFramebufferSolidRgb"])
         self.assertFalse(result["anacondaUserInterfaceVerified"])
 

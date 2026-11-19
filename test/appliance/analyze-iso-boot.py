@@ -65,6 +65,9 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
         "earlyToMiddleFramebufferChanged": first["sha256"] != second["sha256"],
         "middleToLaterFramebufferChanged": second["sha256"] != third["sha256"],
         "finalFramebufferUniform": third["solidColor"],
+        # A nonblank screenshot is necessary, NOT sufficient, for a
+        # graphical installer. Never claim GUI or installation succeeded.
+        "finalFramebufferNonUniform": not third["solidColor"],
         "finalFramebufferSolidRgb": third["solidColorRgb"],
         "serialCaptured": bool(raw),
         "serialGuestBootMessagesSeen": serial_after_grub,
@@ -110,11 +113,19 @@ def main() -> int:
     print("Anaconda pre-service FINISHED:", evidence["anacondaPreServiceFinished"])
     print("Anaconda main service STARTED:", evidence["anacondaMainServiceStarted"])
     print("Final framebuffer solid color:", evidence["finalFramebufferUniform"])
+    print("Final framebuffer nonuniform:", evidence["finalFramebufferNonUniform"])
     print("Guest messages on serial after GRUB:", evidence["serialGuestBootMessagesSeen"])
     print("Anaconda virtio log bytes:", evidence["anacondaVirtioLogBytes"])
     print("Interactive Anaconda UI, disk install and reboot: UNVERIFIED")
     if not evidence["bootPrerequisitePassed"]:
         print("FAIL: insufficient UEFI boot prerequisite evidence", file=sys.stderr)
+        return 1
+    if not evidence["finalFramebufferNonUniform"]:
+        print(
+            "FAIL: final UEFI framebuffer is a uniform color. This is not "
+            "a demonstrated installer screen; block even experimental QA.",
+            file=sys.stderr,
+        )
         return 1
     return 0
 

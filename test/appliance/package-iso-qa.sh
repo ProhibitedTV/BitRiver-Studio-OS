@@ -21,7 +21,9 @@ test -s "$input/boot-record.txt"
 test -s "$input/iso-file-list.txt"
 test -s "$input/iso-provenance.json"
 test -s "$root/artifacts/iso-evidence/uefi-boot-probe.json"
-jq -e '.bootPrerequisitePassed == true and .releaseReady == false and
+jq -e '.bootPrerequisitePassed == true and
+       .finalFramebufferNonUniform == true and .finalFramebufferUniform == false and
+       .releaseReady == false and
        .anacondaUserInterfaceVerified == false and
        .diskInstallationVerified == false and .rebootVerified == false' \
   "$root/artifacts/iso-evidence/uefi-boot-probe.json" >/dev/null
@@ -53,8 +55,8 @@ USE A BLANK DISPOSABLE VIRTUAL DISK WITH NO HOST STORAGE PASS-THROUGH.
 This manual workflow artifact is NOT a signed production build or GitHub
 Release. Files are ordered binary chunks in ./chunks. Reconstruct and
 verify SHA256 against the manifest before attaching to a virtual machine.
-The uefi-boot-probe.json is limited to a prerequisite boot proof: systemd
-and anaconda-pre.service. It does NOT verify a visible Anaconda UI,
+The uefi-boot-probe.json requires a prerequisite boot event and a
+non-uniform final VM framebuffer. These are not a verified Anaconda UI,
 installation to disk, reboot, updates or rollback.
 
 Windows PowerShell in this folder:

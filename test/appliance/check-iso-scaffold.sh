@@ -16,6 +16,8 @@ grep -Fq 'run: bash test/appliance/smoke-iso-uefi.sh' .github/workflows/applianc
 grep -Fq 'bootPrerequisitePassed == true' .github/workflows/appliance-iso.yml
 grep -Fq 'analyze-iso-boot.py' test/appliance/smoke-iso-uefi.sh
 grep -Fq 'bootPrerequisitePassed == true' test/appliance/package-iso-qa.sh
+grep -Fq 'finalFramebufferNonUniform == true' .github/workflows/appliance-iso.yml
+grep -Fq 'finalFramebufferNonUniform == true' test/appliance/package-iso-qa.sh
 grep -Fq 'event_name == ' .github/workflows/appliance-iso.yml
 python3 test/appliance/test-iso-layout.py -v
 grep -Fq 'python3 test/appliance/check-iso-layout.py' test/appliance/build-iso-candidate.sh

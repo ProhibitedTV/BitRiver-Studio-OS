@@ -153,3 +153,16 @@ for an **isolated virtual machine with an empty disposable disk**. The
 download does not demonstrate successful installation, rollback, an
 update origin, hardware support or security. **Never flash this QA build
 onto a real PC.**
+
+## Nonblank framebuffer gate (2026-11-19)
+
+A UEFI ISO can reach `basic.target` and **start** `anaconda-pre.service`
+while rendering only a featureless solid-color screen. The experimental
+ISO and optional manual QA download therefore require the final QEMU PPM
+framebuffer to contain **more than one color**, in addition to the systemd
+boot prerequisite. A uniform blue/black/white screen now fails closed.
+
+**Limit of this check:** nonuniform pixels can be GRUB, a kernel error or a
+text console; they do not verify Anaconda or an installable disk. An operator
+must inspect the captured image and explicitly prove the interactive disk
+selection and completed offline installation on disposable storage.
