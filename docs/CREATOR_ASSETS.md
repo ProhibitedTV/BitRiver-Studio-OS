@@ -1,16 +1,39 @@
 # Creator Asset Library (OBS Scene Assets)
 
-BitRiver can browse a **local, optional** installation of
-[ProhibitedTV/OBS-Scene-Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets).
-Its metadata catalog and PNG previews appear in the Asset Studio panel of the
-control dashboard. You can search and filter assets, customize common title
-and subtitle query parameters, and copy an OBS Browser Source file URL.
+BitRiver ships a **small, offline, MIT-licensed starter subset** of
+[ProhibitedTV/OBS-Scene-Assets](https://github.com/ProhibitedTV/OBS-Scene-Assets):
+Starting Soon, Be Right Back, Just Chatting and Intermission. The pinned
+HTML + PNG previews are embedded in the immutable OS at
+`/usr/local/share/bitriver/creator-assets/assets/` and appear immediately
+in Asset Studio without a network connection. Only remote font-import rules
+were removed from the upstream HTML for offline use; provenance and license
+are preserved alongside the pack.
+
+Its metadata catalog and PNG previews appear in the Asset Studio panel of
+the control dashboard. You can search and filter assets, customize common
+title/subtitle query parameters, and copy an OBS Browser Source file URL.
+The full upstream library remains optional. **Bundled assets are not
+automatically installed into an OBS scene collection.**
 
 This initial integration is deliberately read-only: it does not modify OBS,
 install scene collections, execute overlays in the admin browser, or download
 untrusted content automatically. One-click OBS source installation is future work.
 
-## Install on the appliance
+## Use the included offline scenes
+
+Boot the OS, sign in to its local control interface and open Asset Studio.
+Four starter scenes should be visible. Select one and copy the OBS Browser
+Source URL, for example:
+
+    file:///usr/local/share/bitriver/creator-assets/assets/scenes/starting-soon.html
+
+Add the URL in OBS with a 1920 × 1080 Browser Source and review the scene
+before going live. The files are read-only and shared across all users;
+this prevents a creator's edits from silently modifying the base image.
+To customize permanently, copy an asset into a persistent directory and
+change the OBS source URL. No streaming keys are bundled.
+
+## Install the full library on the appliance
 
 1. Place a reviewed copy of the repository under the **persistent** directory
    /data/creator-assets/. For example, on a trusted development system:
@@ -24,7 +47,9 @@ untrusted content automatically. One-click OBS source installation is future wor
    write access to the source checkout unnecessarily.
 4. Set BITRIVER_ASSET_LIBRARY_DIR=/data/creator-assets/assets in the
    appliance environment file and restart bitriver-control-api.service.
-   This path is already the default in the included image configuration.
+   The default is the **read-only offline starter subset**. Changing this
+   variable switches the catalog to your larger, persistent installation;
+   it does not merge asset catalogs or mutate existing OBS scenes.
 
 For local development, run bitriverd with
 -asset-library-dir /absolute/path/to/OBS-Scene-Assets/assets.
