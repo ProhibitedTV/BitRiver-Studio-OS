@@ -20,6 +20,11 @@ test -s "$iso"
 test -s "$input/boot-record.txt"
 test -s "$input/iso-file-list.txt"
 test -s "$input/iso-provenance.json"
+test -s "$root/artifacts/iso-evidence/uefi-boot-probe.json"
+jq -e '.bootPrerequisitePassed == true and .releaseReady == false and
+       .anacondaUserInterfaceVerified == false and
+       .diskInstallationVerified == false and .rebootVerified == false' \
+  "$root/artifacts/iso-evidence/uefi-boot-probe.json" >/dev/null
 jq -e '.releaseReady == false and
        .bootSmokePassed == false and
        .installationSmokePassed == false and
