@@ -74,9 +74,10 @@ capture_screen "$tmp/early.ppm"
 sleep 140
 kill -0 "$(cat "$tmp/qemu.pid")"
 capture_screen "$tmp/mid.ppm"
-# Under TCG (no KVM), startup may be slow. Allow a third sample so a
-# partially initialized Fedora VM is not confused with a terminal boot state.
-sleep 180
+# Under TCG (no KVM), startup may be slow; the third capture at ~615s
+# observes startup beyond the first systemd and Plymouth service events.
+# This is still NOT an installer UI / installation / reboot proof.
+sleep 400
 kill -0 "$(cat "$tmp/qemu.pid")"
 capture_screen "$tmp/later.ppm"
 

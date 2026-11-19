@@ -7,8 +7,9 @@ grub2:
     - name: "Install BitRiver Studio OS (experimental)"
       # Anaconda chooses the LAST console= device as its UI destination.
       # Mirror boot logs to serial but keep tty0 LAST for the graphical UI.
-      # Reversing this order silently directs the installer to serial.
-      linux: ${kernelpath} ${root} inst.graphical console=ttyS0,115200n8 console=tty0
+      # Disable the live installer's Plymouth splash to expose boot failures.
+      # This does not disable the graphical Anaconda interface.
+      linux: ${kernelpath} ${root} inst.graphical rd.plymouth=0 plymouth.enable=0 console=ttyS0,115200n8 console=tty0
       initrd: ${initrdpath}
     - name: "Troubleshoot installation (text, basic display)"
       # This is operator-selected only. Never force text/nomodeset on the

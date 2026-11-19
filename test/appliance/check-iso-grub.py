@@ -34,6 +34,8 @@ def validate(grub: str) -> None:
         raise ValueError("default installer missing inst.graphical")
     if "inst.text" in graphical.split() or "nomodeset" in graphical.split():
         raise ValueError("default graphical boot redirected to text/basic display")
+    if not {"rd.plymouth=0", "plymouth.enable=0"}.issubset(set(graphical.split())):
+        raise ValueError("graphical installer missing diagnostic Plymouth splash bypass")
     if CONSOLE.findall(graphical) != ["ttyS0,115200n8", "tty0"]:
         raise ValueError("graphical installer MUST have serial first and tty0 last")
     if DANGEROUS.search(graphical):

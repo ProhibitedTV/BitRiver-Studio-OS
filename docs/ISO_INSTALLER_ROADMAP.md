@@ -203,3 +203,18 @@ for **isolated disposable-VM testing only**, not a release.
 See [VM install acceptance instructions](ISO_VM_INSTALL_QA.md) before
 testing. The test ISO still has no verified complete installation,
 installed-disk boot or secure update origin.
+
+## Splash-independent ISO launch diagnosis (2026-11-18)
+
+Real ISO CI [run 44451971959](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44451971959)
+passed the boot *prerequisite* but its final screenshot was uniformly blue
+(`4ab4ed`) even with corrected graphical console ordering. Serial logs
+showed `anaconda-pre.service`, `plymouth-quit.service` and
+`plymouth-quit-wait.service` starting without a completed Anaconda startup.
+This is not enough to conclude that Plymouth caused the delay; software TCG
+emulation might also explain it.
+
+The next diagnostic iteration disables the *experimental ISO graphical boot*
+splash via `rd.plymouth=0 plymouth.enable=0` but retains `inst.graphical`.
+The last QEMU screenshot moves from ~395 to ~615 seconds; installer UI,
+offline disk installation and installed-disk reboot remain unverified.

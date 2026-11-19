@@ -15,7 +15,7 @@ def example(graphic_consoles="console=ttyS0,115200n8 console=tty0", text_extra="
     return (
         "set timeout=8\n"
         "menuentry 'Install BitRiver Studio OS (experimental)' --class fedora {\n"
-        f"  linux /images/pxeboot/vmlinuz root=live:CDLABEL=BITRIVER-ISO rd.live.image inst.graphical {graphic_consoles}\n"
+        f"  linux /images/pxeboot/vmlinuz root=live:CDLABEL=BITRIVER-ISO rd.live.image inst.graphical rd.plymouth=0 plymouth.enable=0 {graphic_consoles}\n"
         "  initrd /images/pxeboot/initrd.img\n"
         "}\n"
         "menuentry 'Troubleshoot installation (text, basic display)' --class fedora {\n"
@@ -28,6 +28,10 @@ def example(graphic_consoles="console=ttyS0,115200n8 console=tty0", text_extra="
 class ISOGrubTests(unittest.TestCase):
     def test_expected_graphical_and_text_modes(self):
         grub.validate(example())
+
+    def test_missing_graphical_plymouth_bypass_rejected(self):
+        with self.assertRaisesRegex(ValueError, "Plymouth splash bypass"):
+            grub.validate(example().replace("plymouth.enable=0 ", "", 1))
 
     def test_reverse_console_order_rejected(self):
         with self.assertRaisesRegex(ValueError, "tty0 last"):
