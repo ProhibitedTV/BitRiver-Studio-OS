@@ -35,10 +35,17 @@ def inspect_ppm(path: Path) -> dict:
     }
 
 
-def classify(early: Path, middle: Path, later: Path, serial: Path) -> dict:
+def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path | None = None) -> dict:
     first, second, third = [inspect_ppm(p) for p in (early, middle, later)]
     raw = serial.read_text(errors="replace")
     log = ANSI.sub("", raw)
+    virtio_text = virtio.read_text(errors="replace") if virtio is not None else ""
+    # Do not mistake a firmware-only GRUB log for a failed Linux boot:
+    # the last console= is tty0, and serial may stop at GRUB despite booting.
+    serial_after_grub = bool(re.search(
+        r"Linux version|dracut-initqueue|Reached target|Starting anaconda-pre",
+        log, re.I
+    ))
 
     # Require positive systemd activity. Substring checks for basic.target or
     # anaconda-pre.service also match "Stopped", "Failed" and diagnostic
@@ -50,7 +57,7 @@ def classify(early: Path, middle: Path, later: Path, serial: Path) -> dict:
     prerequisite = basic and pre_started
 
     return {
-        "schemaVersion": 4,
+        "schemaVersion": 5,
         "uefiVMLaunched": True,
         "earlyFramebufferCaptured": True,
         "middleFramebufferCaptured": True,
@@ -60,6 +67,9 @@ def classify(early: Path, middle: Path, later: Path, serial: Path) -> dict:
         "finalFramebufferUniform": third["solidColor"],
         "finalFramebufferSolidRgb": third["solidColorRgb"],
         "serialCaptured": bool(raw),
+        "serialGuestBootMessagesSeen": serial_after_grub,
+        "anacondaVirtioLogNonempty": bool(virtio_text.strip()),
+        "anacondaVirtioLogBytes": len(virtio_text.encode("utf-8")),
         "systemdBasicTargetSeen": basic,
         "anacondaPreServiceSeen": pre_started,
         "anacondaPreServiceStarted": pre_started,
@@ -75,7 +85,9 @@ def classify(early: Path, middle: Path, later: Path, serial: Path) -> dict:
         "observedEddModuleWarning": "could not insert 'edd'" in log,
         "note": (
             "Only a systemd basic.target reached event and anaconda-pre "
-            "START event are required. This does NOT establish that pre-"
+            "START event are required. A GRUB-only serial log means boot " 
+            "progress cannot yet be classified, not that Linux failed. "
+            "Virtio Anaconda logs are supplemental diagnostics. This does NOT establish that pre-"
             "service finished, Anaconda UI appeared, installation worked, "
             "or the installed OS rebooted. A solid-color final frame "
             "requires visual investigation."
@@ -84,19 +96,22 @@ def classify(early: Path, middle: Path, later: Path, serial: Path) -> dict:
 
 
 def main() -> int:
-    if len(sys.argv) != 6:
+    if len(sys.argv) not in (6, 7):
         print(
-            "usage: analyze-iso-boot.py early.ppm middle.ppm later.ppm serial.log output.json",
+            "usage: analyze-iso-boot.py early.ppm middle.ppm later.ppm serial.log output.json [anaconda-virtio.log]",
             file=sys.stderr,
         )
         return 2
-    early, middle, later, serial, output = map(Path, sys.argv[1:])
-    evidence = classify(early, middle, later, serial)
+    early, middle, later, serial, output = map(Path, sys.argv[1:6])
+    virtio = Path(sys.argv[6]) if len(sys.argv) == 7 else None
+    evidence = classify(early, middle, later, serial, virtio)
     output.write_text(json.dumps(evidence, indent=2) + "\n")
     print("UEFI systemd and Anaconda pre-service START observed:", evidence["bootPrerequisitePassed"])
     print("Anaconda pre-service FINISHED:", evidence["anacondaPreServiceFinished"])
     print("Anaconda main service STARTED:", evidence["anacondaMainServiceStarted"])
     print("Final framebuffer solid color:", evidence["finalFramebufferUniform"])
+    print("Guest messages on serial after GRUB:", evidence["serialGuestBootMessagesSeen"])
+    print("Anaconda virtio log bytes:", evidence["anacondaVirtioLogBytes"])
     print("Interactive Anaconda UI, disk install and reboot: UNVERIFIED")
     if not evidence["bootPrerequisitePassed"]:
         print("FAIL: insufficient UEFI boot prerequisite evidence", file=sys.stderr)

@@ -22,6 +22,11 @@ grep -Fq 'python3 test/appliance/check-iso-layout.py' test/appliance/build-iso-c
 test -s deploy/iso/Containerfile
 test -s deploy/iso/iso.yaml
 test -s deploy/iso/interactive-defaults.ks
+test -s deploy/iso/serial-boot-diagnostics.conf
+grep -Fxq 'ForwardToConsole=yes' deploy/iso/serial-boot-diagnostics.conf
+grep -Fxq 'TTYPath=/dev/ttyS0' deploy/iso/serial-boot-diagnostics.conf
+grep -Fq 'COPY deploy/iso/serial-boot-diagnostics.conf' deploy/iso/Containerfile
+grep -Fq 'org.fedoraproject.anaconda.log.0' test/appliance/smoke-iso-uefi.sh
 test -s .github/workflows/appliance-iso.yml
 
 # Keep the payload and ISO installer built from the reviewed Fedora digest.
@@ -32,7 +37,7 @@ grep -Fxq 'bootc --source-imgref containers-storage:localhost/bitriver-studio-os
 grep -Fq -- '--bootc-installer-payload-ref "$payload"' test/appliance/build-iso-candidate.sh
 grep -Fq 'generic-iso' test/appliance/build-iso-candidate.sh
 grep -Fq 'check-iso-grub.py' test/appliance/build-iso-candidate.sh
-grep -Fq 'inst.graphical rd.plymouth=0 plymouth.enable=0 console=ttyS0,115200n8 console=tty0' deploy/iso/iso.yaml
+grep -Fq 'inst.graphical rd.plymouth=0 plymouth.enable=0 loglevel=7 systemd.show_status=yes rd.systemd.show_status=yes console=ttyS0,115200n8 console=tty0' deploy/iso/iso.yaml
 grep -Fq 'inst.text nomodeset rd.plymouth=0 plymouth.enable=0' deploy/iso/iso.yaml
 
 # Fail if unattended or destructive installer settings land on this branch.

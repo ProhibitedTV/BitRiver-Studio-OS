@@ -49,6 +49,9 @@ qemu-system-x86_64 \
   -vnc 127.0.0.1:7 \
   -monitor "unix:$tmp/monitor.sock,server=on,wait=off" \
   -serial "file:$tmp/serial.log" \
+  -chardev "file,id=anacondalog,path=$tmp/anaconda-virtio.log" \
+  -device virtio-serial-pci \
+  -device "virtserialport,chardev=anacondalog,name=org.fedoraproject.anaconda.log.0" \
   -pidfile "$tmp/qemu.pid" -daemonize
 
 # Capture three stages of UEFI progress, not just "QEMU is running".
@@ -85,11 +88,16 @@ cp "$tmp/early.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture-early.p
 cp "$tmp/mid.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture-mid.ppm"
 cp "$tmp/later.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture.ppm"
 cp "$tmp/serial.log" "$repo_root/artifacts/iso-evidence/uefi-serial.log"
+# Anaconda's documented, isolated virtio log port is independent of
+# tty0/ttyS0 console precedence and never requires network access.
+test -e "$tmp/anaconda-virtio.log" || : > "$tmp/anaconda-virtio.log"
+cp "$tmp/anaconda-virtio.log" "$repo_root/artifacts/iso-evidence/anaconda-virtiolog.log"
 
 # Fail if QEMU never reached even Anaconda's startup prerequisite. This
 # prevents structurally valid but unbootable ISOs from passing the ISO job.
 # This marker DOES NOT demonstrate an interactive Anaconda UI.
 python3 test/appliance/analyze-iso-boot.py \
   "$tmp/early.ppm" "$tmp/mid.ppm" "$tmp/later.ppm" "$tmp/serial.log" \
-  "$repo_root/artifacts/iso-evidence/uefi-boot-probe.json"
+  "$repo_root/artifacts/iso-evidence/uefi-boot-probe.json" \
+  "$tmp/anaconda-virtio.log"
 echo "PASS: UEFI reached systemd and logged Anaconda pre-service START; installation NOT validated."

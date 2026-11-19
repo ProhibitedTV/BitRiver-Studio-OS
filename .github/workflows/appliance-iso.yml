@@ -65,6 +65,8 @@ jobs:
             .anacondaPreServiceSeen == true and .anacondaPreServiceStarted == true and
             (.anacondaPreServiceFinished | type == "boolean") and
             (.finalFramebufferUniform | type == "boolean") and
+            (.serialGuestBootMessagesSeen | type == "boolean") and
+            (.anacondaVirtioLogNonempty | type == "boolean") and
             .anacondaUserInterfaceVerified == false and
             .diskInstallationVerified == false and .rebootVerified == false and .releaseReady == false'             artifacts/iso-evidence/uefi-boot-probe.json
 

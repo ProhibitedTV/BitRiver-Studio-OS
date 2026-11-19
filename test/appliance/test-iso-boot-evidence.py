@@ -21,13 +21,15 @@ class BootEvidenceTests(unittest.TestCase):
         self.mid = root / "middle.ppm"
         self.later = root / "later.ppm"
         self.serial = root / "serial.log"
+        self.virtio = root / "anaconda-virtio.log"
+        self.virtio.write_text("")
         self.early.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0]) * 2)
         self.mid.write_bytes(b"P6\n2 1\n255\n" + bytes([255, 255, 255]) * 2)
         self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([57, 169, 226]) * 2)
 
     def classify(self, log):
         self.serial.write_text(log)
-        return probe.classify(self.early, self.mid, self.later, self.serial)
+        return probe.classify(self.early, self.mid, self.later, self.serial, self.virtio)
 
     def test_valid_basic_target_and_pre_service_start_do_not_claim_installer(self):
         result = self.classify(
@@ -77,6 +79,23 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertFalse(result["finalFramebufferUniform"])
         self.assertIsNone(result["finalFramebufferSolidRgb"])
         self.assertFalse(result["anacondaUserInterfaceVerified"])
+
+    def test_grub_only_serial_is_inconclusive_not_installer_proof(self):
+        result = self.classify(
+            "GRUB version 2.12\nBooting `Install BitRiver Studio OS`\n"
+        )
+        self.assertFalse(result["serialGuestBootMessagesSeen"])
+        self.assertFalse(result["bootPrerequisitePassed"])
+        self.assertFalse(result["anacondaUserInterfaceVerified"])
+
+    def test_virtio_log_is_separate_evidence_and_never_claims_ui(self):
+        self.virtio.write_text("Anaconda: initializing storage UI\n")
+        result = self.classify("GRUB version 2.12\n")
+        self.assertTrue(result["anacondaVirtioLogNonempty"])
+        self.assertGreater(result["anacondaVirtioLogBytes"], 0)
+        self.assertFalse(result["bootPrerequisitePassed"])
+        self.assertFalse(result["anacondaUserInterfaceVerified"])
+        self.assertFalse(result["releaseReady"])
 
     def test_truncated_framebuffer_is_rejected(self):
         self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0]))

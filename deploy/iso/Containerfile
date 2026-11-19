@@ -20,6 +20,8 @@ RUN dnf -y install \
 RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
 COPY deploy/iso/iso.yaml /usr/lib/image-builder/bootc/iso.yaml
 COPY deploy/iso/interactive-defaults.ks /usr/share/anaconda/interactive-defaults.ks
+# Installer-only diagnostic channel. Never copied to the BitRiver bootc payload.
+COPY deploy/iso/serial-boot-diagnostics.conf /etc/systemd/journald.conf.d/90-bitriver-installer-serial.conf
 
 # Adapt the Fedora bootc base to boot Anaconda, never the BitRiver service
 # target. The installer is interactive, not a preseeded disk-wiping image.
