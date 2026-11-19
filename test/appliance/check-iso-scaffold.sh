@@ -23,6 +23,8 @@ grep -Fq 'finalFramebufferNonUniform == true' test/appliance/package-iso-qa.sh
 grep -Fq 'requiredSmokePassed == true' .github/workflows/appliance-iso.yml
 grep -Fq 'requiredSmokePassed == true' test/appliance/package-iso-qa.sh
 grep -Fq 'installerInitiatedReboot == false' .github/workflows/appliance-iso.yml
+grep -Fq 'firefoxStartedUnprivileged == true' .github/workflows/appliance-iso.yml
+grep -Fq 'firefoxStartedUnprivileged == true' test/appliance/package-iso-qa.sh
 grep -Fq 'installerInitiatedReboot == false' test/appliance/package-iso-qa.sh
 grep -Fq 'event_name == ' .github/workflows/appliance-iso.yml
 python3 test/appliance/test-iso-layout.py -v
@@ -39,6 +41,14 @@ grep -Fq 'test -x /usr/libexec/anaconda/webui-desktop' deploy/iso/Containerfile
 test -s deploy/iso/iso.yaml
 test -s deploy/iso/interactive-defaults.ks
 test -s deploy/iso/serial-boot-diagnostics.conf
+test -s deploy/iso/iso-browser-probe.sh
+test -s deploy/iso/iso-browser-probe.service
+bash -n deploy/iso/iso-browser-probe.sh
+grep -Fq 'BITRIVER_ISO_PROBE sample=' deploy/iso/iso-browser-probe.sh
+grep -Fq 'After=anaconda.service' deploy/iso/iso-browser-probe.service
+grep -Fq 'ConditionKernelCommandLine=inst.graphical' deploy/iso/iso-browser-probe.service
+grep -Fq 'COPY deploy/iso/iso-browser-probe.sh' deploy/iso/Containerfile
+grep -Fq 'anaconda.target.wants/bitriver-iso-browser-probe.service' deploy/iso/Containerfile
 grep -Fxq 'ForwardToConsole=yes' deploy/iso/serial-boot-diagnostics.conf
 grep -Fxq 'TTYPath=/dev/ttyS0' deploy/iso/serial-boot-diagnostics.conf
 grep -Fq 'COPY deploy/iso/serial-boot-diagnostics.conf' deploy/iso/Containerfile

@@ -1,0 +1,14 @@
+[Unit]
+Description=BitRiver experimental ISO read-only browser/display diagnostics
+After=anaconda.service
+ConditionKernelCommandLine=inst.graphical
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/bitriver/iso-browser-probe.sh
+StandardOutput=journal
+StandardError=journal
+Restart=no
+
+[Install]
+WantedBy=anaconda.target

@@ -26,6 +26,7 @@ jq -e '.bootPrerequisitePassed == true and
        .requiredSmokePassed == true and
        .anacondaWebuiDesktopLaunched == true and
        .firefoxBrowserSelected == true and
+       .firefoxStartedUnprivileged == true and
        .installerInitiatedReboot == false and
        .browserSandboxRefusalSeen == false and
        .releaseReady == false and

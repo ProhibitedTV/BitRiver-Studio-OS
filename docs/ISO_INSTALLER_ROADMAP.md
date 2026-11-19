@@ -247,3 +247,25 @@ Although [experimental ISO workflow run 44581097335](https://github.com/Prohibit
 The next live ISO selects **Firefox** through Anaconda's documented `[User Interface] webui_web_engine` configuration and provides a dedicated **non-root browser account**. The installer does not disable Chromium sandboxing. The required isolated UEFI smoke now rejects guest-initiated reboot or sandbox refusal, and requires a completed Anaconda pre-service, main Anaconda launch, Web UI launcher event, explicit Firefox selection and nonuniform final framebuffer. These are **diagnostics only**, not verification of an interactive disk-selection UI.
 
 Reference: https://anaconda-installer.readthedocs.io/en/latest/anaconda-webui/docs/customization.html
+
+## Firefox process verification and browser/display probe (2026-11-19)
+
+Actual guest serial evidence from failed candidate 44588274146 shows pkexec launched
+/usr/bin/firefox as dedicated bitriver-installer UID 970; Cockpit's Web UI
+service also started. But webui-desktop writes its browser-selection text
+to output not captured on serial. The previous classifier incorrectly
+marked Firefox as absent. The final framebuffer was still solid blue.
+
+The boot classifier now recognizes the unprivileged pkexec Firefox event
+and refuses to treat a selection message or root-owned browser as proof.
+A read-only diagnostic unit in the live ISO samples Firefox process status,
+Xwayland presence, loopback-only Cockpit HTTP response status and the count
+of errors in a local browser log. It emits fixed fields on serial without
+printing user input, raw logs, browser arguments or credentials. The unit
+cannot repartition or install and does not create a network connection.
+
+Working visual installation, disk selection, offline disk install and
+booting the installed system are STILL UNVERIFIED. This diagnostic change
+does not alter the release safety gates.
+
+Evidence: https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44588274146

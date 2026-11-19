@@ -69,6 +69,7 @@ jobs:
             .requiredSmokePassed == true and
             .anacondaWebuiDesktopLaunched == true and
             .firefoxBrowserSelected == true and
+            .firefoxStartedUnprivileged == true and
             .installerInitiatedReboot == false and
             .browserSandboxRefusalSeen == false and
             (.serialGuestBootMessagesSeen | type == "boolean") and

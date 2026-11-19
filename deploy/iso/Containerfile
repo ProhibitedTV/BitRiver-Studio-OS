@@ -43,6 +43,14 @@ COPY deploy/iso/iso.yaml /usr/lib/image-builder/bootc/iso.yaml
 COPY deploy/iso/interactive-defaults.ks /usr/share/anaconda/interactive-defaults.ks
 # Installer-only diagnostic channel. Never copied to the BitRiver bootc payload.
 COPY deploy/iso/serial-boot-diagnostics.conf /etc/systemd/journald.conf.d/90-bitriver-installer-serial.conf
+# Read-only, live-ISO-only serial probe for web browser/compositor diagnosis.
+# Does not modify partitions or require a network connection.
+COPY deploy/iso/iso-browser-probe.sh /usr/libexec/bitriver/iso-browser-probe.sh
+COPY deploy/iso/iso-browser-probe.service /usr/lib/systemd/system/bitriver-iso-browser-probe.service
+RUN chmod 0755 /usr/libexec/bitriver/iso-browser-probe.sh \
+    && mkdir -p /etc/systemd/system/anaconda.target.wants \
+    && ln -sf /usr/lib/systemd/system/bitriver-iso-browser-probe.service \
+      /etc/systemd/system/anaconda.target.wants/bitriver-iso-browser-probe.service
 
 # Adapt the Fedora bootc base to boot Anaconda, never the BitRiver service
 # target. The installer is interactive, not a preseeded disk-wiping image.

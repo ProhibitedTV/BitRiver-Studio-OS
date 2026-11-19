@@ -60,8 +60,19 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
     webui_launched = bool(re.search(
         r"Running\.\.\. /usr/libexec/anaconda/webui-desktop\b", log
     ))
+    # webui-desktop normally prints browser-selection messages to its own
+    # stderr (NOT the serial journal). The guest's pkexec audit record,
+    # however, proves Firefox was ACTUALLY exec'd under the installer UID.
+    firefox_started_unprivileged = bool(re.search(
+        r"pkexec\[\d+\]:.*Executing command \[USER=bitriver-installer\]"
+        r".*\[COMMAND=.*?/usr/bin/firefox\b", log
+    ))
     firefox_selected = bool(re.search(
         r"Using default browser:\s*firefox\b", log, re.I
+    )) or firefox_started_unprivileged
+    browser_probe_seen = "BITRIVER_ISO_PROBE sample=" in log
+    browser_running_sample_seen = bool(re.search(
+        r"BITRIVER_ISO_PROBE sample=\d+ firefox_unprivileged=yes\b", log
     ))
     sandbox_refused = "Running as root without --no-sandbox is not supported" in log
     reboot_seen = bool(re.search(
@@ -70,13 +81,13 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
     ))
     smoke_passed = (
         prerequisite and pre_finished and anaconda_started
-        and webui_launched and firefox_selected
+        and webui_launched and firefox_selected and firefox_started_unprivileged
         and not sandbox_refused and not reboot_seen
         and not third["solidColor"]
     )
 
     return {
-        "schemaVersion": 6,
+        "schemaVersion": 7,
         "uefiVMLaunched": True,
         "earlyFramebufferCaptured": True,
         "middleFramebufferCaptured": True,
@@ -100,6 +111,9 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
         "bootPrerequisitePassed": prerequisite,
         "anacondaWebuiDesktopLaunched": webui_launched,
         "firefoxBrowserSelected": firefox_selected,
+        "firefoxStartedUnprivileged": firefox_started_unprivileged,
+        "browserProbeTelemetrySeen": browser_probe_seen,
+        "firefoxRunningSampleSeen": browser_running_sample_seen,
         "browserSandboxRefusalSeen": sandbox_refused,
         "installerInitiatedReboot": reboot_seen,
         "requiredSmokePassed": smoke_passed,
@@ -141,6 +155,9 @@ def main() -> int:
     print("Guest messages on serial after GRUB:", evidence["serialGuestBootMessagesSeen"])
     print("Anaconda virtio log bytes:", evidence["anacondaVirtioLogBytes"])
     print("Firefox selected:", evidence["firefoxBrowserSelected"])
+    print("Firefox executed as unprivileged installer:", evidence["firefoxStartedUnprivileged"])
+    print("Live browser probe telemetry captured:", evidence["browserProbeTelemetrySeen"])
+    print("Firefox alive in at least one probe sample:", evidence["firefoxRunningSampleSeen"])
     print("Anaconda WebUI launcher seen:", evidence["anacondaWebuiDesktopLaunched"])
     print("Browser sandbox refusal:", evidence["browserSandboxRefusalSeen"])
     print("Installer initiated reboot:", evidence["installerInitiatedReboot"])
@@ -149,8 +166,9 @@ def main() -> int:
     if not evidence["requiredSmokePassed"]:
         print(
             "FAIL: nonblank screen plus completed Anaconda pre-service, "
-            "Anaconda WebUI/Firefox launch, and NO sandbox refusal or "
-            "installer reboot are required. Installer UI not certified.",
+            "Anaconda WebUI plus unprivileged Firefox process launch, and "
+            "NO sandbox refusal or installer reboot are required. "
+            "Installer UI not certified.",
             file=sys.stderr,
         )
         return 1

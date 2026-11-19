@@ -108,11 +108,64 @@ class BootEvidenceTests(unittest.TestCase):
             "Starting anaconda.service\n"
             "program: Running... /usr/libexec/anaconda/webui-desktop -t default\n"
             "anaconda: ui.webui: Using default browser: firefox\n"
+            "pkexec[2798]: root: Executing command [USER=bitriver-installer] "
+            "[TTY=unknown] [CWD=/] [COMMAND=/usr/bin/env DISPLAY=:1 "
+            "/usr/bin/firefox --new-instance]\n"
+            "BITRIVER_ISO_PROBE sample=3 firefox_unprivileged=yes "
+            "xwayland=yes cockpit_http=200 browser_error_count=0\n"
         )
+        self.assertTrue(result["firefoxStartedUnprivileged"])
+        self.assertTrue(result["browserProbeTelemetrySeen"])
+        self.assertTrue(result["firefoxRunningSampleSeen"])
         self.assertTrue(result["requiredSmokePassed"])
         self.assertFalse(result["anacondaUserInterfaceVerified"])
         self.assertFalse(result["diskInstallationVerified"])
         self.assertFalse(result["releaseReady"])
+
+    def test_browser_selection_message_without_unprivileged_launch_fails(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "Using default browser: firefox\n"
+        )
+        self.assertTrue(result["firefoxBrowserSelected"])
+        self.assertFalse(result["firefoxStartedUnprivileged"])
+        self.assertFalse(result["requiredSmokePassed"])
+
+    def test_actual_serial_pkexec_firefox_detected_without_selection_message(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "pkexec[2798]: root: Executing command [USER=bitriver-installer] "
+            "[TTY=unknown] [CWD=/] [COMMAND=/usr/bin/env DISPLAY=:1 "
+            "/usr/bin/env MOZ_APP_TITLE= /usr/bin/firefox --new-instance]\n"
+        )
+        self.assertTrue(result["firefoxBrowserSelected"])
+        self.assertTrue(result["firefoxStartedUnprivileged"])
+        self.assertTrue(result["requiredSmokePassed"])
+        self.assertFalse(result["anacondaUserInterfaceVerified"])
+
+    def test_firefox_root_process_is_not_accepted(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "pkexec[2798]: root: Executing command [USER=root] "
+            "[COMMAND=/usr/bin/firefox]\n"
+        )
+        self.assertFalse(result["firefoxStartedUnprivileged"])
+        self.assertFalse(result["requiredSmokePassed"])
 
     def test_slitherer_root_sandbox_crash_and_reboot_are_rejected(self):
         self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
