@@ -118,3 +118,31 @@ func TestCreatorAssetsUnavailableAndReadOnly(t *testing.T) {
 		t.Fatalf("expected read-only catalog to return 405, got %d", post.StatusCode)
 	}
 }
+
+func TestValidCreatorAssetPathRejectsTraversal(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		path      string
+		prefix    string
+		extension string
+		want      bool
+	}{
+		{path: "scenes/starting-soon.html", extension: ".html", want: true},
+		{path: "previews/scenes/starting-soon.png", prefix: "previews/", extension: ".png", want: true},
+		{path: "../private.html", extension: ".html"},
+		{path: "../../secrets.html", extension: ".html"},
+		{path: "scenes/../../private.html", extension: ".html"},
+		{path: "scenes/../private.html", extension: ".html"},
+		{path: "/etc/private.html", extension: ".html"},
+		{path: "previews/../../private.png", prefix: "previews/", extension: ".png"},
+		{path: "previews/scenes/../private.png", prefix: "previews/", extension: ".png"},
+		{path: "previews\\scenes\\starting-soon.png", prefix: "previews/", extension: ".png"},
+		{path: "previews/scenes/preview.html", prefix: "previews/", extension: ".png"},
+	}
+	for _, tc := range cases {
+		if got := validCreatorAssetPath(tc.path, tc.prefix, tc.extension); got != tc.want {
+			t.Errorf("validCreatorAssetPath(%q, %q, %q)=%t; want %t",
+				tc.path, tc.prefix, tc.extension, got, tc.want)
+		}
+	}
+}
