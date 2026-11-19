@@ -99,6 +99,55 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertFalse(result["anacondaUserInterfaceVerified"])
         self.assertFalse(result["releaseReady"])
 
+    def test_firefox_prerequisites_never_certify_a_disk_install(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop -t default\n"
+            "anaconda: ui.webui: Using default browser: firefox\n"
+        )
+        self.assertTrue(result["requiredSmokePassed"])
+        self.assertFalse(result["anacondaUserInterfaceVerified"])
+        self.assertFalse(result["diskInstallationVerified"])
+        self.assertFalse(result["releaseReady"])
+
+    def test_slitherer_root_sandbox_crash_and_reboot_are_rejected(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop -t default\n"
+            "anaconda: ui.webui: Using default browser: slitherer\n"
+            "Running as root without --no-sandbox is not supported\n"
+            "program: Running... systemctl --no-wall reboot\n"
+            "System is rebooting.\n"
+        )
+        self.assertTrue(result["bootPrerequisitePassed"])
+        self.assertTrue(result["installerInitiatedReboot"])
+        self.assertTrue(result["browserSandboxRefusalSeen"])
+        self.assertFalse(result["firefoxBrowserSelected"])
+        self.assertFalse(result["requiredSmokePassed"])
+
+    def test_firefox_selection_does_not_excuse_a_reboot(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "Using default browser: firefox\n"
+            "System is rebooting.\n"
+        )
+        self.assertTrue(result["firefoxBrowserSelected"])
+        self.assertTrue(result["installerInitiatedReboot"])
+        self.assertFalse(result["requiredSmokePassed"])
+
     def test_truncated_framebuffer_is_rejected(self):
         self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0]))
         with self.assertRaises(ValueError):

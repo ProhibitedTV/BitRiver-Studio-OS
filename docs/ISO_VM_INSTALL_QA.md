@@ -170,3 +170,9 @@ selection and completed offline installation on disposable storage.
 ### Graphical frontend dependency test — 2026-11-19
 
 CI detected Fedora 44 Anaconda and GNOME Kiosk running with no visible installer, even after 615 seconds. The experimental ISO now explicitly installs `anaconda-webui` and `firefox`, with a build-time check that its frontend launcher is present. A fresh VM framebuffer and **human-inspected installer screen** remain required; the package check alone cannot validate graphical startup or offline installation.
+
+## Browser crash and false-positive smoke correction (2026-11-19)
+
+A prior green ISO run only showed systemd's **shutdown screen** at the final capture. Its serial log confirmed the Chromium-based Slitherer browser was launched as root, refused to run with its sandbox, and caused Anaconda to reboot. The next experimental ISO now uses a separate non-root Firefox browser account and an explicit Anaconda Firefox configuration override. CI and the optional manual QA package must reject any such installer-initiated reboot, sandbox error or missing Firefox/Web UI launch event.
+
+An unobstructed or multicolor display is still not proof of Anaconda's disk-selection interface. A human must inspect the screenshot and complete an offline installation on a disposable 64 GiB virtual disk, remove the ISO, boot from the installed disk, check firstboot/credentials/persistence and record evidence. Never publish the candidate as a stable installer based solely on these boot checks.

@@ -24,6 +24,19 @@ RUN rpm -q anaconda-webui firefox \
     && test -x /usr/libexec/anaconda/webui-desktop \
     && command -v firefox
 
+# The generic Fedora profile selects Slitherer (Chromium), which exited when
+# launched as root in the actual ISO smoke. Choose Firefox WITHOUT disabling
+# Chromium's sandbox. Restrict this override to the live installer image.
+COPY deploy/iso/99-bitriver-browser.conf /etc/anaconda/conf.d/99-bitriver-browser.conf
+RUN set -eux; \
+    grep -Fxq 'webui_web_engine = firefox' /etc/anaconda/conf.d/99-bitriver-browser.conf; \
+    useradd --system --create-home \
+      --home-dir /var/lib/bitriver-installer-browser \
+      --shell /usr/bin/bash bitriver-installer; \
+    test "$(id -u bitriver-installer)" -ne 0; \
+    browser_user="$(grep '/usr/bin/bash' /etc/passwd | grep -v '^root' | cut -d: -f1 | head -n 1)"; \
+    test "$browser_user" = bitriver-installer
+
 # New image-builder generic-iso requires UEFI boot media in the bootc image.
 RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi
 COPY deploy/iso/iso.yaml /usr/lib/image-builder/bootc/iso.yaml

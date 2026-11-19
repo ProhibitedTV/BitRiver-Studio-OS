@@ -18,10 +18,19 @@ grep -Fq 'analyze-iso-boot.py' test/appliance/smoke-iso-uefi.sh
 grep -Fq 'bootPrerequisitePassed == true' test/appliance/package-iso-qa.sh
 grep -Fq 'finalFramebufferNonUniform == true' .github/workflows/appliance-iso.yml
 grep -Fq 'finalFramebufferNonUniform == true' test/appliance/package-iso-qa.sh
+grep -Fq 'requiredSmokePassed == true' .github/workflows/appliance-iso.yml
+grep -Fq 'requiredSmokePassed == true' test/appliance/package-iso-qa.sh
+grep -Fq 'installerInitiatedReboot == false' .github/workflows/appliance-iso.yml
+grep -Fq 'installerInitiatedReboot == false' test/appliance/package-iso-qa.sh
 grep -Fq 'event_name == ' .github/workflows/appliance-iso.yml
 python3 test/appliance/test-iso-layout.py -v
 grep -Fq 'python3 test/appliance/check-iso-layout.py' test/appliance/build-iso-candidate.sh
 test -s deploy/iso/Containerfile
+test -s deploy/iso/99-bitriver-browser.conf
+grep -Fxq 'webui_web_engine = firefox' deploy/iso/99-bitriver-browser.conf
+grep -Fq 'COPY deploy/iso/99-bitriver-browser.conf /etc/anaconda/conf.d/99-bitriver-browser.conf' deploy/iso/Containerfile
+grep -Fq 'useradd --system --create-home' deploy/iso/Containerfile
+grep -Fq 'test "$browser_user" = bitriver-installer' deploy/iso/Containerfile
 grep -Fq 'anaconda anaconda-webui firefox anaconda-install-img-deps' deploy/iso/Containerfile
 grep -Fq 'rpm -q anaconda-webui firefox' deploy/iso/Containerfile
 grep -Fq 'test -x /usr/libexec/anaconda/webui-desktop' deploy/iso/Containerfile

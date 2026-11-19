@@ -55,9 +55,28 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
     pre_finished = bool(re.search(r"\bFinished anaconda-pre\.service\b", log))
     anaconda_started = bool(re.search(r"\bStarting anaconda\.service\b", log))
     prerequisite = basic and pre_started
+    # A browser crash and guest reboot must never masquerade as a
+    # successful graphical installer just because the framebuffer changed.
+    webui_launched = bool(re.search(
+        r"Running\.\.\. /usr/libexec/anaconda/webui-desktop\b", log
+    ))
+    firefox_selected = bool(re.search(
+        r"Using default browser:\s*firefox\b", log, re.I
+    ))
+    sandbox_refused = "Running as root without --no-sandbox is not supported" in log
+    reboot_seen = bool(re.search(
+        r"\bSystem is rebooting\b|program: Running\.\.\. systemctl --no-wall reboot"
+        r"|\bReached target reboot\.target\b", log
+    ))
+    smoke_passed = (
+        prerequisite and pre_finished and anaconda_started
+        and webui_launched and firefox_selected
+        and not sandbox_refused and not reboot_seen
+        and not third["solidColor"]
+    )
 
     return {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "uefiVMLaunched": True,
         "earlyFramebufferCaptured": True,
         "middleFramebufferCaptured": True,
@@ -79,6 +98,11 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
         "anacondaPreServiceFinished": pre_finished,
         "anacondaMainServiceStarted": anaconda_started,
         "bootPrerequisitePassed": prerequisite,
+        "anacondaWebuiDesktopLaunched": webui_launched,
+        "firefoxBrowserSelected": firefox_selected,
+        "browserSandboxRefusalSeen": sandbox_refused,
+        "installerInitiatedReboot": reboot_seen,
+        "requiredSmokePassed": smoke_passed,
         "networkConnected": False,
         "anacondaUserInterfaceVerified": False,
         "diskInstallationVerified": False,
@@ -116,14 +140,17 @@ def main() -> int:
     print("Final framebuffer nonuniform:", evidence["finalFramebufferNonUniform"])
     print("Guest messages on serial after GRUB:", evidence["serialGuestBootMessagesSeen"])
     print("Anaconda virtio log bytes:", evidence["anacondaVirtioLogBytes"])
-    print("Interactive Anaconda UI, disk install and reboot: UNVERIFIED")
-    if not evidence["bootPrerequisitePassed"]:
-        print("FAIL: insufficient UEFI boot prerequisite evidence", file=sys.stderr)
-        return 1
-    if not evidence["finalFramebufferNonUniform"]:
+    print("Firefox selected:", evidence["firefoxBrowserSelected"])
+    print("Anaconda WebUI launcher seen:", evidence["anacondaWebuiDesktopLaunched"])
+    print("Browser sandbox refusal:", evidence["browserSandboxRefusalSeen"])
+    print("Installer initiated reboot:", evidence["installerInitiatedReboot"])
+    print("Required experimental boot smoke:", evidence["requiredSmokePassed"])
+    print("Interactive Anaconda UI, disk install and disk boot: UNVERIFIED")
+    if not evidence["requiredSmokePassed"]:
         print(
-            "FAIL: final UEFI framebuffer is a uniform color. This is not "
-            "a demonstrated installer screen; block even experimental QA.",
+            "FAIL: nonblank screen plus completed Anaconda pre-service, "
+            "Anaconda WebUI/Firefox launch, and NO sandbox refusal or "
+            "installer reboot are required. Installer UI not certified.",
             file=sys.stderr,
         )
         return 1

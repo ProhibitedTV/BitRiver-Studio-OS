@@ -23,6 +23,11 @@ test -s "$input/iso-provenance.json"
 test -s "$root/artifacts/iso-evidence/uefi-boot-probe.json"
 jq -e '.bootPrerequisitePassed == true and
        .finalFramebufferNonUniform == true and .finalFramebufferUniform == false and
+       .requiredSmokePassed == true and
+       .anacondaWebuiDesktopLaunched == true and
+       .firefoxBrowserSelected == true and
+       .installerInitiatedReboot == false and
+       .browserSandboxRefusalSeen == false and
        .releaseReady == false and
        .anacondaUserInterfaceVerified == false and
        .diskInstallationVerified == false and .rebootVerified == false' \

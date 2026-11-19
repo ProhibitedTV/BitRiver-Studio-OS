@@ -66,6 +66,11 @@ jobs:
             (.anacondaPreServiceFinished | type == "boolean") and
             .finalFramebufferUniform == false and
             .finalFramebufferNonUniform == true and
+            .requiredSmokePassed == true and
+            .anacondaWebuiDesktopLaunched == true and
+            .firefoxBrowserSelected == true and
+            .installerInitiatedReboot == false and
+            .browserSandboxRefusalSeen == false and
             (.serialGuestBootMessagesSeen | type == "boolean") and
             (.anacondaVirtioLogNonempty | type == "boolean") and
             .anacondaUserInterfaceVerified == false and
