@@ -9,6 +9,10 @@ test -s test/appliance/reassemble-iso-qa.ps1
 grep -Fq 'GITHUB_EVENT_NAME' test/appliance/package-iso-qa.sh
 grep -Fq 'BITRIVER_QA_OPT_IN' test/appliance/package-iso-qa.sh
 grep -Fq 'inputs.export_qa_iso == true' .github/workflows/appliance-iso.yml
+grep -Fq 'run: bash test/appliance/smoke-iso-uefi.sh' .github/workflows/appliance-iso.yml
+grep -Fq 'bootPrerequisitePassed == true' .github/workflows/appliance-iso.yml
+grep -Fq 'anaconda-pre.service' test/appliance/smoke-iso-uefi.sh
+grep -Fq 'bootPrerequisitePassed == true' test/appliance/package-iso-qa.sh
 grep -Fq 'event_name == ' .github/workflows/appliance-iso.yml
 python3 test/appliance/test-iso-layout.py -v
 grep -Fq 'python3 test/appliance/check-iso-layout.py' test/appliance/build-iso-candidate.sh
