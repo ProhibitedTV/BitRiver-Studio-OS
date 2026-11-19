@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Evidence-only first-stage UEFI boot attempt for an ALREADY BUILT ISO.
-# This is NOT a test of installation or installed-OS reboot.
+# Isolated first-stage UEFI boot gate for an ALREADY BUILT ISO.
+# Requires proof the live installer reaches Anaconda's pre-service, not just
+# GRUB or a framebuffer. Does NOT certify the Anaconda UI, install or reboot.
 # No host block devices, host shared folders, remote ports, or network access.
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$repo_root"
@@ -33,10 +34,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# This 32 GiB disk is ALWAYS created inside a unique private /tmp directory;
+# This 64 GiB sparse disk is ALWAYS created inside a unique private /tmp directory;
 # it cannot point at an existing disk. It is intentionally never installed
 # to, attached to a host block device, or published.
-qemu-img create -f qcow2 "$tmp/disposable-disk.qcow2" 32G >/dev/null
+qemu-img create -f qcow2 "$tmp/disposable-disk.qcow2" 64G >/dev/null
 cp "$vars" "$tmp/OVMF_VARS.fd"
 qemu-system-x86_64 \
   -machine q35,accel=kvm:tcg -cpu max -smp 2 -m 4096 \
@@ -72,30 +73,45 @@ kill -0 "$(cat "$tmp/qemu.pid")"
 capture_screen "$tmp/early.ppm"
 sleep 140
 kill -0 "$(cat "$tmp/qemu.pid")"
+capture_screen "$tmp/mid.ppm"
+# Under TCG (no KVM), startup may be slow. Allow a third sample so a
+# partially initialized Fedora VM is not confused with a terminal boot state.
+sleep 180
+kill -0 "$(cat "$tmp/qemu.pid")"
 capture_screen "$tmp/later.ppm"
 
 cp "$tmp/early.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture-early.ppm"
+cp "$tmp/mid.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture-mid.ppm"
 cp "$tmp/later.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture.ppm"
 cp "$tmp/serial.log" "$repo_root/artifacts/iso-evidence/uefi-serial.log"
 
-# Being alive at 215s is NOT success: we have seen dracut warnings at 70s
-# while the installer UI was still absent. Preserve factual diagnostics.
-python3 - "$tmp/early.ppm" "$tmp/later.ppm" "$tmp/serial.log" \
+# Fail if QEMU never reached even Anaconda's startup prerequisite. This
+# prevents structurally valid but unbootable ISOs from passing the ISO job.
+# This marker DOES NOT demonstrate an interactive Anaconda UI.
+python3 - "$tmp/early.ppm" "$tmp/mid.ppm" "$tmp/later.ppm" "$tmp/serial.log" \
   "$repo_root/artifacts/iso-evidence/uefi-boot-probe.json" <<'PY'
 import hashlib
 import json
 from pathlib import Path
 import sys
-early, later, serial, output = map(Path, sys.argv[1:])
-changed = hashlib.sha256(early.read_bytes()).digest() != hashlib.sha256(later.read_bytes()).digest()
+
+early, middle, later, serial, output = map(Path, sys.argv[1:])
+fingerprint = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
 text = serial.read_text(errors="replace")
+anaconda_pre = "anaconda-pre.service" in text
+basic_target = "basic.target" in text
 evidence = {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "uefiVMLaunched": True,
     "earlyFramebufferCaptured": True,
+    "middleFramebufferCaptured": True,
     "laterFramebufferCaptured": True,
-    "framebufferChanged": changed,
+    "earlyToMiddleFramebufferChanged": fingerprint(early) != fingerprint(middle),
+    "middleToLaterFramebufferChanged": fingerprint(middle) != fingerprint(later),
     "serialCaptured": len(text) > 0,
+    "systemdBasicTargetSeen": basic_target,
+    "anacondaPreServiceSeen": anaconda_pre,
+    "bootPrerequisitePassed": basic_target and anaconda_pre,
     "networkConnected": False,
     "anacondaUserInterfaceVerified": False,
     "diskInstallationVerified": False,
@@ -103,9 +119,12 @@ evidence = {
     "releaseReady": False,
     "observedDracutBuildstampWarning": ".buildstamp missing" in text,
     "observedEddModuleWarning": "could not insert 'edd'" in text,
-    "note": "Early/late visual boot snapshots require human review. A changed screen, GRUB, or kernel logs alone do not prove Anaconda works."
+    "note": "Three graphical samples and serial logs. Anaconda pre-service is a boot prerequisite, NOT installer UI, completed disk installation, or reboot proof."
 }
 output.write_text(json.dumps(evidence, indent=2) + "\n")
-print("UEFI boot diagnostic: screen changed:", changed)
-print("Installer UI, disk install and reboot NOT verified.")
+print("ISO UEFI boot prerequisite reached:", evidence["bootPrerequisitePassed"])
+print("Installer UI and disk install remain UNVERIFIED.")
+if not evidence["bootPrerequisitePassed"]:
+    sys.exit("FAIL: boot never reached systemd basic.target and anaconda-pre.service")
 PY
+echo "PASS: UEFI reached systemd and Anaconda pre-service; installation NOT validated."
