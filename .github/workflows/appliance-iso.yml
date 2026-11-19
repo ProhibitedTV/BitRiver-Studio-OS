@@ -46,19 +46,20 @@ jobs:
       - name: Build independent Anaconda ISO image with offline BitRiver payload
         run: bash test/appliance/build-iso-candidate.sh
 
-      # First pass captures an actual UEFI QEMU framebuffer; initial
-      # failures are evidence-only while we harden the VM boot harness.
-      # Do NOT treat this as Anaconda launch or installed-OS reboot proof.
-      - name: Boot candidate in isolated disposable UEFI VM (visual evidence, non-gating)
-        continue-on-error: true
+      # Required UEFI proof: GRUB, Linux, systemd basic.target and
+      # Anaconda's pre-service. Still NOT a graphical installer/disk test.
+      - name: Boot UEFI candidate through Anaconda pre-service (required gate)
         run: bash test/appliance/smoke-iso-uefi.sh
 
-      - name: Validate evidence (not installation validation)
+      - name: Validate boot evidence and preserve unverified install status
         run: |
           test -s artifacts/iso-candidate/ISO-SHA256SUMS
           test -s artifacts/iso-candidate/boot-record.txt
           test -s artifacts/iso-candidate/iso-file-list.txt
           jq -e '.releaseReady == false and .bootSmokePassed == false and .installationSmokePassed == false' artifacts/iso-candidate/iso-provenance.json
+          jq -e '.bootPrerequisitePassed == true and .systemdBasicTargetSeen == true and
+            .anacondaPreServiceSeen == true and .anacondaUserInterfaceVerified == false and
+            .diskInstallationVerified == false and .rebootVerified == false and .releaseReady == false'             artifacts/iso-evidence/uefi-boot-probe.json
 
       - name: Keep only non-release build evidence, never the ISO
         if: always()
