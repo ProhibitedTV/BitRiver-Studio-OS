@@ -14,6 +14,7 @@ grep -Fq 'BITRIVER_QA_OPT_IN' test/appliance/package-iso-qa.sh
 grep -Fq 'inputs.export_qa_iso == true' .github/workflows/appliance-iso.yml
 grep -Fq 'run: bash test/appliance/smoke-iso-uefi.sh' .github/workflows/appliance-iso.yml
 grep -Fq -- '-no-reboot' test/appliance/smoke-iso-uefi.sh
+grep -Fq -- '-vga virtio' test/appliance/smoke-iso-uefi.sh
 grep -Fq 'ISO smoke failed; captured available guest logs' test/appliance/smoke-iso-uefi.sh
 grep -Fq 'bootPrerequisitePassed == true' .github/workflows/appliance-iso.yml
 grep -Fq 'analyze-iso-boot.py' test/appliance/smoke-iso-uefi.sh
@@ -49,7 +50,40 @@ test -s deploy/iso/iso-browser-probe.sh
 test -s deploy/iso/iso-browser-probe.service
 bash -n deploy/iso/iso-browser-probe.sh
 grep -Fq 'BITRIVER_ISO_PROBE sample=' deploy/iso/iso-browser-probe.sh
-grep -Fq 'After=anaconda.service' deploy/iso/iso-browser-probe.service
+grep -Fxq 'After=basic.target' deploy/iso/iso-browser-probe.service
+! grep -Eq '^After=anaconda\.service
+grep -Fq 'ConditionKernelCommandLine=inst.graphical' deploy/iso/iso-browser-probe.service
+grep -Fq 'COPY deploy/iso/iso-browser-probe.sh' deploy/iso/Containerfile
+grep -Fq 'anaconda.target.wants/bitriver-iso-browser-probe.service' deploy/iso/Containerfile
+grep -Fxq 'ForwardToConsole=yes' deploy/iso/serial-boot-diagnostics.conf
+grep -Fxq 'TTYPath=/dev/ttyS0' deploy/iso/serial-boot-diagnostics.conf
+grep -Fq 'COPY deploy/iso/serial-boot-diagnostics.conf' deploy/iso/Containerfile
+grep -Fq 'org.fedoraproject.anaconda.log.0' test/appliance/smoke-iso-uefi.sh
+test -s .github/workflows/appliance-iso.yml
+
+# Keep the payload and ISO installer built from the reviewed Fedora digest.
+fedora="$(jq -er '.builderImages.fedoraBootc' deploy/image/releases.lock.json)"
+grep -Fxq "ARG FEDORA_BOOTC_IMAGE=$fedora" deploy/iso/Containerfile
+grep -Fq 'FROM ${FEDORA_BOOTC_IMAGE}' deploy/iso/Containerfile
+grep -Fxq 'bootc --source-imgref containers-storage:localhost/bitriver-studio-os:ci --target-imgref localhost/bitriver-studio-os:ci' deploy/iso/interactive-defaults.ks
+grep -Fq -- '--bootc-installer-payload-ref "$payload"' test/appliance/build-iso-candidate.sh
+grep -Fq 'generic-iso' test/appliance/build-iso-candidate.sh
+grep -Fq 'check-iso-grub.py' test/appliance/build-iso-candidate.sh
+grep -Fq 'inst.graphical rd.plymouth=0 plymouth.enable=0 loglevel=7 systemd.show_status=yes rd.systemd.show_status=yes console=ttyS0,115200n8 console=tty0' deploy/iso/iso.yaml
+grep -Fq 'inst.text nomodeset rd.plymouth=0 plymouth.enable=0' deploy/iso/iso.yaml
+
+# Fail if unattended or destructive installer settings land on this branch.
+if grep -Ein '(^|[[:space:]])(clearpart|autopart|zerombr|ignoredisk|part[[:space:]]|reqpart|rootpw|user[[:space:]]|reboot|shutdown)([[:space:]]|$)|inst[.](ks|cmdline|noninteractive)|--source-imgref[[:space:]]+registry:' \
+    deploy/iso/interactive-defaults.ks deploy/iso/iso.yaml | grep -v '^.*:#'; then
+  echo 'Unsafe or network-dependent installer default detected' >&2; exit 1
+fi
+# Never auto-upload an ISO from a PR or publish a release; a manual-only
+# short-lived QA artifact is allowed, with a second package-script check.
+! grep -Eq 'gh release|contents: write|upload-release|upload-artifact.*iso|publish-iso' .github/workflows/appliance-iso.yml
+grep -Fq 'ISO-SHA256SUMS' test/appliance/build-iso-candidate.sh
+grep -Fq 'bootSmokePassed:false' test/appliance/build-iso-candidate.sh
+echo 'Experimental ISO scaffold guard passed.'
+ deploy/iso/iso-browser-probe.service
 grep -Fq 'ConditionKernelCommandLine=inst.graphical' deploy/iso/iso-browser-probe.service
 grep -Fq 'COPY deploy/iso/iso-browser-probe.sh' deploy/iso/Containerfile
 grep -Fq 'anaconda.target.wants/bitriver-iso-browser-probe.service' deploy/iso/Containerfile
