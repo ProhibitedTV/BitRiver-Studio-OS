@@ -8,6 +8,18 @@ a **manual, short-lived unvalidated QA artifact** behind a separate explicit
 opt-in on the `appliance-iso-experimental` workflow; this is not a public
 installer download or production release.
 
+## Automated evidence (what CI does and does not prove)
+
+The experimental ISO workflow now requires QEMU/OVMF to boot into systemd
+and log Anaconda's `anaconda-pre.service`. It samples the framebuffer
+at roughly 75, 215 and 395 seconds to accommodate slower emulated CPUs.
+The QA bundle includes `uefi-boot-probe.json`: check
+`bootPrerequisitePassed`, but **do not** equate it with the Anaconda UI
+being visible. The `anacondaUserInterfaceVerified`,
+`diskInstallationVerified`, `rebootVerified` and `releaseReady` flags
+must stay false until independently verified and documented.
+A successful CI job is necessary, **not sufficient**, for a stable release.
+
 ## Test environment
 
 - Use **VirtualBox** or QEMU/OVMF on an isolated computer.
