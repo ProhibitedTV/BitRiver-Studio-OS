@@ -18,6 +18,8 @@ on:
       - "test/appliance/check-iso-layout.py"
       - "test/appliance/test-iso-layout.py"
       - "test/appliance/smoke-iso-uefi.sh"
+      - "test/appliance/analyze-iso-boot.py"
+      - "test/appliance/test-iso-boot-evidence.py"
       - "test/appliance/package-iso-qa.sh"
       - "test/appliance/reassemble-iso-qa.ps1"
 
@@ -58,7 +60,10 @@ jobs:
           test -s artifacts/iso-candidate/iso-file-list.txt
           jq -e '.releaseReady == false and .bootSmokePassed == false and .installationSmokePassed == false' artifacts/iso-candidate/iso-provenance.json
           jq -e '.bootPrerequisitePassed == true and .systemdBasicTargetSeen == true and
-            .anacondaPreServiceSeen == true and .anacondaUserInterfaceVerified == false and
+            .anacondaPreServiceSeen == true and .anacondaPreServiceStarted == true and
+            (.anacondaPreServiceFinished | type == "boolean") and
+            (.finalFramebufferUniform | type == "boolean") and
+            .anacondaUserInterfaceVerified == false and
             .diskInstallationVerified == false and .rebootVerified == false and .releaseReady == false'             artifacts/iso-evidence/uefi-boot-probe.json
 
       - name: Keep only non-release build evidence, never the ISO
