@@ -51,7 +51,7 @@ qemu-system-x86_64 \
   -serial "file:$tmp/serial.log" \
   -pidfile "$tmp/qemu.pid" -daemonize
 
-# Capture progress at two points, not simply "QEMU is running".
+# Capture three stages of UEFI progress, not just "QEMU is running".
 # On GH-hosted runners TCG may boot very slowly without /dev/kvm.
 capture_screen() {
   local target="$1" attempt
@@ -88,43 +88,7 @@ cp "$tmp/serial.log" "$repo_root/artifacts/iso-evidence/uefi-serial.log"
 # Fail if QEMU never reached even Anaconda's startup prerequisite. This
 # prevents structurally valid but unbootable ISOs from passing the ISO job.
 # This marker DOES NOT demonstrate an interactive Anaconda UI.
-python3 - "$tmp/early.ppm" "$tmp/mid.ppm" "$tmp/later.ppm" "$tmp/serial.log" \
-  "$repo_root/artifacts/iso-evidence/uefi-boot-probe.json" <<'PY'
-import hashlib
-import json
-from pathlib import Path
-import sys
-
-early, middle, later, serial, output = map(Path, sys.argv[1:])
-fingerprint = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
-text = serial.read_text(errors="replace")
-anaconda_pre = "anaconda-pre.service" in text
-basic_target = "basic.target" in text
-evidence = {
-    "schemaVersion": 3,
-    "uefiVMLaunched": True,
-    "earlyFramebufferCaptured": True,
-    "middleFramebufferCaptured": True,
-    "laterFramebufferCaptured": True,
-    "earlyToMiddleFramebufferChanged": fingerprint(early) != fingerprint(middle),
-    "middleToLaterFramebufferChanged": fingerprint(middle) != fingerprint(later),
-    "serialCaptured": len(text) > 0,
-    "systemdBasicTargetSeen": basic_target,
-    "anacondaPreServiceSeen": anaconda_pre,
-    "bootPrerequisitePassed": basic_target and anaconda_pre,
-    "networkConnected": False,
-    "anacondaUserInterfaceVerified": False,
-    "diskInstallationVerified": False,
-    "rebootVerified": False,
-    "releaseReady": False,
-    "observedDracutBuildstampWarning": ".buildstamp missing" in text,
-    "observedEddModuleWarning": "could not insert 'edd'" in text,
-    "note": "Three graphical samples and serial logs. Anaconda pre-service is a boot prerequisite, NOT installer UI, completed disk installation, or reboot proof."
-}
-output.write_text(json.dumps(evidence, indent=2) + "\n")
-print("ISO UEFI boot prerequisite reached:", evidence["bootPrerequisitePassed"])
-print("Installer UI and disk install remain UNVERIFIED.")
-if not evidence["bootPrerequisitePassed"]:
-    sys.exit("FAIL: boot never reached systemd basic.target and anaconda-pre.service")
-PY
-echo "PASS: UEFI reached systemd and Anaconda pre-service; installation NOT validated."
+python3 test/appliance/analyze-iso-boot.py \
+  "$tmp/early.ppm" "$tmp/mid.ppm" "$tmp/later.ppm" "$tmp/serial.log" \
+  "$repo_root/artifacts/iso-evidence/uefi-boot-probe.json"
+echo "PASS: UEFI reached systemd and logged Anaconda pre-service START; installation NOT validated."
