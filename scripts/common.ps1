@@ -26,7 +26,13 @@ function Invoke-Step {
   )
 
   Write-Host "==> $Name" -ForegroundColor Cyan
+  # Native tools (go test, npm, etc.) do not necessarily throw when they
+  # exit nonzero. Never report a passing CI step after a failing command.
+  $global:LASTEXITCODE = 0
   & $Action
+  if ($global:LASTEXITCODE -ne 0) {
+    throw "Step '$Name' failed (native exit code $global:LASTEXITCODE)."
+  }
 }
 
 function Ensure-Directory {

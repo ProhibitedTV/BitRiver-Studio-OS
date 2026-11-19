@@ -11,8 +11,8 @@ Initialize-GoEnv
 
 $apiProcess = $null
 $goCommand = @"
-\$env:GOCACHE = '$($env:GOCACHE.Replace("'", "''"))'
-\$env:GOTMPDIR = '$($env:GOTMPDIR.Replace("'", "''"))'
+`$env:GOCACHE = '$($env:GOCACHE.Replace("'", "''"))'
+`$env:GOTMPDIR = '$($env:GOTMPDIR.Replace("'", "''"))'
 Set-Location '$((Join-Path $repoRoot "apps/control-api").Replace("'", "''"))'
 & '$($goExecutable.Replace("'", "''"))' run ./cmd/bitriverd -http-addr 127.0.0.1:8080
 "@
