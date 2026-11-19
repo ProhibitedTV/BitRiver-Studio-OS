@@ -4,10 +4,12 @@
 ARG FEDORA_BOOTC_IMAGE=quay.io/fedora/fedora-bootc@sha256:21be546e96dd831f5c92ecd0c84ea54205b2659a1724d1efa0b24ba465bc1556
 FROM ${FEDORA_BOOTC_IMAGE}
 
-# Fedora Anaconda and generic-iso boot requirements. Package versions are
-# not snapshot-locked yet; this is NOT a reproducible, supported installer.
+# Fedora Anaconda and generic-iso boot requirements. The bare "anaconda"
+# metapackage is NOT proof that the Fedora 44 graphical Web UI and an
+# actual browser are present. Install both explicitly in the live ISO.
+# Package versions are not snapshot-locked; this remains experimental.
 RUN dnf -y install \
-      anaconda anaconda-install-img-deps anaconda-dracut \
+      anaconda anaconda-webui firefox anaconda-install-img-deps anaconda-dracut \
       dracut-config-generic dracut-network dracut-live \
       grub2-efi-x64-cdboot grub2-common grub2-pc-modules \
       plymouth default-fonts-core-sans default-fonts-other-sans \
@@ -15,6 +17,12 @@ RUN dnf -y install \
       xorrisofs squashfs-tools implantisomd5 \
       podman python3 jq \
     && dnf clean all
+
+# Fail at build time if the installer would have a display server but no
+# browser-based Anaconda frontend. Do not rely on weak RPM dependencies.
+RUN rpm -q anaconda-webui firefox \
+    && test -x /usr/libexec/anaconda/webui-desktop \
+    && command -v firefox
 
 # New image-builder generic-iso requires UEFI boot media in the bootc image.
 RUN mkdir -p /boot/efi && cp -ra /usr/lib/efi/*/*/EFI /boot/efi

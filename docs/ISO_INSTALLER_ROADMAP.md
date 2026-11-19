@@ -233,3 +233,9 @@ The reviewed digest is now used consistently by the lockfile, both Fedora
 Containerfiles, PowerShell guard and the archive verifier. No mutable-tag
 fallback was introduced. Installation, reboot and stable release remain
 blocked pending fresh CI and actual disposable-VM acceptance evidence.
+
+## Explicit graphical Web UI dependencies (2026-11-19)
+
+In [failed ISO boot run 44562080450](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44562080450), Fedora 44 successfully started `anaconda.service`, launched GNOME Kiosk under Wayland, found the 64 GiB disposable disk and finished the storage initialization thread. The final 615-second framebuffer nevertheless remained **uniform blue** (`4ab4ed`), and the Anaconda virtio log was empty. The serial log did **not** demonstrate a working installer page. It showed software GL fallback on the Bochs virtual GPU and repeated brltty mount warnings; neither is conclusively responsible for the blank screen.
+
+The installer Containerfile previously requested `anaconda` and `anaconda-install-img-deps` but never expressly requested Fedora's **`anaconda-webui` graphical frontend or a browser**. Fedora documents this frontend as a separate package, with a browser required in custom ISO environments. The next build now installs `anaconda-webui` and `firefox` explicitly and fails its image build if `/usr/libexec/anaconda/webui-desktop` or the browser is absent. This is a testable dependency correction, **not a verified fix for the blue screen**. The nonblank-screen release gate remains in force. See [Fedora WebUI packaging](https://packages.fedoraproject.org/pkgs/anaconda-webui/anaconda-webui/fedora-44.html) and [Anaconda customization guidance](https://anaconda-installer.readthedocs.io/en/latest/anaconda-webui/docs/customization.html).

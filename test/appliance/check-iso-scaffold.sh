@@ -22,6 +22,9 @@ grep -Fq 'event_name == ' .github/workflows/appliance-iso.yml
 python3 test/appliance/test-iso-layout.py -v
 grep -Fq 'python3 test/appliance/check-iso-layout.py' test/appliance/build-iso-candidate.sh
 test -s deploy/iso/Containerfile
+grep -Fq 'anaconda anaconda-webui firefox anaconda-install-img-deps' deploy/iso/Containerfile
+grep -Fq 'rpm -q anaconda-webui firefox' deploy/iso/Containerfile
+grep -Fq 'test -x /usr/libexec/anaconda/webui-desktop' deploy/iso/Containerfile
 test -s deploy/iso/iso.yaml
 test -s deploy/iso/interactive-defaults.ks
 test -s deploy/iso/serial-boot-diagnostics.conf

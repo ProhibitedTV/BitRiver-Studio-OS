@@ -166,3 +166,7 @@ boot prerequisite. A uniform blue/black/white screen now fails closed.
 text console; they do not verify Anaconda or an installable disk. An operator
 must inspect the captured image and explicitly prove the interactive disk
 selection and completed offline installation on disposable storage.
+
+### Graphical frontend dependency test — 2026-11-19
+
+CI detected Fedora 44 Anaconda and GNOME Kiosk running with no visible installer, even after 615 seconds. The experimental ISO now explicitly installs `anaconda-webui` and `firefox`, with a build-time check that its frontend launcher is present. A fresh VM framebuffer and **human-inspected installer screen** remain required; the package check alone cannot validate graphical startup or offline installation.
