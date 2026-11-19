@@ -51,7 +51,7 @@ test -s deploy/iso/iso-browser-probe.service
 bash -n deploy/iso/iso-browser-probe.sh
 grep -Fq 'BITRIVER_ISO_PROBE sample=' deploy/iso/iso-browser-probe.sh
 grep -Fxq 'After=basic.target' deploy/iso/iso-browser-probe.service
-! grep -Eq '^After=anaconda\.service
+! grep -Fxq 'After=anaconda.service' deploy/iso/iso-browser-probe.service
 grep -Fq 'ConditionKernelCommandLine=inst.graphical' deploy/iso/iso-browser-probe.service
 grep -Fq 'COPY deploy/iso/iso-browser-probe.sh' deploy/iso/Containerfile
 grep -Fq 'anaconda.target.wants/bitriver-iso-browser-probe.service' deploy/iso/Containerfile
