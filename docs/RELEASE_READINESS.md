@@ -113,6 +113,22 @@ operator key rotation, restart, and preserved credential/identity hashes.
 A passing VM test is not hardware certification, a signed installer, or a
 rollback demonstration.
 
+## Live authentication regression test on UEFI bootc (proposed)
+
+The isolated OVMF/QEMU appliance smoke now checks the **running** local API,
+not only Go handler unit tests: anonymous stream/settings/creator-assets
+reads and stream start must return 401; a first-boot guest-only operator
+key must login successfully; session cookies must enable authenticated
+reads while mutations without CSRF or with a foreign Origin return 403;
+rotating the key must invalidate both the prior browser session and old
+key. These checks run on a disposable CI disk and never print, upload,
+or export the one-time key.
+
+This acceptance test is **pending successful image/UEFI CI validation**.
+It verifies the already-assembled bootc appliance, **not** an installation
+from the interactive ISO, physical-presence claiming, end-user credential
+rotation, or signed rollback. Those release gates remain open.
+
 ## First-boot hardware probe
 
 The image now builds /usr/local/bin/bitriver-hw-report from the Go source.
