@@ -53,8 +53,9 @@ jobs:
       - name: Build offline experimental installer ISO and verify BIOS/UEFI structure
         run: bash test/appliance/build-iso-candidate.sh
 
-      - name: Capture disposable UEFI boot framebuffer (diagnostic only)
-        continue-on-error: true
+      # Verified kernel/systemd/Anaconda startup prerequisite only; this
+      # does NOT imply an interactive installer UI, disk install or reboot.
+      - name: Require disposable UEFI boot reaches Anaconda pre-service
         run: bash test/appliance/smoke-iso-uefi.sh
 
       - name: Stage explicitly unvalidated QA ISO with hash and reassembly instructions
