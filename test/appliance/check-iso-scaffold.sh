@@ -5,6 +5,7 @@ cd "$root"
 bash -n test/appliance/build-iso-candidate.sh
 bash -n test/appliance/smoke-iso-uefi.sh
 python3 test/appliance/test-iso-boot-evidence.py -v
+python3 test/appliance/test-iso-grub.py -v
 test -s test/appliance/analyze-iso-boot.py
 bash -n test/appliance/package-iso-qa.sh
 test -s test/appliance/reassemble-iso-qa.ps1
@@ -30,7 +31,8 @@ grep -Fq 'FROM ${FEDORA_BOOTC_IMAGE}' deploy/iso/Containerfile
 grep -Fxq 'bootc --source-imgref containers-storage:localhost/bitriver-studio-os:ci --target-imgref localhost/bitriver-studio-os:ci' deploy/iso/interactive-defaults.ks
 grep -Fq -- '--bootc-installer-payload-ref "$payload"' test/appliance/build-iso-candidate.sh
 grep -Fq 'generic-iso' test/appliance/build-iso-candidate.sh
-grep -Fq 'inst.graphical console=tty0' deploy/iso/iso.yaml
+grep -Fq 'check-iso-grub.py' test/appliance/build-iso-candidate.sh
+grep -Fq 'inst.graphical console=ttyS0,115200n8 console=tty0' deploy/iso/iso.yaml
 grep -Fq 'inst.text nomodeset rd.plymouth=0 plymouth.enable=0' deploy/iso/iso.yaml
 
 # Fail if unattended or destructive installer settings land on this branch.

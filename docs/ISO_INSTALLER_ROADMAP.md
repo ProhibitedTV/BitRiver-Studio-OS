@@ -169,6 +169,27 @@ pre-service **start** event from **finish**, record blank solid-color frames,
 and continue to assert `anacondaUserInterfaceVerified: false`. A green
 boot-prerequisite gate is **not** a green installer or release gate.
 
+## Graphical boot console-selection fix (2026-11-18)
+
+The previous generated UEFI GRUB command contained
+`inst.graphical console=tty0 console=ttyS0,115200n8`.
+This was a **configuration bug**: [Anaconda's documented console selection](https://anaconda-installer.readthedocs.io/en/latest/user-guide/boot-options.html)
+uses the last `console=` argument for the installer interface, so the
+last serial console could redirect the graphical UI away from QEMU's display.
+
+The default boot entry now deliberately uses
+`inst.graphical console=ttyS0,115200n8 console=tty0`, retaining serial boot
+messages while selecting the VM display. The opt-in text recovery entry
+continues to use serial last. A new test validates **both extracted BIOS
+and UEFI GRUB configurations** and rejects reversed console order, a text
+default, or unattended install flags. The QEMU boot probe also matches the
+8 GiB/4-vCPU VM QA memory and CPU target.
+
+**Expected behavior is not proof:** a new ISO must be built and its framebuffer
+reviewed, then Anaconda's actual interactive disk selection, offline install,
+installed-disk boot and persistent firstboot verified. A passing boot-prerequisite
+check still does not certify those steps.
+
 ## Manual QA ISO workflow on default branch
 
 The `main` branch provides a deliberately separate GitHub Actions

@@ -40,7 +40,7 @@ trap cleanup EXIT
 qemu-img create -f qcow2 "$tmp/disposable-disk.qcow2" 64G >/dev/null
 cp "$vars" "$tmp/OVMF_VARS.fd"
 qemu-system-x86_64 \
-  -machine q35,accel=kvm:tcg -cpu max -smp 2 -m 4096 \
+  -machine q35,accel=kvm:tcg -cpu max -smp 4 -m 8192 \
   -drive "if=pflash,format=raw,readonly=on,file=$code" \
   -drive "if=pflash,format=raw,file=$tmp/OVMF_VARS.fd" \
   -drive "file=$iso,media=cdrom,readonly=on,format=raw" \

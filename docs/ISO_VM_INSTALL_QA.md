@@ -24,6 +24,20 @@ being visible. The `anacondaUserInterfaceVerified`,
 must stay false until independently verified and documented.
 A successful CI job is necessary, **not sufficient**, for a stable release.
 
+## Graphical console routing (2026-11-18 fix)
+
+Earlier experimental ISOs placed `console=ttyS0,115200n8` **last** after
+`console=tty0`, which can make Anaconda use serial as its interaction
+console even on a graphical VM. The corrected default boot command ends
+with `console=ttyS0,115200n8 console=tty0`; the serial text fallback
+is a separate GRUB entry. The ISO build now checks the **actual** extracted
+BIOS and UEFI GRUB files, not just the YAML template. This removes one
+known configuration error; it does **not** yet demonstrate a working GUI.
+
+If the screen is blank, capture the VNC/VirtualBox framebuffer and record
+whether `anaconda-pre.service` finished. Do not enter a disk installation
+until the UI is visible and its destination is explicitly confirmed.
+
 ## Test environment
 
 - Use **VirtualBox** or QEMU/OVMF on an isolated computer.

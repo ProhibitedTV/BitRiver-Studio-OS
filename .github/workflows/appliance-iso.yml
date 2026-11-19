@@ -16,6 +16,8 @@ on:
       - "test/appliance/build-iso-candidate.sh"
       - "test/appliance/check-iso-scaffold.sh"
       - "test/appliance/check-iso-layout.py"
+      - "test/appliance/check-iso-grub.py"
+      - "test/appliance/test-iso-grub.py"
       - "test/appliance/test-iso-layout.py"
       - "test/appliance/smoke-iso-uefi.sh"
       - "test/appliance/analyze-iso-boot.py"

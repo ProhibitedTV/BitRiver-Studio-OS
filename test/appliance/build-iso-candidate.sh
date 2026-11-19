@@ -69,6 +69,9 @@ xorriso -indev "$iso" -osirrox on -extract /EFI/BOOT/grub.cfg \
   "$out/uefi-grub.cfg" > "$out/uefi-grub-extract.log" 2>&1
 test -s "$out/bios-grub.cfg"
 test -s "$out/uefi-grub.cfg"
+# Validate actual generated BIOS and UEFI menu choices, not just iso.yaml.
+# Anaconda uses the LAST console= as its interactive UI destination.
+python3 test/appliance/check-iso-grub.py "$out/bios-grub.cfg" "$out/uefi-grub.cfg"
 
 jq -n --arg builder "$builder" --arg source "${GITHUB_SHA:-unknown}" \
   '{schemaVersion:1, releaseReady:false, artifactType:"experimental offline installer ISO",
