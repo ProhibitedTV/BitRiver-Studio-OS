@@ -128,7 +128,10 @@ func (handler *Handler) handleCreatorAssetPreview(writer http.ResponseWriter, re
 }
 
 func validCreatorAssetPath(path, prefix, extension string) bool {
-	if path == "" || strings.HasPrefix(path, "/") || strings.Contains(path, "\\") ||
+	// filepath.Clean("../private.html") is unchanged, so clean equality alone
+	// does NOT prevent escaping the configured library root.
+	if path == "" || !filepath.IsLocal(filepath.FromSlash(path)) ||
+		strings.HasPrefix(path, "/") || strings.Contains(path, "\\") ||
 		!creatorAssetPathPattern.MatchString(path) ||
 		filepath.ToSlash(filepath.Clean(filepath.FromSlash(path))) != path {
 		return false

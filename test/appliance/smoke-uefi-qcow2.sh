@@ -105,6 +105,14 @@ systemctl is-active --quiet bitriver-control-api.service
 systemctl is-active --quiet mediamtx.service
 systemctl is-active --quiet bitriver-update-agent.service
 curl --fail --silent --show-error http://127.0.0.1:8080/healthz >/dev/null
+# The running appliance must refuse anonymous API reads and mutations,
+# including asset-library paths, even when healthz remains public.
+for endpoint in /api/v1/stream /api/v1/creator-assets/catalog /api/v1/settings/active; do
+  status="$(curl -sS -o /dev/null -w '%{http_code}' "http://127.0.0.1:8080$endpoint")"
+  test "$status" = 401 || { echo "Anonymous read accepted: $endpoint ($status)" >&2; exit 1; }
+done
+status="$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8080/api/v1/stream/start)"
+test "$status" = 401 || { echo "Anonymous stream mutation accepted ($status)" >&2; exit 1; }
 jq -e '.firstBootComplete == true and .credentialsReady == true and
   (.state == "ready" or .state == "degraded")' \
   /var/lib/bitriver/bootstrap/setup-status.json >/dev/null
@@ -126,16 +134,67 @@ fi
 echo "Rotating operator key locally before reboot (suppressing the new secret)..."
 if ! guest 'sudo -n /bin/bash -se' <<'GUEST'
 set -euo pipefail
+# Print only the stage and guest-local line number, never secrets or curl data.
+auth_stage=bootstrap
+trap 'rc=$?; printf "FAIL: UEFI auth stage %s (line %s, exit %s)\\n" "$auth_stage" "$LINENO" "$rc" >&2' ERR
 credentials=/var/lib/bitriver/bootstrap/admin-credentials.json
 notice=/var/lib/bitriver/bootstrap/one-time-admin-password.txt
+base_url=http://127.0.0.1:8080
+# One-time key is read strictly INSIDE the guest. Never print it or copy it
+# into artifacts; all login and cookie files live in a private tmp directory.
+umask 077
+auth_tmp="$(mktemp -d)"
+trap 'rm -rf "$auth_tmp"' EXIT
+test "$(stat -c '%a' "$notice")" = 600
+operator_key="$(sed -n 's/^Operator control key: //p' "$notice")"
+test "${#operator_key}" -ge 32
+auth_stage=login
+login_payload="$(jq -cn --arg key "$operator_key" '{key: $key}')"
+curl --fail --silent --show-error -X POST -H 'Content-Type: application/json' \
+  --data "$login_payload" -c "$auth_tmp/cookies" \
+  -o "$auth_tmp/login.json" "$base_url/api/v1/auth/login"
+auth_stage=session
+csrf_token="$(jq -er '.csrfToken | select(type == "string" and length >= 32)' "$auth_tmp/login.json")"
+jq -e '.enabled == true and .authenticated == true' "$auth_tmp/login.json" >/dev/null
+curl --fail --silent --show-error -b "$auth_tmp/cookies" \
+  "$base_url/api/v1/auth/session" | jq -e --arg csrf "$csrf_token" \
+  '.authenticated == true and .csrfToken == $csrf' >/dev/null
+auth_stage=authenticated-read
+# A headless VM may return HTTP 503 on /api/v1/stream when OBS is offline.
+# Read local settings to prove authentication without requiring OBS.
+auth_read="$(curl -sS -o /dev/null -w '%{http_code}' -b "$auth_tmp/cookies" "$base_url/api/v1/settings/active")"
+test "$auth_read" = 200 || { echo "Authenticated settings read returned HTTP $auth_read instead of 200" >&2; exit 1; }
+# A valid browser session does not grant permission to mutate without
+# its anti-CSRF token or with a foreign Origin; neither request starts a stream.
+auth_stage=csrf
+without_csrf="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+  -b "$auth_tmp/cookies" "$base_url/api/v1/stream/start")"
+test "$without_csrf" = 403 || { echo "Missing-CSRF mutation returned HTTP $without_csrf instead of 403" >&2; exit 1; }
+auth_stage=origin
+bad_origin="$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+  -H "Origin: http://untrusted.example" -H "X-BitRiver-CSRF: $csrf_token" \
+  -b "$auth_tmp/cookies" "$base_url/api/v1/stream/start")"
+test "$bad_origin" = 403 || { echo "Foreign-origin mutation returned HTTP $bad_origin instead of 403" >&2; exit 1; }
+# Rotate the digest while a session is live: the next authenticated request
+# must revoke that session, and the previously issued key must stop working.
+auth_stage=rotate
 before="$(sha256sum "$credentials")"
 /usr/local/bin/bitriver-operator-key rotate > /dev/null
 after="$(sha256sum "$credentials")"
 test "$before" != "$after"
+auth_stage=revoke-session
+revoked="$(curl -sS -o /dev/null -w '%{http_code}' -b "$auth_tmp/cookies" "$base_url/api/v1/stream")"
+test "$revoked" = 401 || { echo "Old operator session survived rotation ($revoked)" >&2; exit 1; }
+auth_stage=revoke-key
+old_key="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  --data "$login_payload" "$base_url/api/v1/auth/login")"
+test "$old_key" = 401 || { echo "Old operator key survived rotation ($old_key)" >&2; exit 1; }
+auth_stage=final-permissions
+unset operator_key login_payload csrf_token
 test ! -e "$notice"
 test "$(stat -c '%a' "$credentials")" = 600
 test "$(stat -c '%U' "$credentials")" = bitriver
-echo "Operator key rotation changed digest, removed old notice, and retained credentials permissions."
+echo "PASS: guest-only operator login, CSRF/origin gate, key rotation, session revocation and private file permissions."
 GUEST
 then
   diagnostics

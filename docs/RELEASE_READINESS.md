@@ -113,6 +113,22 @@ operator key rotation, restart, and preserved credential/identity hashes.
 A passing VM test is not hardware certification, a signed installer, or a
 rollback demonstration.
 
+## Live authentication regression test on UEFI bootc (proposed)
+
+The isolated OVMF/QEMU appliance smoke now checks the **running** local API,
+not only Go handler unit tests: anonymous stream/settings/creator-assets
+reads and stream start must return 401; a first-boot guest-only operator
+key must login successfully; session cookies must enable authenticated
+reads while mutations without CSRF or with a foreign Origin return 403;
+rotating the key must invalidate both the prior browser session and old
+key. These checks run on a disposable CI disk and never print, upload,
+or export the one-time key.
+
+This acceptance test is **pending successful image/UEFI CI validation**.
+It verifies the already-assembled bootc appliance, **not** an installation
+from the interactive ISO, physical-presence claiming, end-user credential
+rotation, or signed rollback. Those release gates remain open.
+
 ## First-boot hardware probe
 
 The image now builds /usr/local/bin/bitriver-hw-report from the Go source.
@@ -163,3 +179,9 @@ disk installation, update origin/rollback, or physical hardware readiness.
 
 See [ISO installer roadmap](ISO_INSTALLER_ROADMAP.md). The VirtualBox VDI
 preview is **not** evidence that the ISO installation flow is safe.
+
+### Headless authentication test does not require OBS readiness
+
+[UEFI run 44561244894](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44561244894) confirmed anonymous access was rejected (401), and initial login/session lookup both succeeded (200). The test then failed because it expected the authenticated `/api/v1/stream` endpoint to return 200 even though OBS was offline; the service correctly returned **503**. The test now uses the local `/api/v1/settings/active` endpoint as its authenticated-read success oracle. It separately checks unauthorized stream control and leaves the stream offline. New CI must still validate CSRF, rotation, session revocation and reboot. This is **not** proof of a working physical installer or broadcast source.
+
+A full UEFI smoke on merged security PR #26 subsequently passed. Its on-disk ISO installation, user-visible claim flow and signed rollback remain separate open acceptance gates.
