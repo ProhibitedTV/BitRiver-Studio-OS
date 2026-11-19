@@ -158,6 +158,12 @@ Inspection of the downloadable diagnostics showed:
   than a visually demonstrated installer UI.
 - No complete installation or disk reboot was attempted.
 
+The ISO's second operator-selectable GRUB entry now offers
+`inst.text nomodeset rd.plymouth=0 plymouth.enable=0` as an alternative
+to the default graphical installer on problematic virtual displays.
+This is a **fallback**, not a verified functioning text installer; it does
+not change default boot or installed-OS graphics configuration.
+
 The new `analyze-iso-boot.py` classifier and fixture tests distinguish the
 pre-service **start** event from **finish**, record blank solid-color frames,
 and continue to assert `anacondaUserInterfaceVerified: false`. A green
