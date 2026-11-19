@@ -132,6 +132,20 @@ whether the frames differ. It still marks Anaconda UI verification as
 installation / reboot verification false regardless. This prevents
 confusing an active QEMU process with a ready Anaconda installation.
 
+## Required QEMU boot prerequisite gate (2026-11-18)
+
+The installer branch now requires the experimental CI boot probe to detect
+both `basic.target` and `anaconda-pre.service` on the *real* QEMU/UEFI
+guest's serial console, not only a running QEMU process or captured screenshot.
+It uses a 64 GiB disposable sparse virtual disk, no external network or
+host-storage pass-through, and allows additional boot time under TCG.
+The boot probe outputs a machine-readable JSON report and three screenshots.
+
+**This is still not graphical Anaconda UI, disk installation, installed-OS
+reboot or tested update rollback.** Those remain hard release blockers.
+The manually opted-in QA ISO export is denied if the prerequisite boot
+evidence fails; CI still never publishes a production release.
+
 ## Manual QA ISO workflow on default branch
 
 The `main` branch provides a deliberately separate GitHub Actions
