@@ -1,6 +1,9 @@
 [Unit]
 Description=BitRiver experimental ISO read-only browser/display diagnostics
-After=anaconda.service
+# anaconda.service already starts AFTER anaconda.target. A probe wanted by
+# anaconda.target must not wait on anaconda.service: that creates an
+# ordering cycle and systemd deletes the probe job.
+After=basic.target
 ConditionKernelCommandLine=inst.graphical
 
 [Service]

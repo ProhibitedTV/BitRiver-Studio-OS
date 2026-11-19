@@ -147,11 +147,53 @@ class BootEvidenceTests(unittest.TestCase):
             "pkexec[2798]: root: Executing command [USER=bitriver-installer] "
             "[TTY=unknown] [CWD=/] [COMMAND=/usr/bin/env DISPLAY=:1 "
             "/usr/bin/env MOZ_APP_TITLE= /usr/bin/firefox --new-instance]\n"
+            "BITRIVER_ISO_PROBE sample=10 firefox_unprivileged=yes "
+            "xwayland=yes cockpit_http=200 browser_error_count=0\n"
         )
+        self.assertTrue(result["browserProbeTelemetrySeen"])
+        self.assertFalse(result["browserProbeOrderingCycleDetected"])
         self.assertTrue(result["firefoxBrowserSelected"])
         self.assertTrue(result["firefoxStartedUnprivileged"])
         self.assertTrue(result["requiredSmokePassed"])
         self.assertFalse(result["anacondaUserInterfaceVerified"])
+
+    def test_probe_deleted_by_systemd_cycle_fails_closed(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "pkexec[2781]: root: Executing command [USER=bitriver-installer] "
+            "[COMMAND=/usr/bin/env DISPLAY=:1 /usr/bin/firefox]\n"
+            "BITRIVER_ISO_PROBE sample=7 firefox_unprivileged=yes\n"
+            "anaconda.service: Found ordering cycle: anaconda.target/start "
+            "after bitriver-iso-browser-probe.service/start after "
+            "anaconda.service/start - after anaconda.target\n"
+            "anaconda.service: Job bitriver-iso-browser-probe.service/start "
+            "deleted to break ordering cycle\n"
+        )
+        self.assertTrue(result["browserProbeOrderingCycleDetected"])
+        self.assertTrue(result["browserProbeTelemetrySeen"])
+        self.assertTrue(result["firefoxStartedUnprivileged"])
+        self.assertFalse(result["requiredSmokePassed"])
+        self.assertFalse(result["releaseReady"])
+
+    def test_missing_browser_probe_does_not_fake_success(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "pkexec[2781]: root: Executing command [USER=bitriver-installer] "
+            "[COMMAND=/usr/bin/env DISPLAY=:1 /usr/bin/firefox]\n"
+        )
+        self.assertTrue(result["firefoxStartedUnprivileged"])
+        self.assertFalse(result["browserProbeTelemetrySeen"])
+        self.assertFalse(result["requiredSmokePassed"])
 
     def test_firefox_root_process_is_not_accepted(self):
         self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))

@@ -269,3 +269,16 @@ booting the installed system are STILL UNVERIFIED. This diagnostic change
 does not alter the release safety gates.
 
 Evidence: https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44588274146
+
+## Eliminating the systemd browser-probe cycle and testing VirtIO VGA (2026-11-19)
+
+The latest run [44593573847](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44593573847) failed its experimental ISO gate despite successful Linux, Anaconda, WebUI/Cockpit startup and **unprivileged Firefox execution**. Its last 1280×800 QEMU frame was uniformly **gray (RGB 128,128,128)**, not a working installer. A line-level serial review revealed:
+
+- `anaconda.service: Found ordering cycle: anaconda.target/start after bitriver-iso-browser-probe.service/start after anaconda.service/start - after anaconda.target`
+- systemd consequently **deleted the diagnostic probe job**. This explains absent `BITRIVER_ISO_PROBE` telemetry; it does not explain or fix the blank interface.
+- The legacy QEMU `-vga std` adapter exposed `bochs-drm`, with GNOME Kiosk/Mutter reporting no accelerated framebuffer sharing and Xwayland reporting GBM Wayland interfaces unavailable. This is a plausible graphics compatibility problem, **not a proven root cause**.
+
+The live-ISO-only probe unit now orders after `basic.target`, avoiding the Anaconda target/service cycle. The QEMU test VM uses a **VirtIO VGA** device rather than std/bochs VGA while keeping the same OVMF, 8 GiB RAM, four virtual CPUs, disconnected network and disposable 64 GiB disk. The probe now must emit at least one serial sample without a detected ordering cycle; the workflow and opt-in QA packager explicitly fail closed otherwise. The framebuffer must still be nonuniform and the existing Firefox safety gates still apply.
+
+A successful VirtIO VGA test would only be evidence for *that emulated graphics adapter*, not VirtualBox or physical hardware. Interactive disk selection, offline installation, disk-only reboot and signed update rollback remain unverified.
+

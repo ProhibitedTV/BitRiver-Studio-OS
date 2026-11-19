@@ -25,6 +25,10 @@ grep -Fq 'requiredSmokePassed == true' test/appliance/package-iso-qa.sh
 grep -Fq 'installerInitiatedReboot == false' .github/workflows/appliance-iso.yml
 grep -Fq 'firefoxStartedUnprivileged == true' .github/workflows/appliance-iso.yml
 grep -Fq 'firefoxStartedUnprivileged == true' test/appliance/package-iso-qa.sh
+grep -Fq 'browserProbeTelemetrySeen == true' .github/workflows/appliance-iso.yml
+grep -Fq 'browserProbeTelemetrySeen == true' test/appliance/package-iso-qa.sh
+grep -Fq 'browserProbeOrderingCycleDetected == false' .github/workflows/appliance-iso.yml
+grep -Fq 'browserProbeOrderingCycleDetected == false' test/appliance/package-iso-qa.sh
 grep -Fq 'installerInitiatedReboot == false' test/appliance/package-iso-qa.sh
 grep -Fq 'event_name == ' .github/workflows/appliance-iso.yml
 python3 test/appliance/test-iso-layout.py -v

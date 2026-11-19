@@ -187,3 +187,7 @@ attach physical disks, expose guest network ports, upload virtual disks or
 certify the installer. A deliberate operator-selected reboot after a completed
 manual installation is a **separate** acceptance test and is not performed
 by this first-stage boot probe.
+
+### VirtIO graphics and probe self-test (2026-11-19)
+
+The ISO CI QEMU machine now tests VirtIO VGA rather than legacy `-vga std` because the prior guest exposed `bochs-drm` and GNOME Kiosk/Xwayland logged missing acceleration/GBM interfaces. The last frame in the failing 44593573847 run was **solid gray**, so no graphical installation screen was demonstrated. The diagnostic service originally had a systemd ordering cycle and never ran; it now starts after `basic.target` and the smoke gate requires its serial telemetry without a cycle. Check the `browserProbeTelemetrySeen`, `browserProbeOrderingCycleDetected` and `finalFramebufferNonUniform` fields and inspect the actual screenshot. These are not substitutes for completing the manual offline disk-installation and post-install reboot steps.

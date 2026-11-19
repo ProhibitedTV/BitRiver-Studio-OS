@@ -71,6 +71,12 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
         r"Using default browser:\s*firefox\b", log, re.I
     )) or firefox_started_unprivileged
     browser_probe_seen = "BITRIVER_ISO_PROBE sample=" in log
+    # Regression from real ISO run 44593573847: systemd discarded the probe
+    # because it was WantedBy=anaconda.target but After=anaconda.service.
+    browser_probe_cycle = bool(re.search(
+        r"anaconda\.service: Found ordering cycle:.*bitriver-iso-browser-probe\.service"
+        r"|Job bitriver-iso-browser-probe\.service/start deleted", log
+    ))
     browser_running_sample_seen = bool(re.search(
         r"BITRIVER_ISO_PROBE sample=\d+ firefox_unprivileged=yes\b", log
     ))
@@ -82,12 +88,13 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
     smoke_passed = (
         prerequisite and pre_finished and anaconda_started
         and webui_launched and firefox_selected and firefox_started_unprivileged
+        and browser_probe_seen and not browser_probe_cycle
         and not sandbox_refused and not reboot_seen
         and not third["solidColor"]
     )
 
     return {
-        "schemaVersion": 7,
+        "schemaVersion": 8,
         "uefiVMLaunched": True,
         "earlyFramebufferCaptured": True,
         "middleFramebufferCaptured": True,
@@ -113,6 +120,7 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
         "firefoxBrowserSelected": firefox_selected,
         "firefoxStartedUnprivileged": firefox_started_unprivileged,
         "browserProbeTelemetrySeen": browser_probe_seen,
+        "browserProbeOrderingCycleDetected": browser_probe_cycle,
         "firefoxRunningSampleSeen": browser_running_sample_seen,
         "browserSandboxRefusalSeen": sandbox_refused,
         "installerInitiatedReboot": reboot_seen,
@@ -157,6 +165,7 @@ def main() -> int:
     print("Firefox selected:", evidence["firefoxBrowserSelected"])
     print("Firefox executed as unprivileged installer:", evidence["firefoxStartedUnprivileged"])
     print("Live browser probe telemetry captured:", evidence["browserProbeTelemetrySeen"])
+    print("Browser probe systemd ordering cycle detected:", evidence["browserProbeOrderingCycleDetected"])
     print("Firefox alive in at least one probe sample:", evidence["firefoxRunningSampleSeen"])
     print("Anaconda WebUI launcher seen:", evidence["anacondaWebuiDesktopLaunched"])
     print("Browser sandbox refusal:", evidence["browserSandboxRefusalSeen"])
@@ -166,7 +175,8 @@ def main() -> int:
     if not evidence["requiredSmokePassed"]:
         print(
             "FAIL: nonblank screen plus completed Anaconda pre-service, "
-            "Anaconda WebUI plus unprivileged Firefox process launch, and "
+            "Anaconda WebUI, unprivileged Firefox launch, working browser "
+            "diagnostics without systemd ordering cycles, and "
             "NO sandbox refusal or installer reboot are required. "
             "Installer UI not certified.",
             file=sys.stderr,

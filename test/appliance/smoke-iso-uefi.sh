@@ -54,13 +54,15 @@ trap cleanup EXIT
 # to, attached to a host block device, or published.
 qemu-img create -f qcow2 "$tmp/disposable-disk.qcow2" 64G >/dev/null
 cp "$vars" "$tmp/OVMF_VARS.fd"
+# VirtIO VGA gives Mutter/Xwayland a modern DRM interface. The previous
+# QEMU std VGA exposed bochs-drm and a GBM warning. No virgl or networking.
 qemu-system-x86_64 \
   -machine q35,accel=kvm:tcg -cpu max -smp 4 -m 8192 \
   -drive "if=pflash,format=raw,readonly=on,file=$code" \
   -drive "if=pflash,format=raw,file=$tmp/OVMF_VARS.fd" \
   -drive "file=$iso,media=cdrom,readonly=on,format=raw" \
   -drive "file=$tmp/disposable-disk.qcow2,if=virtio,format=qcow2" \
-  -boot order=d -no-reboot -vga std -nic none -display none \
+  -boot order=d -no-reboot -vga virtio -nic none -display none \
   -vnc 127.0.0.1:7 \
   -monitor "unix:$tmp/monitor.sock,server=on,wait=off" \
   -serial "file:$tmp/serial.log" \
