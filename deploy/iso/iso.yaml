@@ -9,6 +9,8 @@ grub2:
       # serial log while keeping the primary graphical console available.
       linux: ${kernelpath} ${root} inst.graphical console=tty0 console=ttyS0,115200n8
       initrd: ${initrdpath}
-    - name: "Install BitRiver Studio OS (experimental text)"
-      linux: ${kernelpath} ${root} inst.text console=ttyS0,115200n8
+    - name: "Troubleshoot installation (text, basic display)"
+      # This is operator-selected only. Never force text/nomodeset on the
+      # default graphical installer or the installed broadcast OS.
+      linux: ${kernelpath} ${root} inst.text nomodeset rd.plymouth=0 plymouth.enable=0 console=ttyS0,115200n8
       initrd: ${initrdpath}
