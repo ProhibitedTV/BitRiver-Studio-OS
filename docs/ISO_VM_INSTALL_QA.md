@@ -176,3 +176,14 @@ CI detected Fedora 44 Anaconda and GNOME Kiosk running with no visible installer
 A prior green ISO run only showed systemd's **shutdown screen** at the final capture. Its serial log confirmed the Chromium-based Slitherer browser was launched as root, refused to run with its sandbox, and caused Anaconda to reboot. The next experimental ISO now uses a separate non-root Firefox browser account and an explicit Anaconda Firefox configuration override. CI and the optional manual QA package must reject any such installer-initiated reboot, sandbox error or missing Firefox/Web UI launch event.
 
 An unobstructed or multicolor display is still not proof of Anaconda's disk-selection interface. A human must inspect the screenshot and complete an offline installation on a disposable 64 GiB virtual disk, remove the ISO, boot from the installed disk, check firstboot/credentials/persistence and record evidence. Never publish the candidate as a stable installer based solely on these boot checks.
+
+## Preserving evidence on a guest-initiated reboot (2026-11-19)
+
+The isolated QEMU ISO boot now uses `-no-reboot`: an unexpected installer
+reset exits the guest VM rather than silently booting the ISO again. A failed
+probe preserves its available serial and Anaconda virtio logs and any captured
+framebuffers in the non-release CI evidence artifact. This does **not**
+attach physical disks, expose guest network ports, upload virtual disks or
+certify the installer. A deliberate operator-selected reboot after a completed
+manual installation is a **separate** acceptance test and is not performed
+by this first-stage boot probe.

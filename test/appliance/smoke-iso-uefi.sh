@@ -24,6 +24,21 @@ done
 
 tmp="$(mktemp -d /tmp/bitriver-iso-uefi.XXXXXXXX)"
 cleanup() {
+  local result=$?
+  # If the guest exited or rebooted before the 615-second capture, preserve
+  # serial/virtio logs for the always-uploaded failure evidence artifact.
+  # Never copy the ISO, VM disk, or operator credentials.
+  if [[ "$result" -ne 0 ]]; then
+    [[ ! -f "$tmp/serial.log" ]] ||
+      cp "$tmp/serial.log" "$repo_root/artifacts/iso-evidence/uefi-serial.log" || true
+    [[ ! -f "$tmp/anaconda-virtio.log" ]] ||
+      cp "$tmp/anaconda-virtio.log" "$repo_root/artifacts/iso-evidence/anaconda-virtiolog.log" || true
+    for stage in early mid later; do
+      [[ ! -f "$tmp/$stage.ppm" ]] ||
+        cp "$tmp/$stage.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture-$stage.ppm" || true
+    done
+    echo "ISO smoke failed; captured available guest logs and frames for CI diagnosis." >&2
+  fi
   if [[ -e "$tmp/qemu.pid" ]]; then
     pid="$(cat "$tmp/qemu.pid" || true)"
     if [[ "$pid" =~ ^[0-9]+$ ]]; then
@@ -45,7 +60,7 @@ qemu-system-x86_64 \
   -drive "if=pflash,format=raw,file=$tmp/OVMF_VARS.fd" \
   -drive "file=$iso,media=cdrom,readonly=on,format=raw" \
   -drive "file=$tmp/disposable-disk.qcow2,if=virtio,format=qcow2" \
-  -boot order=d -vga std -nic none -display none \
+  -boot order=d -no-reboot -vga std -nic none -display none \
   -vnc 127.0.0.1:7 \
   -monitor "unix:$tmp/monitor.sock,server=on,wait=off" \
   -serial "file:$tmp/serial.log" \
@@ -72,16 +87,25 @@ capture_screen() {
 
 sleep 75
 test -s "$tmp/qemu.pid"
-kill -0 "$(cat "$tmp/qemu.pid")"
+kill -0 "$(cat "$tmp/qemu.pid")" || {
+  echo "FAIL: installer guest exited, shut down, or reset before probe capture." >&2
+  exit 1
+}
 capture_screen "$tmp/early.ppm"
 sleep 140
-kill -0 "$(cat "$tmp/qemu.pid")"
+kill -0 "$(cat "$tmp/qemu.pid")" || {
+  echo "FAIL: installer guest exited, shut down, or reset before probe capture." >&2
+  exit 1
+}
 capture_screen "$tmp/mid.ppm"
 # Under TCG (no KVM), startup may be slow; the third capture at ~615s
 # observes startup beyond the first systemd and Plymouth service events.
 # This is still NOT an installer UI / installation / reboot proof.
 sleep 400
-kill -0 "$(cat "$tmp/qemu.pid")"
+kill -0 "$(cat "$tmp/qemu.pid")" || {
+  echo "FAIL: installer guest exited, shut down, or reset before probe capture." >&2
+  exit 1
+}
 capture_screen "$tmp/later.ppm"
 
 cp "$tmp/early.ppm" "$repo_root/artifacts/iso-evidence/uefi-boot-capture-early.ppm"
@@ -100,4 +124,4 @@ python3 test/appliance/analyze-iso-boot.py \
   "$tmp/early.ppm" "$tmp/mid.ppm" "$tmp/later.ppm" "$tmp/serial.log" \
   "$repo_root/artifacts/iso-evidence/uefi-boot-probe.json" \
   "$tmp/anaconda-virtio.log"
-echo "PASS: UEFI reached systemd and logged Anaconda pre-service START; installation NOT validated."
+echo "PASS: UEFI smoke observed Anaconda Web UI and Firefox without a reboot; offline installation and disk-only boot NOT validated."
