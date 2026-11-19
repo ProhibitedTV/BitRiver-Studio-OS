@@ -42,6 +42,11 @@ grep -Fq 'preview ALL=(root) NOPASSWD: /usr/bin/cat /var/lib/bitriver/bootstrap/
 grep -Fq 'if: ${{ github.event_name !=' .github/workflows/virtualbox-preview.yml
 bash -n test/appliance/validate-oci-sbom.sh
 bash -n test/appliance/smoke-uefi-qcow2.sh
+# Do not silently regress the running UEFI VM authentication acceptance gate.
+grep -Fq 'Anonymous stream mutation accepted' test/appliance/smoke-uefi-qcow2.sh
+grep -Fq 'Old operator session survived rotation' test/appliance/smoke-uefi-qcow2.sh
+grep -Fq 'Old operator key survived rotation' test/appliance/smoke-uefi-qcow2.sh
+grep -Fq 'X-BitRiver-CSRF:' test/appliance/smoke-uefi-qcow2.sh
 while IFS= read -r -d '' script; do
   bash -n "${script}"
 done < <(find deploy/image/rootfs-overlay/usr/local/libexec/bitriver -name '*.sh' -print0)
