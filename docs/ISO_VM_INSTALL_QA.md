@@ -40,6 +40,11 @@ A successful CI job is necessary, **not sufficient**, for a stable release.
 1. Boot ISO. Photograph/screenshot the initial **BitRiver Studio OS** boot
    menu and select the explicitly interactive graphical or text installer.
 2. Confirm Anaconda launches and offers a **manual** target-disk selection.
+   If the default graphical installer remains blank, power off and retry
+   using the second GRUB entry **Troubleshoot installation (text, basic display)**.
+   It uses `inst.text nomodeset rd.plymouth=0 plymouth.enable=0`. Record
+   whether the serial console displays Anaconda text mode; **do not**
+   assume that reaching the boot menu means text mode works.
    **Fail immediately** if it starts repartitioning without the operator
    choosing a disk and confirming all changes.
 3. Confirm the only install target is the disposable 64+ GiB VM disk.
