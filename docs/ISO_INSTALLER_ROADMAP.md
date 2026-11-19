@@ -146,6 +146,23 @@ reboot or tested update rollback.** Those remain hard release blockers.
 The manually opted-in QA ISO export is denied if the prerequisite boot
 evidence fails; CI still never publishes a production release.
 
+## UEFI evidence audit: boot-start signal versus installer UI (2026-11-18)
+
+[Run 44443213727](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44443213727)
+passed the required kernel/systemd/Anaconda-pre **start** gate on the ISO branch.
+Inspection of the downloadable diagnostics showed:
+
+- The serial log reached `basic.target` and recorded **Starting**
+  `anaconda-pre.service`; it did **not** record that this service finished.
+- The screenshot at ~395 seconds was a **single solid-blue frame** rather
+  than a visually demonstrated installer UI.
+- No complete installation or disk reboot was attempted.
+
+The new `analyze-iso-boot.py` classifier and fixture tests distinguish the
+pre-service **start** event from **finish**, record blank solid-color frames,
+and continue to assert `anacondaUserInterfaceVerified: false`. A green
+boot-prerequisite gate is **not** a green installer or release gate.
+
 ## Manual QA ISO workflow on default branch
 
 The `main` branch provides a deliberately separate GitHub Actions
