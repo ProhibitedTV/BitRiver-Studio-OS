@@ -11,7 +11,7 @@ jq -e '
   .schemaVersion == 2 and
   .targetPlatform == "linux/amd64" and
   .fedoraBootc == "quay.io/fedora/fedora-bootc:44" and
-  .builderImages.fedoraBootc == "quay.io/fedora/fedora-bootc@sha256:5fdfeee1cb12af2a05d1fd2e4e654c7f605003eb06fa4ca0b4e27079f31c7b6f" and
+  .builderImages.fedoraBootc == "quay.io/fedora/fedora-bootc@sha256:21be546e96dd831f5c92ecd0c84ea54205b2659a1724d1efa0b24ba465bc1556" and
   .builderImages.go == "docker.io/library/golang:1.22-bookworm@sha256:3d699e4d15d0f8f13c9195c0632a16702b8cbdece2955af1c23b37ae5d55a253" and
   .builderImages.node == "docker.io/library/node:22-bookworm@sha256:e13726ca604184d7a91fcacab1fc09eefd642dc28e79ac34e85540dd93b78cfb" and
   .mediamtx.version == "v1.21.4" and
