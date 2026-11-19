@@ -14,7 +14,11 @@ The experimental ISO workflow now requires QEMU/OVMF to boot into systemd
 and log Anaconda's `anaconda-pre.service`. It samples the framebuffer
 at roughly 75, 215 and 395 seconds to accommodate slower emulated CPUs.
 The QA bundle includes `uefi-boot-probe.json`: check
-`bootPrerequisitePassed`, but **do not** equate it with the Anaconda UI
+`bootPrerequisitePassed`, `anacondaPreServiceStarted`,
+`anacondaPreServiceFinished` and `finalFramebufferUniform` separately.
+The most recent verified screenshot (~395 seconds into the software-emulated
+QEMU boot) was a **uniform blue frame**, not a proven Anaconda screen.
+**Do not** equate the positive prerequisite with the Anaconda UI
 being visible. The `anacondaUserInterfaceVerified`,
 `diskInstallationVerified`, `rebootVerified` and `releaseReady` flags
 must stay false until independently verified and documented.
