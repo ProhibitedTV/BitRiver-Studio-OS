@@ -1,0 +1,49 @@
+name: fedora-base-probe
+
+# Read-only provenance probe. Never changes the locked image, pushes an OCI
+# image, uses credentials, or promotes a candidate release automatically.
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fedora-base-probe.yml"
+      - "deploy/image/releases.lock.json"
+      - "deploy/image/**"
+      - "deploy/iso/Containerfile"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-fedora-base:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install registry inspection tooling
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends skopeo jq
+
+      - name: Inspect current Fedora 44 registry tag and verify the amd64 image
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref="quay.io/fedora/fedora-bootc:44"
+          skopeo inspect --raw "docker://$ref" > "$RUNNER_TEMP/fedora-44-manifest.json"
+          sha="$(sha256sum "$RUNNER_TEMP/fedora-44-manifest.json" | awk '{print $1}')"
+          [[ "$sha" =~ ^[a-f0-9]{64}$ ]]
+          digest_ref="quay.io/fedora/fedora-bootc@sha256:$sha"
+          echo "Candidate digest: $digest_ref"
+          docker pull --platform linux/amd64 "$digest_ref"
+          docker run --rm --platform linux/amd64 --entrypoint /bin/sh "$digest_ref" \
+            -c '. /etc/os-release; echo "Verified VERSION_ID=$VERSION_ID"; test "$VERSION_ID" = 44'
+          printf 'Fedora 44 base verified as linux/amd64: \`%s\`\n' "$digest_ref" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Show current reviewed lock (never auto-update)
+        run: |
+          set -euo pipefail
+          echo "Current locked base image:"
+          jq -r '.builderImages.fedoraBootc' deploy/image/releases.lock.json
+          echo "Compare against the verified digest above before opening a lockfile update."
