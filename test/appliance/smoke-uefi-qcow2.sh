@@ -160,8 +160,10 @@ curl --fail --silent --show-error -b "$auth_tmp/cookies" \
   "$base_url/api/v1/auth/session" | jq -e --arg csrf "$csrf_token" \
   '.authenticated == true and .csrfToken == $csrf' >/dev/null
 auth_stage=authenticated-read
-auth_read="$(curl -sS -o /dev/null -w '%{http_code}' -b "$auth_tmp/cookies" "$base_url/api/v1/stream")"
-test "$auth_read" = 200 || { echo "Authenticated API read returned HTTP $auth_read instead of 200" >&2; exit 1; }
+# A headless VM may return HTTP 503 on /api/v1/stream when OBS is offline.
+# Read local settings to prove authentication without requiring OBS.
+auth_read="$(curl -sS -o /dev/null -w '%{http_code}' -b "$auth_tmp/cookies" "$base_url/api/v1/settings/active")"
+test "$auth_read" = 200 || { echo "Authenticated settings read returned HTTP $auth_read instead of 200" >&2; exit 1; }
 # A valid browser session does not grant permission to mutate without
 # its anti-CSRF token or with a foreign Origin; neither request starts a stream.
 auth_stage=csrf

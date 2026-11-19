@@ -161,3 +161,7 @@ build or a successful install/boot test. The lock, Containerfile, image builder
 wrapper, drift guard and image workflow assertions are rotated atomically.
 Fresh full-image and UEFI/VirtualBox validation must still pass before claiming
 restored installable artifacts.
+
+### Headless authentication test does not require OBS readiness
+
+[UEFI run 44561244894](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44561244894) confirmed anonymous access was rejected (401), and initial login/session lookup both succeeded (200). The test then failed because it expected the authenticated `/api/v1/stream` endpoint to return 200 even though OBS was offline; the service correctly returned **503**. The test now uses the local `/api/v1/settings/active` endpoint as its authenticated-read success oracle. It separately checks unauthorized stream control and leaves the stream offline. New CI must still validate CSRF, rotation, session revocation and reboot. This is **not** proof of a working physical installer or broadcast source.
