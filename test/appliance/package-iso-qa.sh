@@ -39,6 +39,7 @@ sha="$(sha256sum "$iso" | awk '{print $1}')"
 printf '%s  bitriver-studio-os-qa.iso\n' "$sha" > "$output/ISO-SHA256SUMS"
 (cd "$output" && sha256sum chunks/* > CHUNK-SHA256SUMS)
 cp "$input/iso-provenance.json" "$output/iso-provenance.json"
+cp "$root/artifacts/iso-evidence/uefi-boot-probe.json" "$output/uefi-boot-probe.json"
 cp "$input/boot-record.txt" "$output/boot-record.txt"
 cp "$input/iso-file-list.txt" "$output/iso-file-list.txt"
 cp "$root/test/appliance/reassemble-iso-qa.ps1" "$output/reassemble-iso-qa.ps1"
@@ -52,6 +53,9 @@ USE A BLANK DISPOSABLE VIRTUAL DISK WITH NO HOST STORAGE PASS-THROUGH.
 This manual workflow artifact is NOT a signed production build or GitHub
 Release. Files are ordered binary chunks in ./chunks. Reconstruct and
 verify SHA256 against the manifest before attaching to a virtual machine.
+The uefi-boot-probe.json is limited to a prerequisite boot proof: systemd
+and anaconda-pre.service. It does NOT verify a visible Anaconda UI,
+installation to disk, reboot, updates or rollback.
 
 Windows PowerShell in this folder:
   .\reassemble-iso-qa.ps1
