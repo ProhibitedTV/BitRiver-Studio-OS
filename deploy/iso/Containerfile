@@ -13,16 +13,16 @@ RUN dnf -y install \
       dracut-config-generic dracut-network dracut-live \
       grub2-efi-x64-cdboot grub2-common grub2-pc-modules \
       plymouth default-fonts-core-sans default-fonts-other-sans \
-      google-noto-sans-cjk-fonts net-tools \
+      google-noto-sans-cjk-fonts net-tools xdpyinfo xwininfo \
       xorrisofs squashfs-tools implantisomd5 \
       podman python3 jq \
     && dnf clean all
 
 # Fail at build time if the installer would have a display server but no
 # browser-based Anaconda frontend. Do not rely on weak RPM dependencies.
-RUN rpm -q anaconda-webui firefox \
+RUN rpm -q anaconda-webui firefox xdpyinfo xwininfo \
     && test -x /usr/libexec/anaconda/webui-desktop \
-    && command -v firefox
+    && command -v firefox && command -v xdpyinfo && command -v xwininfo
 
 # The generic Fedora profile selects Slitherer (Chromium), which exited when
 # launched as root in the actual ISO smoke. Choose Firefox WITHOUT disabling

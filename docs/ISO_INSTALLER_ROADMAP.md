@@ -282,3 +282,11 @@ The live-ISO-only probe unit now orders after `basic.target`, avoiding the Anaco
 
 A successful VirtIO VGA test would only be evidence for *that emulated graphics adapter*, not VirtualBox or physical hardware. Interactive disk selection, offline installation, disk-only reboot and signed update rollback remain unverified.
 
+## Firefox/X11 connectivity diagnostics after VirtIO VGA (2026-11-19)
+
+In [ISO run 44609816007](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44609816007), the systemd cycle was fixed and the read-only browser probe produced all 16 samples. Fedora detected `virtio_gpu`, GNOME Kiosk created a GBM renderer, Firefox was observed running as the non-root installer user, and loopback Cockpit returned HTTP 200. Despite this, the final 1280×800 framebuffer remained uniformly **gray (RGB 128,128,128)**. This strongly narrows the remaining problem to the graphical client-to-compositor path, but it does **not** yet identify the failed permission or window.
+
+The Fedora 44 WebUI launcher log shows `pkexec` running Firefox as UID 970 with `DISPLAY=:1` and a Firefox profile at `/run/user/0/anaconda/firefox-profile`. The parent root runtime directory is often mode 0700. This creates a **testable permission hypothesis** without justifying changes to X11 access controls or browser sandboxing. The next *live ISO only* build installs tiny Fedora `xdpyinfo` and `xwininfo` utilities and extends the existing read-only probe. It checks whether `bitriver-installer` can connect to display `:1`, whether the Firefox profile directory is traversable, the octal mode of `/run/user/0`, and an X11 child-window **count** if accessible. Only fixed status values and the count go to serial: no window titles, URLs, credentials, raw browser command lines or raw X11 output.
+
+These fields are diagnostic, **not automated installation proof**. Even a green X11 check would not establish a visible installation screen; those release blockers remain separate. The builder and smoke tests continue using only an isolated disposable QEMU disk with network disabled.
+

@@ -195,6 +195,43 @@ class BootEvidenceTests(unittest.TestCase):
         self.assertFalse(result["browserProbeTelemetrySeen"])
         self.assertFalse(result["requiredSmokePassed"])
 
+    def test_display_and_profile_access_detected_without_certifying_install(self):
+        self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
+        result = self.classify(
+            "Reached target basic.target\n"
+            "Starting anaconda-pre.service\n"
+            "Finished anaconda-pre.service\n"
+            "Starting anaconda.service\n"
+            "program: Running... /usr/libexec/anaconda/webui-desktop\n"
+            "pkexec[2811]: root: Executing command [USER=bitriver-installer] "
+            "[COMMAND=/usr/bin/env DISPLAY=:1 /usr/bin/firefox]\n"
+            "BITRIVER_ISO_PROBE sample=8 firefox_unprivileged=yes "
+            "xwayland=yes cockpit_http=200 browser_error_count=unavailable "
+            "x11_connectable=no x11_windows=unavailable "
+            "root_runtime_mode=700 firefox_profile_traversable=no\n"
+        )
+        self.assertTrue(result["x11AccessProbeSeen"])
+        self.assertFalse(result["x11DisplayAccessible"])
+        self.assertTrue(result["firefoxProfileAccessProbeSeen"])
+        self.assertFalse(result["firefoxProfileTraversable"])
+        self.assertTrue(result["requiredSmokePassed"])
+        self.assertFalse(result["anacondaUserInterfaceVerified"])
+        self.assertFalse(result["releaseReady"])
+
+    def test_display_access_positive_does_not_certify_installer_ui(self):
+        result = self.classify(
+            "BITRIVER_ISO_PROBE sample=10 firefox_unprivileged=yes "
+            "xwayland=yes cockpit_http=200 browser_error_count=0 "
+            "x11_connectable=yes x11_windows=3 "
+            "root_runtime_mode=711 firefox_profile_traversable=yes\n"
+        )
+        self.assertTrue(result["x11AccessProbeSeen"])
+        self.assertTrue(result["x11DisplayAccessible"])
+        self.assertTrue(result["firefoxProfileAccessProbeSeen"])
+        self.assertTrue(result["firefoxProfileTraversable"])
+        self.assertFalse(result["anacondaUserInterfaceVerified"])
+        self.assertFalse(result["releaseReady"])
+
     def test_firefox_root_process_is_not_accepted(self):
         self.later.write_bytes(b"P6\n2 1\n255\n" + bytes([0, 0, 0, 255, 255, 255]))
         result = self.classify(

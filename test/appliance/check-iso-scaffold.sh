@@ -50,6 +50,10 @@ test -s deploy/iso/iso-browser-probe.sh
 test -s deploy/iso/iso-browser-probe.service
 bash -n deploy/iso/iso-browser-probe.sh
 grep -Fq 'BITRIVER_ISO_PROBE sample=' deploy/iso/iso-browser-probe.sh
+grep -Fq 'x11_connectable=%s' deploy/iso/iso-browser-probe.sh
+grep -Fq 'firefox_profile_traversable=%s' deploy/iso/iso-browser-probe.sh
+grep -Fq 'runuser -u bitriver-installer -- env DISPLAY=:1 xdpyinfo' deploy/iso/iso-browser-probe.sh
+grep -Fq 'rpm -q anaconda-webui firefox xdpyinfo xwininfo' deploy/iso/Containerfile
 grep -Fxq 'After=basic.target' deploy/iso/iso-browser-probe.service
 ! grep -Fxq 'After=anaconda.service' deploy/iso/iso-browser-probe.service
 grep -Fq 'ConditionKernelCommandLine=inst.graphical' deploy/iso/iso-browser-probe.service

@@ -191,3 +191,7 @@ by this first-stage boot probe.
 ### VirtIO graphics and probe self-test (2026-11-19)
 
 The ISO CI QEMU machine now tests VirtIO VGA rather than legacy `-vga std` because the prior guest exposed `bochs-drm` and GNOME Kiosk/Xwayland logged missing acceleration/GBM interfaces. The last frame in the failing 44593573847 run was **solid gray**, so no graphical installation screen was demonstrated. The diagnostic service originally had a systemd ordering cycle and never ran; it now starts after `basic.target` and the smoke gate requires its serial telemetry without a cycle. Check the `browserProbeTelemetrySeen`, `browserProbeOrderingCycleDetected` and `finalFramebufferNonUniform` fields and inspect the actual screenshot. These are not substitutes for completing the manual offline disk-installation and post-install reboot steps.
+
+### Unprivileged Firefox display and profile checks (2026-11-19)
+
+The 44609816007 ISO probe confirmed Firefox stays running under UID 970 and the local Anaconda Web UI responds, but VirtIO VGA still yields a uniformly gray screen. The next diagnostic reads only `x11_connectable`, `x11_windows`, `root_runtime_mode`, and `firefox_profile_traversable` as the installer user. In `uefi-boot-probe.json` the `x11AccessProbeSeen` and `firefoxProfileAccessProbeSeen` flags distinguish missing evidence from an explicit access denial. This is intentionally not a green-release requirement on its own: status cannot replace seeing the actual Anaconda disk selector, manually installing to a disposable disk and rebooting without the ISO.

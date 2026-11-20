@@ -80,6 +80,20 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
     browser_running_sample_seen = bool(re.search(
         r"BITRIVER_ISO_PROBE sample=\d+ firefox_unprivileged=yes\b", log
     ))
+    x11_access_probe_seen = bool(re.search(
+        r"BITRIVER_ISO_PROBE sample=\d+[^\n]*\bx11_connectable=(?:yes|no)\b", log
+    ))
+    x11_accessible = bool(re.search(
+        r"BITRIVER_ISO_PROBE sample=\d+[^\n]*\bx11_connectable=yes\b", log
+    ))
+    browser_profile_probe_seen = bool(re.search(
+        r"BITRIVER_ISO_PROBE sample=\d+[^\n]*\bfirefox_profile_traversable=(?:yes|no)\b",
+        log,
+    ))
+    browser_profile_traversable = bool(re.search(
+        r"BITRIVER_ISO_PROBE sample=\d+[^\n]*\bfirefox_profile_traversable=yes\b",
+        log,
+    ))
     sandbox_refused = "Running as root without --no-sandbox is not supported" in log
     reboot_seen = bool(re.search(
         r"\bSystem is rebooting\b|program: Running\.\.\. systemctl --no-wall reboot"
@@ -94,7 +108,7 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
     )
 
     return {
-        "schemaVersion": 8,
+        "schemaVersion": 9,
         "uefiVMLaunched": True,
         "earlyFramebufferCaptured": True,
         "middleFramebufferCaptured": True,
@@ -122,6 +136,10 @@ def classify(early: Path, middle: Path, later: Path, serial: Path, virtio: Path 
         "browserProbeTelemetrySeen": browser_probe_seen,
         "browserProbeOrderingCycleDetected": browser_probe_cycle,
         "firefoxRunningSampleSeen": browser_running_sample_seen,
+        "x11AccessProbeSeen": x11_access_probe_seen,
+        "x11DisplayAccessible": x11_accessible,
+        "firefoxProfileAccessProbeSeen": browser_profile_probe_seen,
+        "firefoxProfileTraversable": browser_profile_traversable,
         "browserSandboxRefusalSeen": sandbox_refused,
         "installerInitiatedReboot": reboot_seen,
         "requiredSmokePassed": smoke_passed,
@@ -167,6 +185,10 @@ def main() -> int:
     print("Live browser probe telemetry captured:", evidence["browserProbeTelemetrySeen"])
     print("Browser probe systemd ordering cycle detected:", evidence["browserProbeOrderingCycleDetected"])
     print("Firefox alive in at least one probe sample:", evidence["firefoxRunningSampleSeen"])
+    print("X11 permission probe captured:", evidence["x11AccessProbeSeen"])
+    print("X11 display accessible as installer user:", evidence["x11DisplayAccessible"])
+    print("Firefox profile permission probe captured:", evidence["firefoxProfileAccessProbeSeen"])
+    print("Firefox profile traversable as installer user:", evidence["firefoxProfileTraversable"])
     print("Anaconda WebUI launcher seen:", evidence["anacondaWebuiDesktopLaunched"])
     print("Browser sandbox refusal:", evidence["browserSandboxRefusalSeen"])
     print("Installer initiated reboot:", evidence["installerInitiatedReboot"])
