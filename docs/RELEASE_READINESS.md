@@ -159,9 +159,29 @@ resolved the official Fedora 44 tag to
 `VERSION_ID=44`. This is an immutable replacement, not a mutable release
 build or a successful install/boot test. The lock, Containerfile, image builder
 wrapper, drift guard and image workflow assertions are rotated atomically.
-Fresh full-image and UEFI/VirtualBox validation must still pass before claiming
-restored installable artifacts.
+Full-image and UEFI/VirtualBox validation for the replacement digest now
+passed in GitHub Actions on PR #21. This **does not** establish installer
+disk installation, update origin/rollback, or physical hardware readiness.
+
+## Installer ISO: proof-of-concept workstream
+
+- [ ] Generate an experimental Fedora 44 offline `generic-iso` installer with
+      independent Anaconda boot container and embedded BitRiver OCI payload.
+      Initial CI intentionally uploads **only evidence**, not the ISO.
+- [ ] Boot ISO under UEFI to a **manual** installer, verify there is no
+      unattended repartitioning, and install to a disposable blank VM disk.
+- [ ] Detach ISO, reboot into the installed BitRiver OS and verify the
+      API/systemd services, firstboot identity and persistent recording paths.
+- [ ] Replace the development-only `localhost` payload update target with
+      a real version-pinned, signed remote origin; verify safe updates and
+      failed-update rollback before publishing installable media.
+- [ ] Verify license inventory, signatures and physical hardware matrix.
+
+See [ISO installer roadmap](ISO_INSTALLER_ROADMAP.md). The VirtualBox VDI
+preview is **not** evidence that the ISO installation flow is safe.
 
 ### Headless authentication test does not require OBS readiness
 
 [UEFI run 44561244894](https://github.com/ProhibitedTV/BitRiver-Studio-OS/actions/runs/44561244894) confirmed anonymous access was rejected (401), and initial login/session lookup both succeeded (200). The test then failed because it expected the authenticated `/api/v1/stream` endpoint to return 200 even though OBS was offline; the service correctly returned **503**. The test now uses the local `/api/v1/settings/active` endpoint as its authenticated-read success oracle. It separately checks unauthorized stream control and leaves the stream offline. New CI must still validate CSRF, rotation, session revocation and reboot. This is **not** proof of a working physical installer or broadcast source.
+
+A full UEFI smoke on merged security PR #26 subsequently passed. Its on-disk ISO installation, user-visible claim flow and signed rollback remain separate open acceptance gates.

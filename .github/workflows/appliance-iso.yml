@@ -1,0 +1,118 @@
+name: appliance-iso-experimental
+
+on:
+  workflow_dispatch:
+    inputs:
+      export_qa_iso:
+        description: "EXPERIMENTAL: export unvalidated installer ONLY for isolated disposable-VM testing"
+        type: boolean
+        required: true
+        default: false
+  pull_request:
+    paths:
+      - ".github/workflows/appliance-iso.yml"
+      - "deploy/iso/**"
+      - "deploy/image/**"
+      - "test/appliance/build-iso-candidate.sh"
+      - "test/appliance/check-iso-scaffold.sh"
+      - "test/appliance/check-iso-layout.py"
+      - "test/appliance/check-iso-grub.py"
+      - "test/appliance/test-iso-grub.py"
+      - "test/appliance/test-iso-layout.py"
+      - "test/appliance/smoke-iso-uefi.sh"
+      - "test/appliance/analyze-iso-boot.py"
+      - "test/appliance/test-iso-boot-evidence.py"
+      - "test/appliance/package-iso-qa.sh"
+      - "test/appliance/reassemble-iso-qa.ps1"
+
+permissions:
+  contents: read
+
+jobs:
+  build-offline-installer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate ISO security and compatibility contract
+        run: bash test/appliance/check-iso-scaffold.sh
+
+      - name: Install ISO inspection and OCI tooling
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y --no-install-recommends podman xorriso qemu-system-x86 qemu-utils ovmf socat
+
+      - name: Build complete pinned BitRiver bootc payload
+        shell: pwsh
+        run: ./deploy/image/build-image.ps1 -ContainerRuntime docker -ImageTag bitriver/studio-os:ci -MetadataPath artifacts/image-build-provenance.json
+
+      - name: Build independent Anaconda ISO image with offline BitRiver payload
+        run: bash test/appliance/build-iso-candidate.sh
+
+      # Required UEFI proof: GRUB, Linux, systemd basic.target and
+      # Anaconda's pre-service. Still NOT a graphical installer/disk test.
+      - name: Boot UEFI candidate through Anaconda pre-service (required gate)
+        run: bash test/appliance/smoke-iso-uefi.sh
+
+      - name: Validate boot evidence and preserve unverified install status
+        run: |
+          test -s artifacts/iso-candidate/ISO-SHA256SUMS
+          test -s artifacts/iso-candidate/boot-record.txt
+          test -s artifacts/iso-candidate/iso-file-list.txt
+          jq -e '.releaseReady == false and .bootSmokePassed == false and .installationSmokePassed == false' artifacts/iso-candidate/iso-provenance.json
+          jq -e '.bootPrerequisitePassed == true and .systemdBasicTargetSeen == true and
+            .anacondaPreServiceSeen == true and .anacondaPreServiceStarted == true and
+            (.anacondaPreServiceFinished | type == "boolean") and
+            .finalFramebufferUniform == false and
+            .finalFramebufferNonUniform == true and
+            .requiredSmokePassed == true and
+            .anacondaWebuiDesktopLaunched == true and
+            .firefoxBrowserSelected == true and
+            .firefoxStartedUnprivileged == true and
+            .browserProbeTelemetrySeen == true and
+            .browserProbeOrderingCycleDetected == false and
+            .installerInitiatedReboot == false and
+            .browserSandboxRefusalSeen == false and
+            (.serialGuestBootMessagesSeen | type == "boolean") and
+            (.anacondaVirtioLogNonempty | type == "boolean") and
+            .anacondaUserInterfaceVerified == false and
+            .diskInstallationVerified == false and .rebootVerified == false and .releaseReady == false'             artifacts/iso-evidence/uefi-boot-probe.json
+
+      - name: Keep only non-release build evidence, never the ISO
+        if: always()
+        run: |
+          mkdir -p artifacts/iso-evidence
+          for file in ISO-SHA256SUMS boot-record.txt iso-file-list.txt iso-provenance.json bios-grub.cfg uefi-grub.cfg; do
+            test ! -f "artifacts/iso-candidate/$file" || cp "artifacts/iso-candidate/$file" "artifacts/iso-evidence/$file"
+          done
+          test ! -e artifacts/iso-evidence/install.iso
+
+      - name: Upload diagnostics only (no ISO, disk or test credentials)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-installer-iso-nonrelease-evidence
+          path: |
+            artifacts/iso-evidence/
+            artifacts/image-build-provenance.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # NOT a GitHub Release. Generated only from an explicitly opted-in
+      # manual dispatch, never when someone opens/pushes a pull request.
+      - name: Package unvalidated ISO for isolated VM QA (manual opt-in only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.export_qa_iso == true }}
+        env:
+          BITRIVER_QA_OPT_IN: ${{ inputs.export_qa_iso }}
+        run: bash test/appliance/package-iso-qa.sh
+
+      - name: Upload short-lived unvalidated ISO QA chunks (never a release)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.export_qa_iso == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitriver-experimental-iso-ISOLATED-VM-QA-NOT-RELEASE
+          path: artifacts/iso-qa-download/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0

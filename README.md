@@ -226,3 +226,13 @@ OBS, Wi-Fi, or games work. Open-source Mesa and Fedora firmware are included;
 no proprietary NVIDIA driver, Steam, or other external app is silently installed.
 
 See [hardware compatibility plans](docs/HARDWARE_COMPATIBILITY.md).
+
+## Installer ISO roadmap (experimental)
+
+A bootable installer ISO is now being prototyped separately from the
+[VirtualBox disk preview](docs/VIRTUALBOX_PREVIEW.md). The work uses a Fedora
+Anaconda boot environment with a locally embedded BitRiver bootc image.
+The [ISO roadmap](docs/ISO_INSTALLER_ROADMAP.md) tracks the build, UEFI ISO
+boot test, interactive install, first boot, secure operator enrollment,
+and update/rollback gates. The initial ISO workflow **does not publish an
+ISO** or claim installability; it retains non-release build evidence only.
